@@ -223,6 +223,7 @@ input[type=date].inp{-webkit-appearance:none;}
       <p class="big cero" id="disp"><sup>S/</sup>0</p>
     </div>
 
+    <p class="eti" style="margin-bottom:7px">Tipo de movimiento</p>
     <div class="chips" style="margin-bottom:11px" id="tipos"></div>
 
     <div id="wCat">
@@ -240,7 +241,10 @@ input[type=date].inp{-webkit-appearance:none;}
       <div class="chips" style="margin-bottom:11px" id="destinos"></div>
     </div>
 
-    <div class="chips" style="margin-bottom:11px" id="marcas"></div>
+    <div id="wMarcas">
+      <p class="eti" style="margin-bottom:7px">Marcas · opcional</p>
+      <div class="chips" style="margin-bottom:11px" id="marcas"></div>
+    </div>
 
     <p class="eti" style="margin-bottom:7px">Fecha</p>
     <div class="fecha-btns" style="margin-bottom:11px">
@@ -420,6 +424,7 @@ function pintarForm(){
     `<button class="chip ${F.destino===c.id?'on':''}" onclick="F.destino='${c.id}';pintarForm()"><i style="background:var(--suave)"></i>${c.n}</button>`).join('');
 
   const esG = F.tipo==='GASTO';
+  document.getElementById('wMarcas').style.display = esG ? 'block' : 'none';
   document.getElementById('marcas').innerHTML = esG ? `
     <button class="chip mini2 ${F.evitable?'on':''}" onclick="F.evitable=!F.evitable;pintarForm();vibrar()"><i style="background:var(--rosa)"></i>⚑ Evitable</button>
     <button class="chip mini2 ${F.compartido?'on':''}" onclick="F.compartido=!F.compartido;pintarForm();vibrar()"><i style="background:var(--violeta)"></i>◑ Compartido</button>` : '';

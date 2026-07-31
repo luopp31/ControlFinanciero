@@ -222,7 +222,10 @@ input[type=date].inp{-webkit-appearance:none;}
       <p class="eti" id="cabEti">Networth</p>
       <h1 id="cabTit">Registrar</h1>
     </div>
-    <button class="ic vidrio" onclick="abrirAjustes()">⚙</button>
+    <div style="display:flex;align-items:center;gap:8px">
+      <button class="ic vidrio" id="sync" onclick="tocarSync()" style="width:34px;height:34px;border-radius:11px"></button>
+      <button class="ic vidrio" onclick="abrirAjustes()">⚙</button>
+    </div>
   </div>
 
   <!-- ============ REGISTRAR ============ -->
@@ -344,13 +347,207 @@ const CUENTAS = [
 const CFG_DEF = {
   iniSIMPLE:0, iniMILLONARIA:0, presupuesto:1500,
   concSIMPLE:null, concMILLONARIA:null,
-  ocultar:false, sbUrl:'', sbKey:''
+  ocultar:false, sbUrl:'', sbKey:'',
+  sbTok:'', sbRef:'', sbExp:0, sbMail:'', sbUid:'', sbUlt:''
 };
 
 let DB=null, MOVS=[], CFG={...CFG_DEF}, COMPS=[], PREST=[];
 let vista='registrar';
 let F = {monto:'', tipo:'GASTO', cat:'ALIMENTACION', cuenta:'SIMPLE', destino:'MILLONARIA', evitable:false, compartido:false, emergencia:false, fecha:hoyISO(),
          dir:'PRESTE', persona:'', acordado:'', prestId:''};
+
+/* ==================================================================
+   SINCRONIZACIÓN CON SUPABASE
+   El teléfono guarda primero; la nube es la fuente de verdad.
+   ================================================================== */
+
+let ESTADO_SYNC='local';   // local | ok | pendiente | error | sincronizando
+
+const SB = {
+  get url(){ return (CFG.sbUrl||'').trim().replace(/\/+$/,''); },
+  get key(){ return (CFG.sbKey||'').trim(); },
+  get listo(){ return !!(this.url && this.key); },
+  get sesion(){ return !!(CFG.sbTok && CFG.sbUid); }
+};
+
+const MAPA = {
+  movs: {
+    tabla:'movimientos',
+    sube: m=>({ id:m.id, fecha:m.fecha, monto:m.monto, tipo:m.tipo, categoria:m.categoria,
+                cuenta:m.cuenta, destino:m.destino, dir:m.dir, prest_id:m.prestId,
+                evitable:!!m.evitable, compartido:!!m.compartido, emergencia:!!m.emergencia,
+                nota:m.nota||'', creado:m.creado, borrado:!!m.borrado,
+                usuario:CFG.sbUid, actualizado:new Date().toISOString() }),
+    baja: r=>({ id:r.id, fecha:r.fecha, monto:+r.monto, tipo:r.tipo, categoria:r.categoria,
+                cuenta:r.cuenta, destino:r.destino, dir:r.dir, prestId:r.prest_id,
+                evitable:!!r.evitable, compartido:!!r.compartido, emergencia:!!r.emergencia,
+                nota:r.nota||'', creado:+r.creado||Date.now(), borrado:!!r.borrado, sync:true })
+  },
+  prest: {
+    tabla:'prestamos',
+    sube: p=>({ id:p.id, tipo:p.tipo, persona:p.persona, capital:p.capital, acordado:p.acordado,
+                fecha:p.fecha, creado:p.creado, borrado:!!p.borrado,
+                usuario:CFG.sbUid, actualizado:new Date().toISOString() }),
+    baja: r=>({ id:r.id, tipo:r.tipo, persona:r.persona, capital:+r.capital, acordado:+r.acordado,
+                fecha:r.fecha, creado:+r.creado||Date.now(), borrado:!!r.borrado, sync:true })
+  },
+  comps: {
+    tabla:'compromisos',
+    sube: c=>({ id:c.id, descripcion:c.desc, monto:c.monto, total:c.total, pagadas:c.pagadas,
+                categoria:c.cat, borrado:!!c.borrado,
+                usuario:CFG.sbUid, actualizado:new Date().toISOString() }),
+    baja: r=>({ id:r.id, desc:r.descripcion, monto:+r.monto, total:+r.total, pagadas:+r.pagadas,
+                cat:r.categoria, borrado:!!r.borrado, sync:true })
+  }
+};
+
+async function sbApi(ruta, opts={}, conAuth=true){
+  const h = { 'apikey':SB.key, 'Content-Type':'application/json', ...(opts.headers||{}) };
+  if(conAuth && CFG.sbTok) h['Authorization']='Bearer '+CFG.sbTok;
+  const r = await fetch(SB.url+ruta, {...opts, headers:h});
+  if(!r.ok){
+    let d=''; try{ d=(await r.json()).message || (await r.text()); }catch(e){}
+    const err=new Error(d||('HTTP '+r.status)); err.status=r.status; throw err;
+  }
+  return r.status===204 ? null : r.json().catch(()=>null);
+}
+
+async function entrar(mail, pass){
+  const d = await sbApi('/auth/v1/token?grant_type=password',
+    {method:'POST', body:JSON.stringify({email:mail, password:pass})}, false);
+  CFG.sbTok=d.access_token; CFG.sbRef=d.refresh_token;
+  CFG.sbExp=Date.now()+(d.expires_in||3600)*1000;
+  CFG.sbUid=d.user.id; CFG.sbMail=d.user.email;
+  await guardarCfg();
+}
+async function renovar(){
+  if(!CFG.sbRef) throw new Error('sin sesión');
+  const d = await sbApi('/auth/v1/token?grant_type=refresh_token',
+    {method:'POST', body:JSON.stringify({refresh_token:CFG.sbRef})}, false);
+  CFG.sbTok=d.access_token; CFG.sbRef=d.refresh_token||CFG.sbRef;
+  CFG.sbExp=Date.now()+(d.expires_in||3600)*1000;
+  await guardarCfg();
+}
+async function salir(){
+  CFG.sbTok=''; CFG.sbRef=''; CFG.sbExp=0; CFG.sbUid=''; CFG.sbMail=''; CFG.sbUlt='';
+  await guardarCfg(); ESTADO_SYNC='local'; cerrarModal(); pintarSync(); pintarTodo();
+  toast('Sesión cerrada');
+}
+
+function listaDe(st){ return st==='movs'?MOVS : st==='prest'?PREST : COMPS; }
+function ponLista(st,v){ if(st==='movs')MOVS=v; else if(st==='prest')PREST=v; else COMPS=v; }
+
+async function sincronizar(silencioso){
+  if(!SB.listo || !SB.sesion){ ESTADO_SYNC='local'; pintarSync(); return; }
+  if(ESTADO_SYNC==='sincronizando') return;
+  ESTADO_SYNC='sincronizando'; pintarSync();
+  try{
+    if(Date.now() > CFG.sbExp - 60000) await renovar();
+
+    for(const st of ['movs','prest','comps']){
+      const M=MAPA[st];
+
+      // 1. subir lo pendiente
+      const pend = listaDe(st).filter(x=>!x.sync);
+      if(pend.length){
+        await sbApi('/rest/v1/'+M.tabla, {
+          method:'POST',
+          headers:{'Prefer':'resolution=merge-duplicates,return=minimal'},
+          body:JSON.stringify(pend.map(M.sube))
+        });
+        for(const x of pend){ x.sync=true; await put(st,x); }
+      }
+
+      // 2. bajar lo nuevo del servidor
+      const desde = CFG.sbUlt || '1970-01-01T00:00:00Z';
+      const filas = await sbApi(`/rest/v1/${M.tabla}?select=*&actualizado=gt.${encodeURIComponent(desde)}`,{method:'GET'}) || [];
+      if(filas.length){
+        const local = listaDe(st);
+        for(const f of filas){
+          const obj=M.baja(f);
+          const i=local.findIndex(x=>x.id===obj.id);
+          if(i>=0) local[i]=obj; else local.push(obj);
+          await put(st,obj);
+        }
+        ponLista(st, local.filter(x=>!x.borrado));
+      }
+    }
+
+    // config compartida
+    const claves=['iniSIMPLE','iniMILLONARIA','presupuesto','concSIMPLE','concMILLONARIA'];
+    await sbApi('/rest/v1/config', {
+      method:'POST',
+      headers:{'Prefer':'resolution=merge-duplicates,return=minimal'},
+      body:JSON.stringify(claves.map(k=>({clave:k, valor:CFG[k]??null, usuario:CFG.sbUid, actualizado:new Date().toISOString()})))
+    });
+
+    MOVS.sort((a,b)=> b.fecha.localeCompare(a.fecha) || b.creado-a.creado);
+    CFG.sbUlt=new Date().toISOString(); await guardarCfg();
+    ESTADO_SYNC='ok'; pintarSync(); pintarTodo();
+    if(!silencioso) toast('Sincronizado');
+  }catch(e){
+    if(e.status===401){ ESTADO_SYNC='error'; pintarSync(); if(!silencioso) toast('Vuelve a iniciar sesión'); return; }
+    ESTADO_SYNC = navigator.onLine===false ? 'pendiente' : 'error';
+    pintarSync();
+    if(!silencioso) toast('No se pudo sincronizar');
+  }
+}
+
+function pendientes(){ return MOVS.filter(m=>!m.sync).length + PREST.filter(p=>!p.sync).length + COMPS.filter(c=>!c.sync).length; }
+
+function pintarSync(){
+  const e=document.getElementById('sync'); if(!e) return;
+  const n=pendientes();
+  const mapa={
+    local:        ['○','var(--suave)','Solo en este dispositivo'],
+    sincronizando:['◍','var(--sol)','Sincronizando…'],
+    ok:           ['●','var(--verde)','Todo sincronizado'],
+    pendiente:    ['◐','var(--sol)', n+' por subir'],
+    error:        ['✕','var(--rosa)','Error de sincronización']
+  };
+  const [ic,col,txt] = mapa[ESTADO_SYNC]||mapa.local;
+  e.innerHTML=`<span style="color:${col};font-size:11px">${ic}</span>`;
+  e.title=txt;
+}
+
+function tocarSync(){
+  if(!SB.listo){ abrirAjustes(); return; }
+  if(!SB.sesion){ abrirLogin(); return; }
+  sincronizar();
+}
+function abrirLogin(){
+  document.getElementById('hoja').innerHTML=`
+    <div class="cabm"><h1 style="font-size:19px">Iniciar sesión</h1><button class="x" onclick="cerrarModal()">✕</button></div>
+    <div class="card vidrio">
+      <p style="font-size:12.5px;color:var(--suave);margin-bottom:14px">Usa el correo y la contraseña que creaste en Supabase.</p>
+      <div class="campo"><label class="eti">Correo</label>
+        <input class="inp" id="lgMail" type="email" autocomplete="username" inputmode="email" value="${esc(CFG.sbMail||'')}" style="font-size:14px"></div>
+      <div class="campo"><label class="eti">Contraseña</label>
+        <input class="inp" id="lgPass" type="password" autocomplete="current-password" style="font-size:14px"></div>
+      <div id="lgErr"></div>
+    </div>
+    <button class="btn" id="lgBtn" onclick="hacerLogin()">Entrar</button>`;
+  document.getElementById('modal').classList.add('on');
+  setTimeout(()=>document.getElementById('lgPass').focus(),250);
+}
+async function hacerLogin(){
+  const mail=document.getElementById('lgMail').value.trim();
+  const pass=document.getElementById('lgPass').value;
+  const err=document.getElementById('lgErr'), btn=document.getElementById('lgBtn');
+  if(!mail||!pass){ err.innerHTML='<div class="aviso r"><span>⚠</span><span>Completa los dos campos</span></div>'; return; }
+  btn.disabled=true; btn.textContent='Entrando…'; err.innerHTML='';
+  try{
+    await entrar(mail,pass);
+    cerrarModal(); vibrar(18); toast('Bienvenido');
+    await sincronizar();
+  }catch(e){
+    btn.disabled=false; btn.textContent='Entrar';
+    const msg = /credential/i.test(e.message) ? 'Correo o contraseña incorrectos'
+              : /Failed to fetch/i.test(e.message) ? 'No hay conexión, o la URL del proyecto está mal'
+              : e.message;
+    err.innerHTML=`<div class="aviso r"><span>⚠</span><span>${esc(msg)}</span></div>`;
+  }
+}
 
 /* ---------------- utilidades ---------------- */
 function hoyISO(d){ const x=d?new Date(d):new Date(); const o=x.getTimezoneOffset(); return new Date(x-o*60000).toISOString().slice(0,10); }
@@ -390,8 +587,8 @@ function del(store,id){ return new Promise(res=>{ const q=tx(store,'readwrite').
 async function guardarCfg(){ for(const k in CFG) await put('cfg',{k,v:CFG[k]}); }
 async function cargarTodo(){
   MOVS = (await all('movs')).filter(m=>!m.borrado).sort((a,b)=> b.fecha.localeCompare(a.fecha) || b.creado-a.creado);
-  COMPS = await all('comps');
-  PREST = await all('prest');
+  COMPS = (await all('comps')).filter(c=>!c.borrado);
+  PREST = (await all('prest')).filter(p=>!p.borrado);
   const c = await all('cfg'); CFG={...CFG_DEF}; c.forEach(x=>CFG[x.k]=x.v);
 }
 
@@ -550,7 +747,7 @@ async function guardar(){
       const ac=parseFloat(F.acordado||'0');
       const p={ id:uid(), tipo:F.dir, persona:nom, capital:Math.round(v*100)/100,
                 acordado: ac>0? Math.round(ac*100)/100 : Math.round(v*100)/100,
-                fecha:F.fecha, creado:Date.now() };
+                fecha:F.fecha, creado:Date.now(), sync:false };
       await put('prest',p); PREST.push(p); prestId=p.id;
     } else {
       if(!F.prestId){ toast('Elige a cuál corresponde'); return; }
@@ -575,7 +772,7 @@ async function guardar(){
   F.monto=''; F.evitable=false; F.compartido=false; F.emergencia=false; F.persona=''; F.acordado=''; F.prestId='';
   document.getElementById('nota').value='';
   const inp=document.getElementById('monto'); inp.value=''; inp.blur();
-  pintarForm(); pintarTodo();
+  pintarForm(); pintarTodo(); sincronizar(true);
 }
 function repetir(){
   const u=MOVS[0]; if(!u){ toast('Aún no hay movimientos'); return; }
@@ -897,7 +1094,7 @@ async function cerrarDif(cta,dif){
     tipo: dif<0?'GASTO':'INGRESO', categoria:'SINID', cuenta:cta, destino:null,
     evitable:false, compartido:false, nota:'Ajuste de conciliación', creado:Date.now(), sync:false };
   await put('movs',m); MOVS.unshift(m);
-  saldoReal[cta]=''; vibrar(18); toast('Diferencia cerrada'); pintarTodo();
+  saldoReal[cta]=''; vibrar(18); toast('Diferencia cerrada'); pintarTodo(); sincronizar(true);
 }
 async function marcarConciliado(cta){
   CFG['conc'+cta]=hoyISO(); await guardarCfg(); vibrar(); toast('Conciliado hasta hoy'); pintarConciliar();
@@ -930,12 +1127,14 @@ async function editarFecha(id,f){
   const m=MOVS.find(x=>x.id===id); if(!m||!f) return;
   m.fecha=f; m.sync=false; await put('movs',m);
   MOVS.sort((a,b)=> b.fecha.localeCompare(a.fecha) || b.creado-a.creado);
-  toast('Fecha actualizada'); pintarTodo();
+  toast('Fecha actualizada'); pintarTodo(); sincronizar(true);
 }
 async function borrar(id){
   if(!confirm('¿Eliminar este movimiento?')) return;
-  await del('movs',id); MOVS=MOVS.filter(m=>m.id!==id);
-  cerrarModal(); vibrar(20); toast('Eliminado'); pintarTodo();
+  const m=MOVS.find(x=>x.id===id);
+  if(m){ m.borrado=true; m.sync=false; await put('movs',m); }
+  MOVS=MOVS.filter(m=>m.id!==id);
+  cerrarModal(); vibrar(20); toast('Eliminado'); pintarTodo(); sincronizar(true);
 }
 function cerrarModal(){ document.getElementById('modal').classList.remove('on'); }
 
@@ -987,13 +1186,24 @@ function abrirAjustes(){
     </div>
 
     <div class="card vidrio">
-      <h2>Sincronización</h2>
-      <p style="font-size:11.5px;color:var(--suave);margin-bottom:11px">Pega tus credenciales de Supabase cuando crees el proyecto. Mientras tanto, todo funciona en local.</p>
-      <div class="campo"><label class="eti">URL del proyecto</label>
+      <h2>Nube</h2>
+      ${SB.sesion? `
+        <div class="aviso v" style="margin-bottom:11px"><span>✓</span><span>Sesión iniciada como <b>${esc(CFG.sbMail)}</b></span></div>
+        <div class="fila-sp"><div class="t"><b>Pendientes por subir</b>
+          <span>${CFG.sbUlt? 'Última sincronización: '+new Date(CFG.sbUlt).toLocaleString('es-PE',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}) : 'Nunca'}</span></div>
+          <span class="num" style="font-size:16px">${pendientes()}</span></div>
+        <button class="btn sec peq" style="margin-top:11px" onclick="sincronizar()">Sincronizar ahora</button>
+        <button class="btn sec peq" style="margin-top:7px" onclick="salir()">Cerrar sesión</button>
+      ` : SB.listo? `
+        <div class="aviso a" style="margin-bottom:11px"><span>ℹ</span><span>Credenciales guardadas. Falta iniciar sesión.</span></div>
+        <button class="btn peq" onclick="cerrarModal();abrirLogin()">Iniciar sesión</button>
+      ` : `
+        <p style="font-size:11.5px;color:var(--suave);margin-bottom:11px">Pega las credenciales de tu proyecto Supabase. Mientras no lo hagas, todo funciona en local.</p>
+      `}
+      <div class="campo" style="margin-top:12px"><label class="eti">Project URL</label>
         <input class="inp" id="aUrl" value="${esc(CFG.sbUrl||'')}" placeholder="https://xxx.supabase.co" style="font-size:12.5px"></div>
-      <div class="campo"><label class="eti">Clave anon</label>
-        <input class="inp" id="aKey" value="${esc(CFG.sbKey||'')}" placeholder="eyJ..." style="font-size:12.5px"></div>
-      <div class="aviso a" style="margin:0"><span>ℹ</span><span>Estado: ${CFG.sbUrl?'configurado':'solo local'}. La sincronización se activa en la siguiente versión.</span></div>
+      <div class="campo"><label class="eti">Publishable key</label>
+        <input class="inp" id="aKey" value="${esc(CFG.sbKey||'')}" placeholder="sb_publishable_..." style="font-size:12.5px"></div>
     </div>
 
     <button class="btn" onclick="salvarAjustes()">Guardar ajustes</button>`;
@@ -1005,7 +1215,10 @@ async function salvarAjustes(){
   CFG.presupuesto=parseFloat(document.getElementById('aPresu').value)||0;
   CFG.sbUrl=document.getElementById('aUrl').value.trim();
   CFG.sbKey=document.getElementById('aKey').value.trim();
-  await guardarCfg(); cerrarModal(); vibrar(18); toast('Ajustes guardados'); pintarTodo();
+  await guardarCfg(); cerrarModal(); vibrar(18); toast('Ajustes guardados');
+  pintarSync(); pintarTodo();
+  if(SB.listo && !SB.sesion) setTimeout(abrirLogin,400);
+  else if(SB.sesion) sincronizar(true);
 }
 async function addComp(){
   const d=document.getElementById('cDesc').value.trim();
@@ -1013,24 +1226,27 @@ async function addComp(){
   const t=parseInt(document.getElementById('cTot').value)||0;
   const p=parseInt(document.getElementById('cPag').value)||0;
   if(!d||!m||!t){ toast('Completa descripción, monto y total'); return; }
-  const c={id:uid(),desc:d,monto:m,total:t,pagadas:p,cat:document.getElementById('cCat').value};
+  const c={id:uid(),desc:d,monto:m,total:t,pagadas:p,cat:document.getElementById('cCat').value,sync:false};
   await put('comps',c); COMPS.push(c); vibrar(); toast('Cuota agregada'); abrirAjustes();
 }
 async function pagarCuota(id){
   const c=COMPS.find(x=>x.id===id); if(!c) return;
-  if(c.pagadas<c.total){ c.pagadas++; await put('comps',c); vibrar(); toast('Cuota '+c.pagadas+'/'+c.total); }
+  if(c.pagadas<c.total){ c.pagadas++; c.sync=false; await put('comps',c); sincronizar(true); vibrar(); toast('Cuota '+c.pagadas+'/'+c.total); }
   abrirAjustes();
 }
 async function borrarPrest(id){
   const p=PREST.find(x=>x.id===id); if(!p) return;
   if(!confirm('¿Eliminar el registro de '+p.persona+' y sus movimientos?')) return;
-  for(const m of MOVS.filter(m=>m.prestId===id)) await del('movs',m.id);
+  for(const m of MOVS.filter(m=>m.prestId===id)){ m.borrado=true; m.sync=false; await put('movs',m); }
   MOVS=MOVS.filter(m=>m.prestId!==id);
-  await del('prest',id); PREST=PREST.filter(x=>x.id!==id);
-  vibrar(20); toast('Eliminado'); pintarTodo();
+  p.borrado=true; p.sync=false; await put('prest',p);
+  PREST=PREST.filter(x=>x.id!==id);
+  vibrar(20); toast('Eliminado'); pintarTodo(); sincronizar(true);
 }
 async function borrarComp(id){
-  await del('comps',id); COMPS=COMPS.filter(c=>c.id!==id); vibrar(); abrirAjustes();
+  const c=COMPS.find(x=>x.id===id);
+  if(c){ c.borrado=true; c.sync=false; await put('comps',c); }
+  COMPS=COMPS.filter(x=>x.id!==id); vibrar(); abrirAjustes(); sincronizar(true);
 }
 
 /* ---------------- exportar ---------------- */
@@ -1085,6 +1301,16 @@ function pintarTodo(){
   }
   document.getElementById('fecha').value=F.fecha;
   pintarForm();
+  ESTADO_SYNC = SB.sesion ? (pendientes()?'pendiente':'ok') : 'local';
+  pintarSync();
+
+  if(SB.listo && !SB.sesion) setTimeout(abrirLogin,600);
+  else if(SB.sesion) sincronizar(true);
+
+  window.addEventListener('online', ()=>sincronizar(true));
+  document.addEventListener('visibilitychange', ()=>{ if(!document.hidden) sincronizar(true); });
+  setInterval(()=>{ if(!document.hidden) sincronizar(true); }, 300000);
+
   if('serviceWorker' in navigator){
     navigator.serviceWorker.register('sw.js').catch(()=>{});
   }

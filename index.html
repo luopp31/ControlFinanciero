@@ -347,7 +347,7 @@ const CUENTAS = [
 const CFG_DEF = {
   iniSIMPLE:0, iniMILLONARIA:0, presupuesto:1500,
   concSIMPLE:null, concMILLONARIA:null,
-  ocultar:false, sbUrl:'', sbKey:'',
+  ocultar:false, desde:'', sbUrl:'', sbKey:'',
   sbTok:'', sbRef:'', sbExp:0, sbMail:'', sbUid:'', sbUlt:''
 };
 
@@ -604,7 +604,10 @@ function efecto(m,cta){
   if(m.tipo==='TRASPASO' && m.destino===cta) return m.monto;
   return 0;
 }
-function saldo(cta){ return (CFG['ini'+cta]||0) + MOVS.reduce((s,m)=>s+efecto(m,cta),0); }
+function saldo(cta){
+  const d=CFG.desde||'';
+  return (CFG['ini'+cta]||0) + MOVS.reduce((s,m)=> (d && m.fecha<d) ? s : s+efecto(m,cta), 0);
+}
 function saldoTotal(){ return CUENTAS.reduce((s,c)=>s+saldo(c.id),0); }
 
 /* --- préstamos --- */
@@ -794,9 +797,9 @@ function pintarPanel(){
   const dias=[]; for(let i=29;i>=0;i--) dias.push(menosDias(i));
   let base=(CFG.iniSIMPLE||0)+(CFG.iniMILLONARIA||0);
   const antes=MOVS.filter(m=>m.fecha<dias[0]);
-  antes.forEach(m=>{ base+=efecto(m,'SIMPLE')+efecto(m,'MILLONARIA'); });
+  antes.filter(m=>!CFG.desde||m.fecha>=CFG.desde).forEach(m=>{ base+=efecto(m,'SIMPLE')+efecto(m,'MILLONARIA'); });
   const serie=[]; let acc=base;
-  dias.forEach(d=>{ MOVS.filter(m=>m.fecha===d).forEach(m=>{ acc+=efecto(m,'SIMPLE')+efecto(m,'MILLONARIA'); }); serie.push(acc); });
+  dias.forEach(d=>{ MOVS.filter(m=>m.fecha===d&&(!CFG.desde||m.fecha>=CFG.desde)).forEach(m=>{ acc+=efecto(m,'SIMPLE')+efecto(m,'MILLONARIA'); }); serie.push(acc); });
   const ini=serie[0], fin=serie[serie.length-1], dif=fin-ini;
   const pct= ini? Math.abs(dif/ini*100):0;
 
@@ -1150,6 +1153,9 @@ function abrirAjustes(){
         <input class="inp" inputmode="decimal" id="aSimple" value="${CFG.iniSIMPLE||0}"></div>
       <div class="campo"><label class="eti">Cuenta Millonaria</label>
         <input class="inp" inputmode="decimal" id="aMillo" value="${CFG.iniMILLONARIA||0}"></div>
+      <div class="campo"><label class="eti">Esos saldos son del día</label>
+        <input type="date" class="inp" id="aDesde" value="${CFG.desde||''}" style="font-size:13.5px"></div>
+      <div class="aviso a" style="margin:0"><span>ℹ</span><span>Lo anterior a esa fecha no afecta tus cuentas: ya estaba incluido en el saldo inicial. Sirve para registrar préstamos y deudas viejas sin descontarlos dos veces.</span></div>
     </div>
 
     <div class="card vidrio">
@@ -1213,6 +1219,7 @@ async function salvarAjustes(){
   CFG.iniSIMPLE=parseFloat(document.getElementById('aSimple').value)||0;
   CFG.iniMILLONARIA=parseFloat(document.getElementById('aMillo').value)||0;
   CFG.presupuesto=parseFloat(document.getElementById('aPresu').value)||0;
+  CFG.desde=document.getElementById('aDesde').value||'';
   CFG.sbUrl=document.getElementById('aUrl').value.trim();
   CFG.sbKey=document.getElementById('aKey').value.trim();
   await guardarCfg(); cerrarModal(); vibrar(18); toast('Ajustes guardados');

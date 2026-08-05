@@ -445,7 +445,7 @@ let F = {monto:'', tipo:'GASTO', cat:'ALIMENTACION', cuenta:'SIMPLE', destino:'M
    El teléfono guarda primero; la nube es la fuente de verdad.
    ================================================================== */
 
-let ESTADO_SYNC='local';   // local | ok | pendiente | error | sincronizando
+let ESTADO_SYNC='local', ULT_ERROR='';   // local | ok | pendiente | error | sincronizando
 
 const SB = {
   get url(){ return (CFG.sbUrl||'').trim().replace(/\/+$/,''); },
@@ -600,13 +600,17 @@ async function sincronizar(silencioso){
 
     MOVS.sort((a,b)=> b.fecha.localeCompare(a.fecha) || b.creado-a.creado);
     CFG.sbUlt=new Date().toISOString(); await guardarCfg();
-    ESTADO_SYNC='ok'; pintarSync(); pintarTodo();
+    ULT_ERROR=''; ESTADO_SYNC='ok'; pintarSync(); pintarTodo();
     if(!silencioso) toast('Sincronizado');
   }catch(e){
+    ULT_ERROR = (e && e.message) ? String(e.message).slice(0,300) : 'Error desconocido';
     if(e.status===401){ ESTADO_SYNC='error'; pintarSync(); if(!silencioso) toast('Vuelve a iniciar sesión'); return; }
     ESTADO_SYNC = navigator.onLine===false ? 'pendiente' : 'error';
     pintarSync();
-    if(!silencioso) toast('No se pudo sincronizar');
+    if(!silencioso){
+      const falta = /column .* does not exist|schema cache/i.test(ULT_ERROR);
+      toast(falta? 'Falta una columna en Supabase' : 'No se pudo sincronizar');
+    }
   }
 }
 
@@ -1633,6 +1637,11 @@ function abrirAjustes(){
         <div class="fila-sp"><div class="t"><b>Pendientes por subir</b>
           <span>${CFG.sbUlt? 'Última sync: '+new Date(CFG.sbUlt).toLocaleString('es-PE',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}) : 'Nunca'}</span></div>
           <span class="num" style="font-size:16px">${pendientes()}</span></div>
+        ${ULT_ERROR? `<div class="aviso r" style="margin:11px 0 0"><span>⚠</span><span><b>Último error:</b><br>
+          <span style="font-size:11px;word-break:break-word">${esc(ULT_ERROR)}</span>
+          ${/column .* does not exist|schema cache/i.test(ULT_ERROR)? `<br><br>Falta una columna en Supabase. Corre esto en el SQL Editor:<br>
+          <code style="font-size:10.5px;display:block;margin-top:5px;padding:7px;background:rgba(0,0,0,.25);border-radius:7px;word-break:break-all">alter table movimientos add column if not exists etiqueta text;</code>`:''}
+        </span></div>`:''}
         <button class="btn sec peq" style="margin-top:11px" onclick="sincronizar()">Sincronizar ahora</button>
         <button class="btn sec peq" style="margin-top:7px" onclick="salir()">Cerrar sesión</button>
       ` : SB.listo? `

@@ -164,6 +164,14 @@ h2{font-family:'Inter',sans-serif;font-weight:600;font-size:14px;letter-spacing:
 .chip.on{background:linear-gradient(135deg,rgba(255,176,32,.92),rgba(255,140,20,.84));border-color:rgba(255,200,90,.6);color:#180F02;box-shadow:0 0 20px rgba(255,176,32,.3);}
 .chip.on i{background:#180F02!important;}
 .chip.mini2{padding:6px 11px;font-size:11.5px;}
+
+.pill-tipo{
+  display:flex;align-items:center;gap:8px;flex:1;justify-content:center;
+  background:var(--vidrio-alto);border:1.5px solid var(--filo);border-radius:14px;
+  padding:11px 8px;font-size:13px;font-weight:700;color:var(--suave);
+}
+.pill-tipo .ico{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;flex:0 0 24px;}
+.pill-tipo.on{border-color:rgba(255,255,255,.22);color:var(--texto);background:var(--vidrio-alto);box-shadow:inset 0 1px 0 rgba(255,255,255,.08);}
 .sep{height:1px;background:var(--filo);margin:3px 0 12px;}
 
 /* ---------- MONTO INPUT ---------- */
@@ -235,19 +243,87 @@ textarea.inp{font-family:'Inter',sans-serif;font-weight:500;resize:vertical;min-
 /* ---------- NAV ---------- */
 .nav{position:fixed;left:0;right:0;bottom:0;z-index:20;padding:0 14px calc(10px + var(--sb));pointer-events:none;}
 .navin{
-  max-width:532px;margin:0 auto;pointer-events:auto;
-  display:grid;grid-template-columns:repeat(4,1fr);
-  border-radius:24px;padding:11px 4px;
+  max-width:532px;margin:0 auto;pointer-events:auto;position:relative;
+  display:grid;grid-template-columns:1fr 1fr 68px 1fr 1fr;
+  align-items:center;
+  border-radius:18px;padding:3px 4px;
   background:rgba(255,255,255,.028);
   -webkit-backdrop-filter:blur(26px) saturate(165%);
   backdrop-filter:blur(26px) saturate(165%);
   border:1px solid rgba(255,255,255,.075);
   box-shadow:inset 0 1px 0 rgba(255,255,255,.07),0 8px 26px rgba(0,0,0,.34);
 }
-.navin button{text-align:center;font-size:9.5px;color:var(--suave);font-weight:700;letter-spacing:.02em;}
-.navin button u{display:block;font-size:17px;text-decoration:none;margin-bottom:3px;opacity:.55;}
-.navin button.on{color:var(--sol);}
-.navin button.on u{opacity:1;filter:drop-shadow(0 0 8px rgba(255,176,32,.55));}
+.navin button{text-align:center;background:none;border:none;padding:6px 0;color:var(--suave);}
+.navin button u{display:block;font-size:26px;text-decoration:none;opacity:.5;transition:opacity .15s,filter .15s;}
+.navin button.on u{opacity:1;color:var(--sol);filter:drop-shadow(0 0 8px rgba(255,176,32,.55));}
+.navin button:disabled u{opacity:.28;}
+
+/* botón central, estilo Margen pero de vidrio */
+.navin .central{grid-column:3;height:0;overflow:visible;position:relative;pointer-events:none;}
+.navin .central .btn-mas{position:absolute;left:50%;top:0;pointer-events:auto;}
+.btn-mas{
+  width:61px;height:61px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:40px;font-weight:200;line-height:0;padding-bottom:3px;color:#FFF6DE;
+  transform:translate(-50%,-50%);transition:transform .15s ease,box-shadow .15s ease;
+  background:linear-gradient(160deg,rgba(255,214,130,.82),rgba(255,160,15,.62));
+  -webkit-backdrop-filter:blur(20px) saturate(210%);
+  backdrop-filter:blur(20px) saturate(210%);
+  border:1.5px solid rgba(255,222,150,.9);
+  text-shadow:0 0 12px rgba(255,255,255,.95),0 0 26px rgba(255,205,110,.9);
+  box-shadow:
+    inset 0 1.5px 1px rgba(255,255,255,.7),
+    inset 0 -8px 14px rgba(170,85,0,.42),
+    0 0 28px rgba(255,176,32,.85),
+    0 0 56px rgba(255,176,32,.5),
+    0 10px 22px rgba(0,0,0,.38);
+}
+.btn-mas:active{transform:translate(-50%,-50%) scale(.92);
+  box-shadow:inset 0 1.5px 1px rgba(255,255,255,.55),inset 0 -8px 14px rgba(180,90,0,.35),
+    0 0 14px rgba(255,176,32,.5),0 0 26px rgba(255,176,32,.22),0 4px 12px rgba(0,0,0,.3);}
+html[data-tema="claro"] .btn-mas{
+  color:#5A3600;
+  background:linear-gradient(160deg,rgba(255,214,130,.75),rgba(255,170,30,.55));
+  border-color:rgba(224,138,0,.6);
+  text-shadow:0 0 10px rgba(255,255,255,.85);
+  box-shadow:
+    inset 0 1.5px 1px rgba(255,255,255,.75),
+    inset 0 -8px 12px rgba(160,80,0,.3),
+    0 0 18px rgba(224,138,0,.5),
+    0 0 36px rgba(224,138,0,.24),
+    0 6px 16px rgba(0,0,0,.14);
+}
+
+/* quinto espacio: reservado para el simulador */
+.prox{position:relative;}
+.prox .chispa{
+  position:absolute;top:-2px;right:calc(50% - 15px);
+  width:6px;height:6px;border-radius:50%;background:var(--violeta);
+  box-shadow:0 0 6px rgba(139,92,246,.7);
+}
+
+/* ---------- HOJA DE REGISTRO ---------- */
+.reg-fondo{
+  position:fixed;inset:0;z-index:30;background:rgba(6,4,10,.6);
+  -webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);
+  opacity:0;pointer-events:none;transition:opacity .22s ease;
+}
+.reg-fondo.on{opacity:1;pointer-events:auto;}
+.reg-hoja{
+  position:fixed;left:0;right:0;bottom:0;z-index:31;
+  max-width:560px;margin:0 auto;max-height:92vh;
+  background:var(--void);border-radius:26px 26px 0 0;
+  border-top:1px solid var(--filo-alto);
+  box-shadow:0 -10px 40px rgba(0,0,0,.5);
+  transform:translateY(100%);transition:transform .28s cubic-bezier(.32,.72,0,1);
+  display:flex;flex-direction:column;
+  padding-bottom:var(--sb);
+}
+.reg-hoja.on{transform:translateY(0);}
+.reg-hoja.arrastrando{transition:none;}
+.reg-agarre{padding:11px 0 4px;display:flex;justify-content:center;flex:0 0 auto;touch-action:none;}
+.reg-agarre i{width:38px;height:4px;border-radius:99px;background:var(--filo-alto);display:block;}
+.reg-scroll{overflow-y:auto;padding:6px 16px 26px;flex:1 1 auto;-webkit-overflow-scrolling:touch;}
 
 /* ---------- MODAL ---------- */
 .modal{position:fixed;inset:0;z-index:40;display:none;align-items:flex-end;justify-content:center;background:rgba(6,4,10,.7);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);}
@@ -275,6 +351,51 @@ input[type=date].inp{-webkit-appearance:none;}
 .fila-sp .t b{display:block;font-size:13.5px;font-weight:700;}
 .fila-sp .t span{font-size:11px;color:var(--suave);}
 .x{width:30px;height:30px;border-radius:9px;background:var(--vidrio-alto);border:1px solid var(--filo);display:flex;align-items:center;justify-content:center;font-size:13px;color:var(--suave);flex:0 0 30px;}
+
+.campo-sel{
+  display:flex;align-items:center;gap:11px;width:100%;text-align:left;
+  background:var(--vidrio-alto);border:1px solid var(--filo);border-radius:15px;
+  padding:12px 14px;margin-bottom:11px;
+}
+.campo-sel .ico{width:32px;height:32px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:15px;flex:0 0 32px;}
+.campo-sel .tx{flex:1;min-width:0;}
+.campo-sel .tx small{display:block;font-size:10px;color:var(--suave);letter-spacing:.06em;text-transform:uppercase;margin-bottom:2px;}
+.campo-sel .tx b{display:block;font-size:14.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.campo-sel .chev{color:var(--suave);font-size:14px;flex:0 0 auto;opacity:.6;}
+
+.campo-fecha{
+  display:flex;align-items:center;justify-content:space-between;gap:10px;
+  background:var(--vidrio-alto);border:1px solid var(--filo);border-radius:15px;
+  padding:12px 14px;margin-bottom:11px;position:relative;
+}
+.campo-fecha b{font-size:14.5px;font-weight:700;}
+.campo-fecha .chev{color:var(--suave);font-size:14px;opacity:.6;}
+.campo-fecha input[type=date]{
+  position:absolute;inset:0;opacity:0;width:100%;height:100%;border:none;
+}
+
+.grid-sel{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;}
+.item-sel{
+  display:flex;flex-direction:column;align-items:center;gap:7px;
+  padding:16px 6px;border-radius:16px;background:var(--vidrio-alto);border:1.5px solid var(--filo);
+}
+.item-sel .ico{width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:19px;}
+.item-sel span{font-size:11.5px;font-weight:600;text-align:center;line-height:1.2;}
+.item-sel.on{border-color:var(--sol);background:rgba(255,176,32,.12);}
+.item-sel.on span{color:var(--sol);}
+
+.marca-fila{
+  display:flex;align-items:center;gap:12px;padding:13px 0;border-bottom:1px solid rgba(255,255,255,.055);
+}
+.marca-fila:last-child{border-bottom:none;}
+.marca-fila .ico{width:34px;height:34px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:15px;flex:0 0 34px;}
+.marca-fila .tx{flex:1;}
+.marca-fila .tx b{display:block;font-size:13.5px;font-weight:700;}
+.marca-fila .tx span{font-size:11px;color:var(--suave);}
+.sw{width:44px;height:26px;border-radius:99px;background:var(--vidrio-alto);border:1px solid var(--filo);position:relative;flex:0 0 44px;transition:.15s;}
+.sw i{position:absolute;top:2px;left:2px;width:20px;height:20px;border-radius:50%;background:var(--suave);transition:.15s;}
+.sw.on{background:rgba(255,176,32,.9);border-color:transparent;}
+.sw.on i{left:20px;background:#180F02;}
 </style>
 </head>
 <body>
@@ -286,7 +407,7 @@ input[type=date].inp{-webkit-appearance:none;}
   <div class="cab">
     <div>
       <p class="eti" id="cabEti">Networth</p>
-      <h1 id="cabTit">Registrar</h1>
+      <h1 id="cabTit">Panel</h1>
     </div>
     <div style="display:flex;align-items:center;gap:8px">
       <button class="ic vidrio" onclick="abrirBuscar()" style="width:34px;height:34px;border-radius:11px;font-size:14px">🔍</button>
@@ -295,8 +416,25 @@ input[type=date].inp{-webkit-appearance:none;}
     </div>
   </div>
 
+  <!-- ============ PANEL ============ -->
+  <div class="vista on" id="v-panel"></div>
+
+  <!-- ============ ANÁLISIS ============ -->
+  <div class="vista" id="v-analisis"></div>
+
+  <!-- ============ CONCILIAR ============ -->
+  <div class="vista" id="v-conciliar"></div>
+
+</div>
+
+<div class="reg-fondo" id="regFondo" onclick="cerrarRegistro()"></div>
+<div class="reg-hoja" id="regHoja">
+  <div class="reg-agarre" id="regAgarre"><i></i></div>
+  <div class="reg-scroll">
   <!-- ============ REGISTRAR ============ -->
-  <div class="vista on" id="v-registrar">
+  
+    <div class="chips" style="margin-bottom:13px;justify-content:center" id="tipos"></div>
+
     <div class="pantalla vidrio" onclick="document.getElementById('monto').focus()">
       <p class="eti">Monto</p>
       <div class="entrada">
@@ -306,23 +444,9 @@ input[type=date].inp{-webkit-appearance:none;}
       </div>
     </div>
 
-    <p class="eti" style="margin-bottom:7px">Tipo de movimiento</p>
-    <div class="chips" style="margin-bottom:11px" id="tipos"></div>
-
-    <div id="wCat">
-      <p class="eti" style="margin-bottom:7px">Categoría</p>
-      <div class="chips" style="margin-bottom:11px" id="cats"></div>
-    </div>
-
-    <div id="wCuenta">
-      <p class="eti" style="margin-bottom:7px" id="lblCuenta">Cuenta</p>
-      <div class="chips" style="margin-bottom:11px" id="cuentas"></div>
-    </div>
-
-    <div id="wDestino" style="display:none">
-      <p class="eti" style="margin-bottom:7px">Hacia</p>
-      <div class="chips" style="margin-bottom:11px" id="destinos"></div>
-    </div>
+    <div id="wCat"></div>
+    <div id="wCuenta"></div>
+    <div id="wDestino" style="display:none"></div>
 
     <div id="wPrest" style="display:none">
       <p class="eti" style="margin-bottom:7px">¿Qué pasó?</p>
@@ -330,18 +454,13 @@ input[type=date].inp{-webkit-appearance:none;}
       <div id="wPersona"></div>
     </div>
 
-    <div id="wMarcas">
-      <div class="sep"></div>
-      <p class="eti" style="margin-bottom:7px">Marcas · opcional</p>
-      <div class="chips" style="margin-bottom:11px" id="marcas"></div>
-    </div>
+    <div id="wMarcas"></div>
 
     <p class="eti" style="margin-bottom:7px">Fecha</p>
-    <div class="fecha-btns" style="margin-bottom:11px">
-      <button class="pill" data-d="0" onclick="setDia(0)">Hoy</button>
-      <button class="pill" data-d="1" onclick="setDia(1)">Ayer</button>
-      <button class="pill" data-d="2" onclick="setDia(2)">Antier</button>
-      <input type="date" class="inp" id="fecha" style="flex:1;min-width:130px;padding:7px 11px;font-size:13px;border-radius:99px" onchange="fechaManual()">
+    <div class="campo-fecha">
+      <b id="fechaTexto">Hoy</b>
+      <span class="chev">▾</span>
+      <input type="date" id="fecha" onchange="fechaManual()">
     </div>
 
     <input class="inp" id="nota" placeholder="Nota (opcional)" style="margin-bottom:9px">
@@ -352,25 +471,17 @@ input[type=date].inp{-webkit-appearance:none;}
 
     <button class="btn" id="bGuardar" onclick="guardar()" disabled>Guardar</button>
     <button class="btn sec" onclick="repetir()">⟲ Repetir último</button>
+  
   </div>
-
-  <!-- ============ PANEL ============ -->
-  <div class="vista" id="v-panel"></div>
-
-  <!-- ============ ANÁLISIS ============ -->
-  <div class="vista" id="v-analisis"></div>
-
-  <!-- ============ CONCILIAR ============ -->
-  <div class="vista" id="v-conciliar"></div>
-
 </div>
 
 <div class="nav">
   <div class="navin vidrio">
-    <button class="on" data-v="registrar" onclick="ir('registrar')"><u>✎</u>Registrar</button>
-    <button data-v="panel" onclick="ir('panel')"><u>◈</u>Panel</button>
-    <button data-v="analisis" onclick="ir('analisis')"><u>◔</u>Análisis</button>
-    <button data-v="conciliar" onclick="ir('conciliar')"><u>✓</u>Conciliar</button>
+    <button class="on" data-v="panel" onclick="ir('panel')" aria-label="Panel"><u>◈</u></button>
+    <button data-v="analisis" onclick="ir('analisis')" aria-label="Análisis"><u>◔</u></button>
+    <div class="central"><button class="btn-mas" onclick="abrirRegistro()">+</button></div>
+    <button data-v="conciliar" onclick="ir('conciliar')" aria-label="Conciliar"><u>✓</u></button>
+    <button class="prox" disabled onclick="toast('Simulador: pronto')" aria-label="Simulador, próximamente"><span class="chispa"></span><u>▤</u></button>
   </div>
 </div>
 
@@ -417,6 +528,12 @@ const DIRS = [
   {id:'COBRO',  n:'Me pagaron',   ayuda:'Alguien te devuelve.'},
   {id:'PAGO',   n:'Pagué',        ayuda:'Le devuelves a alguien.'}
 ];
+const ICONOS_TIPO = {
+  TRASPASO:  {e:'⇄', n:'Traspaso',  c:'var(--suave)'},
+  REEMBOLSO: {e:'↩', n:'Reembolso', c:'var(--verde)'},
+  PRESTAMO:  {e:'⇌', n:'Préstamo',  c:'var(--violeta)'},
+  AHORRO:    {e:'◆', n:'Ahorro',    c:'var(--violeta)'}
+};
 let CUENTAS = [
   {id:'SIMPLE',     n:'Simple',     rol:'BILLETERA', ini:0},
   {id:'MILLONARIA', n:'Millonaria', rol:'BOVEDA',    ini:0}
@@ -431,12 +548,12 @@ function billeteras(){ return CUENTAS.filter(c=>c.rol==='BILLETERA'); }
 const CFG_DEF = {
   iniSIMPLE:0, iniMILLONARIA:0, presupuesto:1500,
   conc:{},
-  ocultar:false, ocultarMovs:false, calladoSinid:false, cfgHora:'{}', catColor:{}, tema:'oscuro', desde:'', cuentas:null, catsExtra:[], sbUrl:'', sbKey:'',
+  ocultar:false, ocultarMovs:false, calladoSinid:false, cfgHora:'{}', catColor:{}, tema:'oscuro', desde:'', cuentas:null, catsExtra:[], sbUrl:'', sbKey:'', nombre:'',
   sbTok:'', sbRef:'', sbExp:0, sbMail:'', sbUid:'', sbUlt:''
 };
 
 let DB=null, MOVS=[], CFG={...CFG_DEF}, COMPS=[], PREST=[];
-let vista='registrar';
+let vista='panel';
 let F = {monto:'', tipo:'GASTO', cat:'ALIMENTACION', cuenta:'SIMPLE', destino:'MILLONARIA', evitable:false, compartido:false, emergencia:false, fecha:hoyISO(),
          dir:'PRESTE', persona:'', acordado:'', prestId:'', etiqueta:''};
 
@@ -559,7 +676,7 @@ async function sincronizar(silencioso){
 
     // ---- config compartida ----
     // Regla de oro: un dispositivo nunca sube un valor vacío encima de uno bueno.
-    const claves=['presupuesto','desde','cuentas','catsExtra','conc','catColor'];
+    const claves=['presupuesto','desde','cuentas','catsExtra','conc','catColor','nombre'];
     const vacio = v => v===null || v===undefined || v==='' ||
                        (Array.isArray(v) && !v.length) ||
                        (typeof v==='object' && !Array.isArray(v) && !Object.keys(v).length);
@@ -851,21 +968,48 @@ function ultimoDe(cta){
 
 /* ---------------- render: chips del formulario ---------------- */
 function pintarForm(){
-  document.getElementById('tipos').innerHTML = TIPOS.map(t=>
-    `<button class="chip ${F.tipo===t.id?'on':''}" onclick="setTipo('${t.id}')"><i style="background:${t.id==='INGRESO'||t.id==='REEMBOLSO'?'var(--verde)':t.id==='TRASPASO'?'var(--suave)':t.id==='AHORRO'?'var(--violeta)':'var(--rosa)'}"></i>${t.n}</button>`).join('');
+  const OTROS = ['TRASPASO','REEMBOLSO','PRESTAMO','AHORRO'];
+  const esOtro = OTROS.includes(F.tipo);
+  const otroActual = esOtro ? ICONOS_TIPO[F.tipo] : null;
+  document.getElementById('tipos').innerHTML = `
+    <button class="pill-tipo ${F.tipo==='GASTO'?'on':''}" onclick="setTipo('GASTO')">
+      <span class="ico" style="background:rgba(255,92,134,.16);color:var(--rosa)">−</span>Gasto</button>
+    <button class="pill-tipo ${F.tipo==='INGRESO'?'on':''}" onclick="setTipo('INGRESO')">
+      <span class="ico" style="background:rgba(61,227,154,.16);color:var(--verde)">+</span>Ingreso</button>
+    <button class="pill-tipo ${esOtro?'on':''}" onclick="abrirSelectorTipoOtro()">
+      <span class="ico" style="background:rgba(139,92,246,.16);color:var(--violeta)">${otroActual?otroActual.e:'⋯'}</span>${otroActual?otroActual.n:'Otro'}</button>`;
 
   const listaCat = F.tipo==='INGRESO' ? CATS_ING : catsGasto();
   if(!listaCat.some(c=>c.id===F.cat)) F.cat = listaCat[0].id;
-  document.getElementById('cats').innerHTML = listaCat.map(c=>
-    `<button class="chip ${F.cat===c.id?'on':''}" onclick="setCat('${c.id}')"><i style="background:${c.c}"></i>${c.n}</button>`).join('');
-
-  document.getElementById('cuentas').innerHTML = CUENTAS.map(c=>
-    `<button class="chip ${F.cuenta===c.id?'on':''}" onclick="setCuenta('${c.id}')"><i style="background:var(--suave)"></i>${c.n}</button>`).join('');
-
-  document.getElementById('destinos').innerHTML = CUENTAS.map(c=>
-    `<button class="chip ${F.destino===c.id?'on':''}" onclick="F.destino='${c.id}';pintarForm()"><i style="background:var(--suave)"></i>${c.n}</button>`).join('');
+  const cSel = catsGasto().concat(CATS_ING).find(c=>c.id===F.cat) || listaCat[0];
 
   const esPrest = F.tipo==='PRESTAMO';
+  const traspaso = F.tipo==='TRASPASO';
+
+  document.getElementById('wCat').innerHTML = (traspaso||esPrest) ? '' : `
+    <button class="campo-sel" onclick="abrirSelectorCategoria()">
+      <span class="ico" style="background:${cSel.c}33;color:${cSel.c}">${cSel.e}</span>
+      <span class="tx"><small>Categoría</small><b>${esc(cSel.n)}</b></span>
+      <span class="chev">›</span>
+    </button>`;
+
+  const cCta = cta(F.cuenta);
+  document.getElementById('wCuenta').innerHTML = `
+    <button class="campo-sel" onclick="abrirSelectorCuenta('origen')">
+      <span class="ico" style="background:rgba(154,147,172,.18);color:var(--suave)">${cCta.rol==='BOVEDA'?'🏦':'👛'}</span>
+      <span class="tx"><small>${traspaso?'Desde':'Cuenta'}</small><b>${esc(cCta.n)}</b></span>
+      <span class="chev">›</span>
+    </button>`;
+
+  const cDest = cta(F.destino);
+  document.getElementById('wDestino').style.display = traspaso ? 'block' : 'none';
+  document.getElementById('wDestino').innerHTML = traspaso ? `
+    <button class="campo-sel" onclick="abrirSelectorCuenta('destino')">
+      <span class="ico" style="background:rgba(154,147,172,.18);color:var(--suave)">${cDest.rol==='BOVEDA'?'🏦':'👛'}</span>
+      <span class="tx"><small>Hacia</small><b>${esc(cDest.n)}</b></span>
+      <span class="chev">›</span>
+    </button>` : '';
+
   document.getElementById('wPrest').style.display = esPrest ? 'block':'none';
   if(esPrest){
     document.getElementById('dirs').innerHTML = DIRS.map(d=>
@@ -895,21 +1039,15 @@ function pintarForm(){
   }
 
   const esG = F.tipo==='GASTO';
-  document.getElementById('wMarcas').style.display = esG ? 'block' : 'none';
-  document.getElementById('marcas').innerHTML = esG ? `
-    <button class="chip mini2 ${F.evitable?'on':''}" onclick="F.evitable=!F.evitable;pintarForm();vibrar()"><i style="background:var(--rosa)"></i>⚑ Evitable</button>
-    <button class="chip mini2 ${F.compartido?'on':''}" onclick="F.compartido=!F.compartido;pintarForm();vibrar()"><i style="background:var(--violeta)"></i>◑ Compartido</button>
-    <button class="chip mini2 ${F.emergencia?'on':''}" onclick="F.emergencia=!F.emergencia;pintarForm();vibrar()"><i style="background:#5CC8FF"></i>⚠ Emergencia</button>` : '';
+  const nMarcas = (F.evitable?1:0)+(F.compartido?1:0)+(F.emergencia?1:0);
+  document.getElementById('wMarcas').innerHTML = esG ? `
+    <button class="campo-sel" onclick="abrirSelectorMarcas()">
+      <span class="ico" style="background:rgba(255,176,32,.16);color:var(--sol)">⚑</span>
+      <span class="tx"><small>Marcas</small><b>${nMarcas? nMarcas+' activa'+(nMarcas>1?'s':'') : 'Ninguna · opcional'}</b></span>
+      <span class="chev">›</span>
+    </button>` : '';
 
-  const traspaso = F.tipo==='TRASPASO';
-  document.getElementById('wCat').style.display = (traspaso||esPrest) ? 'none':'block';
-  document.getElementById('wDestino').style.display = traspaso ? 'block':'none';
-  document.getElementById('lblCuenta').textContent = traspaso ? 'Desde' : 'Cuenta';
-
-  document.querySelectorAll('.fecha-btns .pill').forEach(b=>{
-    b.classList.toggle('on', F.fecha===menosDias(+b.dataset.d));
-  });
-  document.getElementById('fecha').value=F.fecha;
+  pintarFecha();
 
   const v=parseFloat(F.monto||'0');
   const inp=document.getElementById('monto');
@@ -927,6 +1065,82 @@ function onMonto(el){
   F.monto=v;
   document.getElementById('bGuardar').disabled = !(parseFloat(v||'0')>0);
 }
+function pintarFecha(){
+  const t=document.getElementById('fechaTexto'); if(!t) return;
+  const hoy=hoyISO(), ayer=menosDias(1);
+  const corta=fechaCorta(F.fecha); // ej "17 AGO"
+  t.textContent = F.fecha===hoy ? 'Hoy, '+corta.charAt(0)+corta.slice(1).toLowerCase()
+                : F.fecha===ayer ? 'Ayer, '+corta.charAt(0)+corta.slice(1).toLowerCase()
+                : corta.charAt(0)+corta.slice(1).toLowerCase()+' · '+F.fecha.slice(0,4);
+  document.getElementById('fecha').value=F.fecha;
+}
+
+/* ---------------- selectores en ventana nueva (sobre la hoja de registro) ---------------- */
+function abrirSelectorTipoOtro(){
+  document.getElementById('hoja').innerHTML = `
+    <div class="cabm"><h1 style="font-size:19px">Otro movimiento</h1><button class="x" onclick="cerrarSelector()">✕</button></div>
+    <div class="grid-sel">${Object.entries(ICONOS_TIPO).map(([id,t])=>`
+      <button class="item-sel ${F.tipo===id?'on':''}" onclick="setTipo('${id}');cerrarSelector()">
+        <span class="ico" style="background:${t.c}22;color:${t.c}">${t.e}</span>
+        <span>${t.n}</span>
+      </button>`).join('')}</div>`;
+  document.getElementById('modal').classList.add('on');
+}
+function abrirSelectorCategoria(){
+  const lista = F.tipo==='INGRESO' ? CATS_ING : catsGasto();
+  document.getElementById('hoja').innerHTML = `
+    <div class="cabm"><h1 style="font-size:19px">Categoría</h1><button class="x" onclick="cerrarSelector()">✕</button></div>
+    <div class="grid-sel">${lista.map(c=>`
+      <button class="item-sel ${F.cat===c.id?'on':''}" onclick="F.cat='${c.id}';cerrarSelector()">
+        <span class="ico" style="background:${c.c}33;color:${c.c}">${c.e}</span>
+        <span>${esc(c.n)}</span>
+      </button>`).join('')}</div>`;
+  document.getElementById('modal').classList.add('on');
+}
+function abrirSelectorCuenta(cual){
+  document.getElementById('hoja').innerHTML = `
+    <div class="cabm"><h1 style="font-size:19px">${cual==='destino'?'Hacia':'Cuenta'}</h1><button class="x" onclick="cerrarSelector()">✕</button></div>
+    <div class="grid-sel">${CUENTAS.map(c=>`
+      <button class="item-sel ${(cual==='destino'?F.destino:F.cuenta)===c.id?'on':''}"
+        onclick="${cual==='destino'?`F.destino='${c.id}'`:`setCuentaOrigen('${c.id}')`};cerrarSelector()">
+        <span class="ico" style="background:rgba(154,147,172,.18);color:var(--suave)">${c.rol==='BOVEDA'?'🏦':'👛'}</span>
+        <span>${esc(c.n)}</span>
+      </button>`).join('')}</div>`;
+  document.getElementById('modal').classList.add('on');
+}
+function abrirSelectorMarcas(){
+  document.getElementById('hoja').innerHTML = `
+    <div class="cabm"><h1 style="font-size:19px">Marcas</h1><button class="x" onclick="cerrarSelector()">✕</button></div>
+    <div class="card vidrio" style="padding:5px 15px">
+      <div class="marca-fila">
+        <span class="ico" style="background:rgba(255,92,134,.14)">⚑</span>
+        <span class="tx"><b>Evitable</b><span>Pudiste no hacer este gasto</span></span>
+        <span class="sw ${F.evitable?'on':''}" onclick="F.evitable=!F.evitable;pintarSelectorMarcas()"><i></i></span>
+      </div>
+      <div class="marca-fila">
+        <span class="ico" style="background:rgba(139,92,246,.14)">◑</span>
+        <span class="tx"><b>Compartido</b><span>Alguien te va a devolver parte</span></span>
+        <span class="sw ${F.compartido?'on':''}" onclick="F.compartido=!F.compartido;pintarSelectorMarcas()"><i></i></span>
+      </div>
+      <div class="marca-fila">
+        <span class="ico" style="background:rgba(92,200,255,.14)">⚠</span>
+        <span class="tx"><b>Emergencia</b><span>Imprevisto, para dimensionar tu fondo</span></span>
+        <span class="sw ${F.emergencia?'on':''}" onclick="F.emergencia=!F.emergencia;pintarSelectorMarcas()"><i></i></span>
+      </div>
+    </div>
+    <button class="btn" style="margin-top:13px" onclick="cerrarSelector()">Listo</button>`;
+  document.getElementById('modal').classList.add('on');
+}
+function pintarSelectorMarcas(){ vibrar(); abrirSelectorMarcas(); }
+function setCuentaOrigen(id){
+  F.cuenta=id;
+  if(F.destino===id) F.destino=CUENTAS.find(x=>x.id!==id)?.id || F.destino;
+}
+function cerrarSelector(){
+  document.getElementById('modal').classList.remove('on');
+  pintarForm();
+}
+
 function setTipo(t){ const previo=F.tipo; F.tipo=t; if((t==='INGRESO')!==(previo==='INGRESO')) F.cat = t==='INGRESO'?'SUELDO':'ALIMENTACION'; if(t!=='GASTO'){F.evitable=false;F.compartido=false;F.emergencia=false;} vibrar(); pintarForm(); }
 function etiquetasUsadas(){
   const m={};
@@ -1156,9 +1370,9 @@ function filaMov(m){
 }
 
 /* ---------------- ANÁLISIS ---------------- */
-let RANGO={preset:'mes', ini:'', fin:''};
+let RANGO={preset:'mes', ini:'', fin:'', ancla:new Date()};
 function rangoFechas(){
-  const h=new Date(), y=h.getFullYear(), m=h.getMonth();
+  const h=RANGO.ancla||new Date(), y=h.getFullYear(), m=h.getMonth();
   const iso=d=>hoyISO(d);
   switch(RANGO.preset){
     case 'mes':   return [iso(new Date(y,m,1)), iso(new Date(y,m+1,0))];
@@ -1171,7 +1385,12 @@ function rangoFechas(){
 function tituloRango(){
   const M=['ene','feb','mar','abr','may','jun','jul','ago','set','oct','nov','dic'];
   const [a,b]=rangoFechas();
-  if(RANGO.preset==='mes') return 'Este mes';
+  if(RANGO.preset==='mes'){
+    const meses=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Setiembre','Octubre','Noviembre','Diciembre'];
+    const hoy=new Date(), a=RANGO.ancla||hoy;
+    const esActual = a.getFullYear()===hoy.getFullYear() && a.getMonth()===hoy.getMonth();
+    return esActual ? 'Este mes' : meses[a.getMonth()]+' '+a.getFullYear();
+  }
   if(RANGO.preset==='3m') return 'Últimos 3 meses';
   if(RANGO.preset==='anio') return 'Este año';
   if(RANGO.preset==='todo') return 'Todo el historial';
@@ -1179,7 +1398,19 @@ function tituloRango(){
   return f(a)+' — '+f(b);
 }
 function enRango(m){ const [a,b]=rangoFechas(); return m.fecha>=a && m.fecha<=b; }
-function setPreset(p){ RANGO.preset=p; vibrar(); pintarAnalisis(); }
+function setPreset(p){ RANGO.preset=p; if(p==='mes') RANGO.ancla=new Date(); vibrar(); pintarAnalisis(); }
+function mesAnterior(){
+  const a=RANGO.ancla||new Date();
+  RANGO.ancla=new Date(a.getFullYear(), a.getMonth()-1, 1);
+  RANGO.preset='mes'; vibrar(); pintarAnalisis();
+}
+function mesSiguiente(){
+  const a=RANGO.ancla||new Date();
+  const hoy=new Date();
+  if(a.getFullYear()===hoy.getFullYear() && a.getMonth()===hoy.getMonth()) return; // no adelantarse al futuro
+  RANGO.ancla=new Date(a.getFullYear(), a.getMonth()+1, 1);
+  RANGO.preset='mes'; vibrar(); pintarAnalisis();
+}
 function pintarRangoContenido(){ pintarAnalisis(); }
 function setRangoLibre(cual,v){
   RANGO[cual]=v; RANGO.preset='libre';
@@ -1228,7 +1459,12 @@ function pintarAnalisis(){
       <div><label class="eti" style="display:block;margin-bottom:5px">Hasta</label>
         <input type="date" class="inp" value="${RANGO.fin||''}" onchange="setRangoLibre('fin',this.value)" style="font-size:13px;padding:11px"></div>
     </div>`:''}
-    <p class="eti" id="rgTit" style="margin-bottom:12px">${titulo}</p>
+    ${RANGO.preset==='mes'? `
+    <div style="display:flex;align-items:center;justify-content:center;gap:14px;margin-bottom:12px">
+      <button class="x" onclick="mesAnterior()" style="width:26px;height:26px">‹</button>
+      <p class="eti" id="rgTit" style="margin:0;min-width:110px;text-align:center">${titulo}</p>
+      <button class="x" onclick="mesSiguiente()" style="width:26px;height:26px;${(()=>{const a=RANGO.ancla||new Date(),h=new Date();return a.getFullYear()===h.getFullYear()&&a.getMonth()===h.getMonth()?'opacity:.28;pointer-events:none':'';})()}">›</button>
+    </div>` : `<p class="eti" id="rgTit" style="margin-bottom:12px">${titulo}</p>`}
 
     <div class="card vidrio">
       <h2>${titulo} · S/ ${fmt(tot)}</h2>
@@ -1539,6 +1775,12 @@ function abrirAjustes(){
     </div>
 
     <div class="card vidrio">
+      <h2>Tu nombre</h2>
+      <p style="font-size:11.5px;color:var(--suave);margin-bottom:11px">Para el saludo del Panel. Opcional.</p>
+      <input class="inp" id="aNombre" value="${esc(CFG.nombre||'')}" placeholder="Luis" style="margin-bottom:0">
+    </div>
+
+    <div class="card vidrio">
       <h2>Presupuesto mensual</h2>
       <p style="font-size:11.5px;color:var(--suave);margin-bottom:11px">Tu meta de gasto. Lo decides tú, no se calcula solo.</p>
       <input class="inp" inputmode="decimal" id="aPresu" value="${CFG.presupuesto||0}">
@@ -1628,6 +1870,8 @@ function abrirAjustes(){
       <p style="font-size:11.5px;color:var(--suave);margin-bottom:11px">${MOVS.length} movimientos guardados.</p>
       <button class="btn sec peq" onclick="exportarCSV()">Descargar CSV (Excel)</button>
       <button class="btn sec peq" onclick="exportarJSON()" style="margin-top:7px">Descargar respaldo completo</button>
+      <input type="file" id="resFile" accept="application/json,.json" onchange="leerRespaldo(this)" style="display:none">
+      <button class="btn sec peq" onclick="document.getElementById('resFile').click()" style="margin-top:7px">Restaurar desde un respaldo</button>
     </div>
 
     <div class="card vidrio">
@@ -1756,11 +2000,12 @@ function abrirManual(){
 
 async function salvarAjustes(){
   CFG.presupuesto=parseFloat(document.getElementById('aPresu').value)||0;
+  CFG.nombre=(document.getElementById('aNombre').value||'').trim();
   CFG.desde=document.getElementById('aDesde').value||'';
   CUENTAS=CUENTAS.map(c=>({...c, n:(c.n||'').trim()||'Cuenta'}));
   CFG.cuentas=CUENTAS;
   const h=JSON.parse(CFG.cfgHora||'{}'); const t=Date.now();
-  ['presupuesto','desde','cuentas','catsExtra','conc','catColor'].forEach(k=>h[k]=t);
+  ['presupuesto','desde','cuentas','catsExtra','conc','catColor','nombre'].forEach(k=>h[k]=t);
   CFG.cfgHora=JSON.stringify(h);
   CFG.sbUrl=document.getElementById('aUrl').value.trim();
   CFG.sbKey=document.getElementById('aKey').value.trim();
@@ -2052,6 +2297,91 @@ async function hacerImport(){
   pintarTodo(); pintarEtiquetas(); sincronizar(true);
 }
 
+/* ---------------- restaurar respaldo ---------------- */
+let RES=null;
+
+function leerRespaldo(el){
+  const f=el.files&&el.files[0]; if(!f) return;
+  const r=new FileReader();
+  r.onload=()=>{
+    let j;
+    try{ j=JSON.parse(String(r.result||'')); }
+    catch(e){ toast('Ese archivo no es un respaldo válido'); el.value=''; return; }
+
+    const okForma = j && typeof j==='object'
+      && Array.isArray(j.movs) && Array.isArray(j.prest) && Array.isArray(j.comps);
+    if(!okForma){ toast('El archivo no tiene la forma de un respaldo de Networth'); el.value=''; return; }
+
+    RES=j;
+    pantallaRestaurar();
+  };
+  r.onerror=()=>toast('No se pudo leer el archivo');
+  r.readAsText(f,'UTF-8');
+  el.value='';
+}
+
+function pantallaRestaurar(){
+  const nMov=RES.movs.length, nPre=RES.prest.length, nCom=RES.comps.length;
+  const nuevosMov = RES.movs.filter(m=>!MOVS.some(x=>x.id===m.id)).length;
+
+  document.getElementById('hoja').innerHTML=`
+    <div class="cabm"><h1 style="font-size:19px">Restaurar respaldo</h1><button class="x" onclick="abrirAjustes()">✕</button></div>
+
+    <div class="card vidrio">
+      <h2>Lo que contiene el archivo</h2>
+      <div class="fila-sp"><div class="t"><b>Movimientos</b></div><span class="num" style="font-size:15px">${nMov}</span></div>
+      <div class="fila-sp"><div class="t"><b>Préstamos</b></div><span class="num" style="font-size:15px">${nPre}</span></div>
+      <div class="fila-sp"><div class="t"><b>Compromisos</b></div><span class="num" style="font-size:15px">${nCom}</span></div>
+    </div>
+
+    <div class="card vidrio">
+      <h2>Agregar lo que falte</h2>
+      <p style="font-size:12.5px;color:var(--suave);margin-bottom:12px">Suma al respaldo lo que tienes ahora. <b>Nunca sobrescribe nada existente</b> — si un movimiento ya está, se deja como está.</p>
+      <div class="aviso v" style="margin-bottom:12px"><span>✓</span><span>Se agregarían <b>${nuevosMov}</b> movimiento(s) que no tienes ahora mismo.</span></div>
+      <button class="btn peq" onclick="restaurar('fusion')">Agregar ${nuevosMov} movimiento(s)</button>
+    </div>
+
+    <div class="card vidrio">
+      <h2>Reemplazar todo</h2>
+      <p style="font-size:12.5px;color:var(--suave);margin-bottom:12px">Borra lo que tienes ahora en este dispositivo y deja <b>solo</b> lo que trae el respaldo. Úsalo si perdiste datos y quieres volver exactamente a como estaba.</p>
+      <div class="aviso r" style="margin-bottom:12px"><span>⚠</span><span>Esto elimina ${MOVS.length} movimiento(s) actuales que no estén en el respaldo. No se puede deshacer.</span></div>
+      <button class="btn rosa" onclick="restaurar('reemplazo')">Reemplazar con el respaldo</button>
+    </div>`;
+  document.getElementById('modal').classList.add('on');
+}
+
+async function restaurar(modo){
+  if(modo==='reemplazo'){
+    if(!confirm('¿Seguro? Se van a borrar los movimientos actuales que no estén en el respaldo.')) return;
+  }
+  vibrar(20);
+
+  if(modo==='reemplazo'){
+    for(const m of MOVS) if(!RES.movs.some(x=>x.id===m.id)){ m.borrado=true; m.sync=false; await put('movs',m); }
+    for(const p of PREST) if(!RES.prest.some(x=>x.id===p.id)){ p.borrado=true; p.sync=false; await put('prest',p); }
+    for(const c of COMPS) if(!RES.comps.some(x=>x.id===c.id)){ c.borrado=true; c.sync=false; await put('comps',c); }
+  }
+
+  for(const m of RES.movs) if(!MOVS.some(x=>x.id===m.id)){ m.sync=false; await put('movs',m); }
+  for(const p of RES.prest) if(!PREST.some(x=>x.id===p.id)){ p.sync=false; await put('prest',p); }
+  for(const c of RES.comps) if(!COMPS.some(x=>x.id===c.id)){ c.sync=false; await put('comps',c); }
+
+  if(modo==='reemplazo' && RES.cfg && typeof RES.cfg==='object'){
+    const camposConfig=['presupuesto','desde','cuentas','catsExtra','conc','catColor','nombre'];
+    camposConfig.forEach(k=>{ if(RES.cfg[k]!==undefined) CFG[k]=RES.cfg[k]; });
+    if(Array.isArray(CFG.cuentas)&&CFG.cuentas.length) CUENTAS=CFG.cuentas;
+    const h=JSON.parse(CFG.cfgHora||'{}'); const t=Date.now();
+    camposConfig.forEach(k=>h[k]=t); CFG.cfgHora=JSON.stringify(h);
+    await guardarCfg();
+  }
+
+  await cargarTodo();
+  RES=null;
+  cerrarModal(); toast('Respaldo restaurado');
+  pintarTodo(); pintarEtiquetas();
+  if(SB.sesion) sincronizar();
+}
+
 /* ---------------- exportar ---------------- */
 function bajar(nombre,contenido,tipo){
   const b=new Blob([contenido],{type:tipo});
@@ -2078,16 +2408,78 @@ function exportarJSON(){
 }
 
 /* ---------------- navegación ---------------- */
-const TITULOS={registrar:'Registrar',panel:'Panel',analisis:'Análisis',conciliar:'Conciliar'};
+const TITULOS={panel:'Panel',analisis:'Análisis',conciliar:'Conciliar'};
+function pintarCabecera(){
+  const eti=document.getElementById('cabEti'), tit=document.getElementById('cabTit');
+  if(vista==='panel'){
+    const h=new Date().getHours();
+    const saludo = h<12?'Buenos días':h<19?'Buenas tardes':'Buenas noches';
+    const dias=['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
+    const meses=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','setiembre','octubre','noviembre','diciembre'];
+    const hoy=new Date();
+    const fechaLarga = dias[hoy.getDay()].charAt(0).toUpperCase()+dias[hoy.getDay()].slice(1)+', '+hoy.getDate()+' de '+meses[hoy.getMonth()];
+    eti.textContent = fechaLarga;
+    tit.textContent = CFG.nombre ? saludo+', '+CFG.nombre : saludo;
+  } else {
+    eti.textContent = 'Networth';
+    tit.textContent = TITULOS[vista];
+  }
+}
 function ir(v){
   vista=v; vibrar();
   document.querySelectorAll('.vista').forEach(e=>e.classList.remove('on'));
   document.getElementById('v-'+v).classList.add('on');
-  document.querySelectorAll('.navin button').forEach(b=>b.classList.toggle('on',b.dataset.v===v));
-  document.getElementById('cabTit').textContent=TITULOS[v];
+  document.querySelectorAll('.navin button[data-v]').forEach(b=>b.classList.toggle('on',b.dataset.v===v));
+  pintarCabecera();
   window.scrollTo({top:0,behavior:'smooth'});
   pintarTodo(); medirBarra();
 }
+
+/* ---------------- hoja de registro (se abre sobre cualquier pestaña) ---------------- */
+let regArrastreY=0, regArrastrando=false;
+function abrirRegistro(){
+  vibrar(10);
+  document.getElementById('regFondo').classList.add('on');
+  document.getElementById('regHoja').classList.add('on');
+  document.body.style.overflow='hidden';
+  pintarForm(); pintarEtiquetas();
+  // el foco va SIN retraso: en iOS Safari, un setTimeout largo rompe el
+  // gesto táctil que habilita que el teclado suba solo. Se enfoca ya mismo,
+  // aunque la hoja todavía esté animando su entrada.
+  document.getElementById('monto').focus();
+}
+function cerrarRegistro(){
+  const hoja=document.getElementById('regHoja');
+  document.getElementById('monto').blur();
+  hoja.classList.remove('on');
+  document.getElementById('regFondo').classList.remove('on');
+  document.body.style.overflow='';
+}
+(function initArrastreRegistro(){
+  const agarre=document.getElementById('regAgarre');
+  const hoja=document.getElementById('regHoja');
+  if(!agarre||!hoja) return;
+  let inicioY=0, actual=0;
+  const empieza=y=>{ inicioY=y; actual=0; regArrastrando=true; hoja.classList.add('arrastrando'); };
+  const mueve=y=>{
+    if(!regArrastrando) return;
+    actual=Math.max(0, y-inicioY);
+    hoja.style.transform=`translateY(${actual}px)`;
+  };
+  const suelta=()=>{
+    if(!regArrastrando) return;
+    regArrastrando=false; hoja.classList.remove('arrastrando'); hoja.style.transform='';
+    if(actual>90) cerrarRegistro();
+  };
+  agarre.addEventListener('touchstart', e=>empieza(e.touches[0].clientY), {passive:true});
+  agarre.addEventListener('touchmove',  e=>mueve(e.touches[0].clientY),  {passive:true});
+  agarre.addEventListener('touchend',   suelta);
+  agarre.addEventListener('mousedown', e=>{ empieza(e.clientY);
+    const mm=ev=>mueve(ev.clientY);
+    const mu=()=>{ suelta(); document.removeEventListener('mousemove',mm); document.removeEventListener('mouseup',mu); };
+    document.addEventListener('mousemove',mm); document.addEventListener('mouseup',mu);
+  });
+})();
 function medirBarra(){
   const n=document.querySelector('.navin'); if(!n) return;
   const alto=n.getBoundingClientRect().height;
@@ -2110,8 +2502,10 @@ function pintarTodo(){
     alert('No se pudo abrir el almacenamiento local. Revisa que no estés en modo privado.');
   }
   aplicarTema();
+  pintarCabecera();
   document.getElementById('fecha').value=F.fecha;
   pintarForm(); pintarEtiquetas();
+  pintarTodo(); medirBarra();
   ESTADO_SYNC = SB.sesion ? (pendientes()?'pendiente':'ok') : 'local';
   pintarSync();
 

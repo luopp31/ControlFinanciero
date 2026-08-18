@@ -2800,9 +2800,44 @@ function pintarTodo(){
   setInterval(()=>{ if(!document.hidden) sincronizar(true); }, 300000);
 
   if('serviceWorker' in navigator){
-    navigator.serviceWorker.register('sw.js').catch(()=>{});
+    navigator.serviceWorker.register('sw.js').then(reg=>{
+      // Si la app se queda abierta días sin cerrarse, nunca vuelve a
+      // pedir index.html y nunca se entera de una versión nueva.
+      // Por eso se revisa sola: al volver de segundo plano, y cada 20 min
+      // mientras sigue abierta.
+      const revisar=()=>reg.update().catch(()=>{});
+      document.addEventListener('visibilitychange', ()=>{ if(!document.hidden) revisar(); });
+      setInterval(revisar, 20*60*1000);
+
+      reg.addEventListener('updatefound', ()=>{
+        const nueva=reg.installing; if(!nueva) return;
+        nueva.addEventListener('statechange', ()=>{
+          if(nueva.state==='installed' && navigator.serviceWorker.controller){
+            mostrarAvisoActualizacion();
+          }
+        });
+      });
+    }).catch(()=>{});
   }
+  // Ojo: a propósito NO se recarga sola con "controllerchange".
+  // Si estás a mitad de un registro cuando llega la actualización,
+  // una recarga sin avisar te haría perder lo que estabas escribiendo.
+  // Por eso la recarga solo pasa si tú tocas "Actualizar" en el aviso.
 })();
+
+function mostrarAvisoActualizacion(){
+  if(document.getElementById('avisoUpd')) return;
+  const e=document.createElement('div');
+  e.id='avisoUpd';
+  e.style.cssText='position:fixed;left:14px;right:14px;bottom:calc(96px + var(--sb));z-index:70;'+
+    'background:var(--sol);color:#180F02;border-radius:16px;padding:13px 15px;'+
+    'display:flex;align-items:center;gap:11px;box-shadow:0 10px 30px rgba(0,0,0,.4);'+
+    'font-family:Inter,sans-serif;font-weight:700;font-size:13px;';
+  e.innerHTML='<span style="flex:1">Hay una versión nueva de Networth</span>'+
+    '<button onclick="location.reload()" style="background:#180F02;color:var(--sol);border:none;'+
+    'border-radius:10px;padding:8px 13px;font-weight:800;font-size:12.5px">Actualizar</button>';
+  document.body.appendChild(e);
+}
 </script>
 </body>
 </html>

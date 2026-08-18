@@ -302,6 +302,30 @@ html[data-tema="claro"] .btn-mas{
   box-shadow:0 0 6px rgba(139,92,246,.7);
 }
 
+/* ---------- PANTALLA DE BLOQUEO ---------- */
+.bloqueo{
+  position:fixed;inset:0;z-index:100;
+  background:var(--void);
+  display:flex;align-items:center;justify-content:center;
+  opacity:1;transition:opacity .25s ease;
+}
+.bloqueo.oculto{opacity:0;pointer-events:none;}
+.bloqueo-cont{text-align:center;padding:20px;}
+.bloqueo-ico{font-size:34px;margin-bottom:14px;filter:drop-shadow(0 0 16px rgba(255,176,32,.4));}
+.pin-puntos{display:flex;gap:14px;justify-content:center;margin-bottom:22px;}
+.pin-puntos i{width:14px;height:14px;border-radius:50%;border:1.5px solid var(--filo-alto);display:block;transition:.15s;}
+.pin-puntos i.on{background:var(--sol);border-color:var(--sol);box-shadow:0 0 10px rgba(255,176,32,.6);}
+.pin-puntos.error i{border-color:var(--rosa);}
+.pin-err{color:var(--rosa);font-size:12.5px;height:16px;margin-bottom:14px;font-weight:600;}
+.pin-teclado{display:grid;grid-template-columns:repeat(3,72px);gap:12px;justify-content:center;}
+.pin-teclado button{
+  width:72px;height:72px;border-radius:50%;
+  background:var(--vidrio-alto);border:1px solid var(--filo);
+  font-family:'Inter',sans-serif;font-size:24px;font-weight:600;color:var(--texto);
+}
+.pin-teclado button:active{background:rgba(255,176,32,.18);}
+#btnBio{font-size:26px;background:rgba(255,176,32,.12);border-color:rgba(255,176,32,.3);}
+
 /* ---------- HOJA DE REGISTRO ---------- */
 .reg-fondo{
   position:fixed;inset:0;z-index:30;background:rgba(6,4,10,.6);
@@ -401,6 +425,25 @@ input[type=date].inp{-webkit-appearance:none;}
 <body>
 
 <div class="orbe o1"></div><div class="orbe o2"></div><div class="orbe o3"></div><div class="grano"></div>
+
+<div class="bloqueo oculto" id="bloqueo">
+  <div class="bloqueo-cont">
+    <div class="bloqueo-ico">🔒</div>
+    <p class="eti" style="margin-bottom:20px">Networth bloqueado</p>
+    <div class="pin-puntos" id="pinPuntos">
+      <i></i><i></i><i></i><i></i>
+    </div>
+    <p id="pinError" class="pin-err"></p>
+    <div class="pin-teclado" id="pinTeclado">
+      <button onclick="pinTecla('1')">1</button><button onclick="pinTecla('2')">2</button><button onclick="pinTecla('3')">3</button>
+      <button onclick="pinTecla('4')">4</button><button onclick="pinTecla('5')">5</button><button onclick="pinTecla('6')">6</button>
+      <button onclick="pinTecla('7')">7</button><button onclick="pinTecla('8')">8</button><button onclick="pinTecla('9')">9</button>
+      <button id="btnBio" onclick="intentarBiometria()" style="display:none">👁</button>
+      <button onclick="pinTecla('0')">0</button>
+      <button onclick="pinTecla('b')">⌫</button>
+    </div>
+  </div>
+</div>
 
 <div class="app">
 
@@ -548,7 +591,7 @@ function billeteras(){ return CUENTAS.filter(c=>c.rol==='BILLETERA'); }
 const CFG_DEF = {
   iniSIMPLE:0, iniMILLONARIA:0, presupuesto:1500,
   conc:{},
-  ocultar:false, ocultarMovs:false, calladoSinid:false, cfgHora:'{}', catColor:{}, tema:'oscuro', desde:'', cuentas:null, catsExtra:[], sbUrl:'', sbKey:'', nombre:'',
+  ocultar:false, ocultarMovs:false, calladoSinid:false, cfgHora:'{}', catColor:{}, tema:'oscuro', desde:'', cuentas:null, catsExtra:[], sbUrl:'', sbKey:'', nombre:'', pinHash:'', bioActivo:false, bioCredId:'',
   sbTok:'', sbRef:'', sbExp:0, sbMail:'', sbUid:'', sbUlt:''
 };
 
@@ -1747,6 +1790,57 @@ async function borrar(id){
 function cerrarModal(){ document.getElementById('modal').classList.remove('on'); }
 
 /* ---------------- AJUSTES ---------------- */
+function abrirSeguridadPin(nueva){
+  document.getElementById('hoja').innerHTML=`
+    <div class="cabm"><h1 style="font-size:19px">${nueva?'Crear PIN':'Cambiar PIN'}</h1><button class="x" onclick="abrirAjustes()">✕</button></div>
+    <div class="card vidrio" style="text-align:center;padding:26px 18px">
+      <p style="font-size:13px;color:var(--suave);margin-bottom:20px">Elige 4 dígitos que recuerdes. Sin cuenta de recuperación: si lo olvidas, tendrás que exportar tu respaldo y reinstalar la app.</p>
+      <div class="pin-puntos" id="pinPuntosSet"><i></i><i></i><i></i><i></i></div>
+      <div class="pin-teclado" id="pinTecladoSet" style="margin-top:6px">
+        <button onclick="pinTeclaSet('1')">1</button><button onclick="pinTeclaSet('2')">2</button><button onclick="pinTeclaSet('3')">3</button>
+        <button onclick="pinTeclaSet('4')">4</button><button onclick="pinTeclaSet('5')">5</button><button onclick="pinTeclaSet('6')">6</button>
+        <button onclick="pinTeclaSet('7')">7</button><button onclick="pinTeclaSet('8')">8</button><button onclick="pinTeclaSet('9')">9</button>
+        <div></div><button onclick="pinTeclaSet('0')">0</button><button onclick="pinTeclaSet('b')">⌫</button>
+      </div>
+    </div>`;
+  document.getElementById('modal').classList.add('on');
+  PIN_SET_PASO=1; PIN_SET_A=''; PIN_SET_B='';
+}
+let PIN_SET_PASO=1, PIN_SET_A='', PIN_SET_B='';
+function pinTeclaSet(k){
+  vibrar(8);
+  let actual = PIN_SET_PASO===1 ? PIN_SET_A : PIN_SET_B;
+  if(k==='b'){ actual=actual.slice(0,-1); }
+  else if(actual.length<4){ actual+=k; }
+  if(PIN_SET_PASO===1) PIN_SET_A=actual; else PIN_SET_B=actual;
+  document.querySelectorAll('#pinPuntosSet i').forEach((p,i)=>p.classList.toggle('on', i<actual.length));
+
+  if(actual.length===4){
+    if(PIN_SET_PASO===1){
+      PIN_SET_PASO=2;
+      setTimeout(()=>{
+        document.querySelector('.cabm h1').textContent='Confirma tu PIN';
+        document.querySelectorAll('#pinPuntosSet i').forEach(p=>p.classList.remove('on'));
+      },200);
+    } else {
+      if(PIN_SET_A===PIN_SET_B){
+        hashTexto(PIN_SET_A).then(async h=>{
+          CFG.pinHash=h; await guardarCfg(); vibrar(20);
+          toast('PIN activado'); abrirAjustes();
+        });
+      } else {
+        toast('Los PIN no coinciden, intenta de nuevo');
+        setTimeout(()=>abrirSeguridadPin(true),400);
+      }
+    }
+  }
+}
+async function quitarPin(){
+  if(!confirm('¿Quitar el PIN? La app quedará sin bloqueo.')) return;
+  CFG.pinHash=''; CFG.bioActivo=false; CFG.bioCredId='';
+  await guardarCfg(); toast('PIN desactivado'); abrirAjustes();
+}
+
 function abrirAjustes(){
   document.getElementById('hoja').innerHTML=`
     <div class="cabm"><h1 style="font-size:19px">Ajustes</h1><button class="x" onclick="cerrarModal()">✕</button></div>
@@ -1784,6 +1878,25 @@ function abrirAjustes(){
       <h2>Presupuesto mensual</h2>
       <p style="font-size:11.5px;color:var(--suave);margin-bottom:11px">Tu meta de gasto. Lo decides tú, no se calcula solo.</p>
       <input class="inp" inputmode="decimal" id="aPresu" value="${CFG.presupuesto||0}">
+    </div>
+
+    <div class="card vidrio">
+      <h2>Seguridad</h2>
+      ${haySeguridad()? `
+        <div class="aviso v" style="margin-bottom:12px"><span>✓</span><span>PIN activado</span></div>
+        <button class="btn sec peq" onclick="abrirSeguridadPin(false)">Cambiar PIN</button>
+        <button class="btn rosa" style="margin-top:7px" onclick="quitarPin()">Quitar PIN</button>
+        ${BIO_HAY? `
+          <div class="sep"></div>
+          <div class="marca-fila" style="padding:5px 0">
+            <span class="ico" style="background:rgba(255,176,32,.16);color:var(--sol)">👁</span>
+            <span class="tx"><b>Face ID / Touch ID</b><span>Desbloquear sin escribir el PIN</span></span>
+            <span class="sw ${CFG.bioActivo?'on':''}" onclick="${CFG.bioActivo?'desactivarBiometria()':'activarBiometria()'}"><i></i></span>
+          </div>` : ''}
+      ` : `
+        <p style="font-size:11.5px;color:var(--suave);margin-bottom:11px">Pide un PIN de 4 dígitos para abrir la app. No cifra tus datos guardados, solo bloquea la pantalla de entrada.</p>
+        <button class="btn peq" onclick="abrirSeguridadPin(true)">Crear PIN</button>
+      `}
     </div>
 
     <div class="card vidrio">
@@ -2297,6 +2410,118 @@ async function hacerImport(){
   pintarTodo(); pintarEtiquetas(); sincronizar(true);
 }
 
+/* ==================================================================
+   SEGURIDAD: PIN y biometría (Face ID / Touch ID)
+   El PIN protege que alguien abra la app en tu teléfono, no cifra
+   los datos guardados: quien tenga acceso directo al dispositivo
+   con herramientas de desarrollo podría verlos igual. Es un candado
+   de pantalla, no un cifrado del contenido.
+   ================================================================== */
+let DESBLOQUEADO=false;
+let PIN_TMP='';
+let BIO_HAY=false;
+
+async function hashTexto(txt){
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode('networth-sal::'+txt));
+  return [...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+
+function haySeguridad(){ return !!CFG.pinHash; }
+
+async function bioDisponible(){
+  try{
+    return !!(window.PublicKeyCredential &&
+      await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable());
+  }catch(e){ return false; }
+}
+
+function mostrarBloqueo(){
+  if(!haySeguridad()){ DESBLOQUEADO=true; document.getElementById('bloqueo').classList.add('oculto'); return; }
+  DESBLOQUEADO=false;
+  document.getElementById('bloqueo').classList.remove('oculto');
+  PIN_TMP=''; pintarPinPuntos();
+  document.getElementById('btnBio').style.display = CFG.bioActivo ? 'flex':'none';
+  document.body.style.overflow='hidden';
+  if(CFG.bioActivo) setTimeout(intentarBiometria, 300);
+}
+function ocultarBloqueo(){
+  DESBLOQUEADO=true;
+  document.getElementById('bloqueo').classList.add('oculto');
+  document.body.style.overflow='';
+}
+
+function pintarPinPuntos(){
+  const pts=document.querySelectorAll('#pinPuntos i');
+  pts.forEach((p,i)=>p.classList.toggle('on', i<PIN_TMP.length));
+}
+async function pinTecla(k){
+  vibrar(8);
+  if(k==='b'){ PIN_TMP=PIN_TMP.slice(0,-1); pintarPinPuntos(); return; }
+  if(PIN_TMP.length>=4) return;
+  PIN_TMP+=k; pintarPinPuntos();
+  if(PIN_TMP.length===4) await verificarPin();
+}
+async function verificarPin(){
+  const h=await hashTexto(PIN_TMP);
+  if(h===CFG.pinHash){
+    document.getElementById('pinError').textContent='';
+    vibrar(20);
+    ocultarBloqueo();
+  }else{
+    document.getElementById('pinError').textContent='PIN incorrecto';
+    document.getElementById('pinPuntos').classList.add('error');
+    vibrar([15,40,15]);
+    setTimeout(()=>{
+      PIN_TMP=''; pintarPinPuntos();
+      document.getElementById('pinPuntos').classList.remove('error');
+    },420);
+  }
+}
+
+async function intentarBiometria(){
+  if(!CFG.bioActivo || !CFG.bioCredId) return;
+  try{
+    const desafio=crypto.getRandomValues(new Uint8Array(24));
+    const credId=Uint8Array.from(atob(CFG.bioCredId), c=>c.charCodeAt(0));
+    await navigator.credentials.get({
+      publicKey:{
+        challenge:desafio,
+        allowCredentials:[{id:credId, type:'public-key'}],
+        userVerification:'required', timeout:20000
+      }
+    });
+    vibrar(20); ocultarBloqueo();
+  }catch(e){ /* canceló o falló: se queda en la pantalla del PIN */ }
+}
+
+async function activarBiometria(){
+  try{
+    const desafio=crypto.getRandomValues(new Uint8Array(24));
+    const uid=crypto.getRandomValues(new Uint8Array(16));
+    const cred=await navigator.credentials.create({
+      publicKey:{
+        challenge:desafio,
+        rp:{name:'Networth'},
+        user:{id:uid, name:CFG.nombre||'usuario', displayName:CFG.nombre||'Networth'},
+        pubKeyCredParams:[{type:'public-key',alg:-7},{type:'public-key',alg:-257}],
+        authenticatorSelection:{authenticatorAttachment:'platform', userVerification:'required'},
+        timeout:30000
+      }
+    });
+    CFG.bioCredId = btoa(String.fromCharCode(...new Uint8Array(cred.rawId)));
+    CFG.bioActivo = true;
+    await guardarCfg();
+    toast('Face ID / Touch ID activado');
+    abrirAjustes();
+  }catch(e){
+    toast('No se pudo activar. Intenta de nuevo');
+  }
+}
+async function desactivarBiometria(){
+  CFG.bioActivo=false; CFG.bioCredId='';
+  await guardarCfg(); abrirAjustes();
+}
+
 /* ---------------- restaurar respaldo ---------------- */
 let RES=null;
 
@@ -2502,10 +2727,16 @@ function pintarTodo(){
     alert('No se pudo abrir el almacenamiento local. Revisa que no estés en modo privado.');
   }
   aplicarTema();
+  BIO_HAY = await bioDisponible();
+  mostrarBloqueo();
   pintarCabecera();
   document.getElementById('fecha').value=F.fecha;
   pintarForm(); pintarEtiquetas();
   pintarTodo(); medirBarra();
+
+  document.addEventListener('visibilitychange', ()=>{
+    if(document.hidden && haySeguridad()) mostrarBloqueo();
+  });
   ESTADO_SYNC = SB.sesion ? (pendientes()?'pendiente':'ok') : 'local';
   pintarSync();
 

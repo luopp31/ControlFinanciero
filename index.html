@@ -326,6 +326,24 @@ html[data-tema="claro"] .btn-mas{
 .pin-teclado button:active{background:rgba(255,176,32,.18);}
 #btnBio{font-size:26px;background:rgba(255,176,32,.12);border-color:rgba(255,176,32,.3);}
 
+.bloqueo-bio{
+  width:100%;height:100%;background:none;border:none;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  color:var(--texto);
+}
+.bloqueo-bio-ico{
+  width:88px;height:88px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;font-size:38px;
+  background:rgba(255,176,32,.14);border:1.5px solid rgba(255,176,32,.35);
+  box-shadow:0 0 30px rgba(255,176,32,.25);
+  animation:pulsoBio 2.2s ease-in-out infinite;
+}
+@keyframes pulsoBio{0%,100%{box-shadow:0 0 24px rgba(255,176,32,.2);}50%{box-shadow:0 0 40px rgba(255,176,32,.4);}}
+.bloqueo-usar-pin{
+  display:block;margin-top:26px;font-size:12.5px;color:var(--suave);
+  text-decoration:underline;text-underline-offset:3px;
+}
+
 /* ---------- HOJA DE REGISTRO ---------- */
 .reg-fondo{
   position:fixed;inset:0;z-index:30;background:rgba(6,4,10,.6);
@@ -427,7 +445,17 @@ input[type=date].inp{-webkit-appearance:none;}
 <div class="orbe o1"></div><div class="orbe o2"></div><div class="orbe o3"></div><div class="grano"></div>
 
 <div class="bloqueo oculto" id="bloqueo">
-  <div class="bloqueo-cont">
+
+  <!-- vista biometrica: toda la pantalla es el boton -->
+  <button class="bloqueo-bio" id="bloqueoBio" onclick="intentarBiometria()" style="display:none">
+    <div class="bloqueo-bio-ico">👁</div>
+    <p class="eti" style="margin-top:16px">Toca para desbloquear</p>
+    <p style="font-size:12px;color:var(--suave);margin-top:5px">Face ID / Touch ID</p>
+    <span class="bloqueo-usar-pin" onclick="event.stopPropagation();mostrarPinManual()">Usar PIN en su lugar</span>
+  </button>
+
+  <!-- vista de PIN -->
+  <div class="bloqueo-cont" id="bloqueoPin">
     <div class="bloqueo-ico">🔒</div>
     <p class="eti" style="margin-bottom:20px">Networth bloqueado</p>
     <div class="pin-puntos" id="pinPuntos">
@@ -438,7 +466,7 @@ input[type=date].inp{-webkit-appearance:none;}
       <button onclick="pinTecla('1')">1</button><button onclick="pinTecla('2')">2</button><button onclick="pinTecla('3')">3</button>
       <button onclick="pinTecla('4')">4</button><button onclick="pinTecla('5')">5</button><button onclick="pinTecla('6')">6</button>
       <button onclick="pinTecla('7')">7</button><button onclick="pinTecla('8')">8</button><button onclick="pinTecla('9')">9</button>
-      <button id="btnBio" onclick="intentarBiometria()" style="display:none">👁</button>
+      <button id="btnBio" onclick="mostrarBioManual()" style="display:none">👁</button>
       <button onclick="pinTecla('0')">0</button>
       <button onclick="pinTecla('b')">⌫</button>
     </div>
@@ -2442,7 +2470,25 @@ function mostrarBloqueo(){
   PIN_TMP=''; pintarPinPuntos();
   document.getElementById('btnBio').style.display = CFG.bioActivo ? 'flex':'none';
   document.body.style.overflow='hidden';
-  if(CFG.bioActivo) setTimeout(intentarBiometria, 300);
+
+  // Si hay biometría, la pantalla completa es el botón de Face ID/Touch ID.
+  // iOS no permite disparar el sensor sin un toque directo, así que no se
+  // intenta solo: se deja el gran botón listo para el primer toque.
+  if(CFG.bioActivo){
+    document.getElementById('bloqueoBio').style.display='flex';
+    document.getElementById('bloqueoPin').style.display='none';
+  } else {
+    document.getElementById('bloqueoBio').style.display='none';
+    document.getElementById('bloqueoPin').style.display='block';
+  }
+}
+function mostrarPinManual(){
+  document.getElementById('bloqueoBio').style.display='none';
+  document.getElementById('bloqueoPin').style.display='block';
+}
+function mostrarBioManual(){
+  document.getElementById('bloqueoBio').style.display='flex';
+  document.getElementById('bloqueoPin').style.display='none';
 }
 function ocultarBloqueo(){
   DESBLOQUEADO=true;

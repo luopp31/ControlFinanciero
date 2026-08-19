@@ -876,7 +876,7 @@ function pintarBuscar(){
 }
 
 function tocarSync(){
-  if(!SB.listo){ abrirAjustes(); return; }
+  if(!SB.listo){ abrirAjNube(); return; }
   if(!SB.sesion){ abrirLogin(); return; }
   sincronizar();
 }
@@ -1335,10 +1335,10 @@ function pintarPanel(){
       <div class="graf">
         <svg viewBox="0 0 340 96" preserveAspectRatio="none">
           <defs><linearGradient id="gf" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stop-color="#FFB020" stop-opacity=".40"/>
-            <stop offset="100%" stop-color="#FFB020" stop-opacity="0"/></linearGradient>
+            <stop offset="0%" stop-color="${dif<0?'#FF5C86':'#3DE39A'}" stop-opacity=".38"/>
+            <stop offset="100%" stop-color="${dif<0?'#FF5C86':'#3DE39A'}" stop-opacity="0"/></linearGradient>
             <linearGradient id="gl" x1="0" y1="0" x2="1" y2="0">
-            <stop offset="0%" stop-color="#FFD98A"/><stop offset="100%" stop-color="#FF9E0D"/></linearGradient></defs>
+            <stop offset="0%" stop-color="${dif<0?'#FF9FB7':'#8BF0C4'}"/><stop offset="100%" stop-color="${dif<0?'#FF5C86':'#3DE39A'}"/></linearGradient></defs>
           <path d="${dPath} L340,96 L0,96 Z" fill="url(#gf)"/>
           <path d="${dPath}" fill="none" stroke="url(#gl)" stroke-width="2.3" stroke-linejoin="round" stroke-linecap="round"/>
         </svg>
@@ -1401,12 +1401,12 @@ function aplicarTema(){
   if(m) m.setAttribute('content', (CFG.tema==='claro')?'#EDF0F5':'#0B0810');
 }
 async function ponerTema(t){
-  CFG.tema=t; await guardarCfg(); aplicarTema(); vibrar(); abrirAjustes();
+  CFG.tema=t; await guardarCfg(); aplicarTema(); vibrar(); abrirAjApariencia();
 }
 async function resetColores(){
   CFG.catColor={};
   const h=JSON.parse(CFG.cfgHora||'{}'); h.catColor=Date.now(); CFG.cfgHora=JSON.stringify(h);
-  await guardarCfg(); vibrar(); abrirAjustes(); pintarTodo();
+  await guardarCfg(); vibrar(); abrirAjApariencia(); pintarTodo();
 }
 async function ponerColor(id,hex){
   CFG.catColor={...(CFG.catColor||{}), [id]:hex};
@@ -1820,7 +1820,7 @@ function cerrarModal(){ document.getElementById('modal').classList.remove('on');
 /* ---------------- AJUSTES ---------------- */
 function abrirSeguridadPin(nueva){
   document.getElementById('hoja').innerHTML=`
-    <div class="cabm"><h1 style="font-size:19px">${nueva?'Crear PIN':'Cambiar PIN'}</h1><button class="x" onclick="abrirAjustes()">✕</button></div>
+    <div class="cabm"><h1 style="font-size:19px">${nueva?'Crear PIN':'Cambiar PIN'}</h1><button class="x" onclick="abrirAjSeguridad()">✕</button></div>
     <div class="card vidrio" style="text-align:center;padding:26px 18px">
       <p style="font-size:13px;color:var(--suave);margin-bottom:20px">Elige 4 dígitos que recuerdes. Sin cuenta de recuperación: si lo olvidas, tendrás que exportar tu respaldo y reinstalar la app.</p>
       <div class="pin-puntos" id="pinPuntosSet"><i></i><i></i><i></i><i></i></div>
@@ -1854,7 +1854,7 @@ function pinTeclaSet(k){
       if(PIN_SET_A===PIN_SET_B){
         hashTexto(PIN_SET_A).then(async h=>{
           CFG.pinHash=h; await guardarCfg(); vibrar(20);
-          toast('PIN activado'); abrirAjustes();
+          toast('PIN activado'); abrirAjSeguridad();
         });
       } else {
         toast('Los PIN no coinciden, intenta de nuevo');
@@ -1866,17 +1866,98 @@ function pinTeclaSet(k){
 async function quitarPin(){
   if(!confirm('¿Quitar el PIN? La app quedará sin bloqueo.')) return;
   CFG.pinHash=''; CFG.bioActivo=false; CFG.bioCredId='';
-  await guardarCfg(); toast('PIN desactivado'); abrirAjustes();
+  await guardarCfg(); toast('PIN desactivado'); abrirAjSeguridad();
 }
 
 function abrirAjustes(){
+  const catsN = (CFG.catsExtra||[]).length;
+  const compActivos = COMPS.filter(c=>c.pagadas<c.total).length;
   document.getElementById('hoja').innerHTML=`
     <div class="cabm"><h1 style="font-size:19px">Ajustes</h1><button class="x" onclick="cerrarModal()">✕</button></div>
 
-    <button class="btn sec peq" onclick="abrirManual()" style="margin-bottom:13px">📖 Cómo empezar</button>
+    <button class="btn sec peq" onclick="abrirManual()" style="margin-bottom:16px">📖 Cómo empezar</button>
 
+    <p class="eti" style="margin:4px 3px 9px">General</p>
+    <button class="campo-sel" onclick="abrirAjGeneral()">
+      <span class="ico" style="background:rgba(255,176,32,.14);color:var(--sol)">👤</span>
+      <span class="tx"><small>Tu nombre</small><b>${esc(CFG.nombre)||'Sin definir'}</b></span>
+      <span class="chev">›</span></button>
+    <button class="campo-sel" onclick="abrirAjGeneral()">
+      <span class="ico" style="background:rgba(61,227,154,.14);color:var(--verde)">◈</span>
+      <span class="tx"><small>Presupuesto mensual</small><b>S/ ${fmt0(CFG.presupuesto||0)}</b></span>
+      <span class="chev">›</span></button>
+
+    <p class="eti" style="margin:20px 3px 9px">Cuentas y categorías</p>
+    <button class="campo-sel" onclick="abrirAjCuentas()">
+      <span class="ico" style="background:rgba(154,147,172,.16);color:var(--suave)">🏦</span>
+      <span class="tx"><small>Mis cuentas</small><b>${CUENTAS.length} cuenta${CUENTAS.length!==1?'s':''}</b></span>
+      <span class="chev">›</span></button>
+    <button class="campo-sel" onclick="abrirAjCategorias()">
+      <span class="ico" style="background:rgba(255,143,214,.16);color:#FF8FD6">🎨</span>
+      <span class="tx"><small>Mis categorías</small><b>${catsN? catsN+' personalizada'+(catsN!==1?'s':'') : '8 categorías base'}</b></span>
+      <span class="chev">›</span></button>
+    <button class="campo-sel" onclick="abrirAjCuotas()">
+      <span class="ico" style="background:rgba(139,92,246,.14);color:var(--violeta)">◆</span>
+      <span class="tx"><small>Compromisos en cuotas</small><b>${compActivos? compActivos+' activo'+(compActivos!==1?'s':'')+' · S/ '+fmt0(comprometido()) : 'Ninguno'}</b></span>
+      <span class="chev">›</span></button>
+
+    <p class="eti" style="margin:20px 3px 9px">Apariencia</p>
+    <button class="campo-sel" onclick="abrirAjApariencia()">
+      <span class="ico" style="background:rgba(255,176,32,.14);color:var(--sol)">${(CFG.tema||'oscuro')==='oscuro'?'🌙':'☀️'}</span>
+      <span class="tx"><small>Tema y colores</small><b>${(CFG.tema||'oscuro')==='oscuro'?'Oscuro':'Claro'}</b></span>
+      <span class="chev">›</span></button>
+
+    <p class="eti" style="margin:20px 3px 9px">Seguridad</p>
+    <button class="campo-sel" onclick="abrirAjSeguridad()">
+      <span class="ico" style="background:rgba(61,227,154,.14);color:var(--verde)">🔒</span>
+      <span class="tx"><small>PIN y biometría</small><b>${haySeguridad()? (CFG.bioActivo?'PIN + Face ID/Touch ID':'PIN activado') : 'Sin configurar'}</b></span>
+      <span class="chev">›</span></button>
+
+    <p class="eti" style="margin:20px 3px 9px">Datos y nube</p>
+    <button class="campo-sel" onclick="abrirAjDatos()">
+      <span class="ico" style="background:rgba(154,147,172,.16);color:var(--suave)">⇅</span>
+      <span class="tx"><small>Importar y respaldo</small><b>${MOVS.length} movimiento${MOVS.length!==1?'s':''} guardados</b></span>
+      <span class="chev">›</span></button>
+    <button class="campo-sel" onclick="abrirAjNube()">
+      <span class="ico" style="background:${SB.sesion?'rgba(61,227,154,.14)':'rgba(154,147,172,.16)'};color:${SB.sesion?'var(--verde)':'var(--suave)'}">☁</span>
+      <span class="tx"><small>Sincronización</small><b>${SB.sesion? esc(CFG.sbMail) : SB.listo?'Falta iniciar sesión':'Sin configurar'}</b></span>
+      <span class="chev">›</span></button>
+  `;
+  document.getElementById('modal').classList.add('on');
+}
+
+/* ---------- General ---------- */
+function abrirAjGeneral(){
+  document.getElementById('hoja').innerHTML=`
+    <div class="cabm"><h1 style="font-size:19px">General</h1><button class="x" onclick="abrirAjustes()">✕</button></div>
     <div class="card vidrio">
-      <h2>Mis cuentas</h2>
+      <h2>Tu nombre</h2>
+      <p style="font-size:11.5px;color:var(--suave);margin-bottom:11px">Para el saludo del Panel. Opcional.</p>
+      <input class="inp" id="aNombre" value="${esc(CFG.nombre||'')}" placeholder="Luis">
+    </div>
+    <div class="card vidrio">
+      <h2>Presupuesto mensual</h2>
+      <p style="font-size:11.5px;color:var(--suave);margin-bottom:11px">Tu meta de gasto. Lo decides tú, no se calcula solo.</p>
+      <input class="inp" inputmode="decimal" id="aPresu" value="${CFG.presupuesto||0}">
+    </div>
+    <button class="btn" onclick="guardarAjGeneral()">Guardar</button>`;
+  document.getElementById('modal').classList.add('on');
+}
+async function guardarAjGeneral(){
+  CFG.nombre=(document.getElementById('aNombre').value||'').trim();
+  CFG.presupuesto=parseFloat(document.getElementById('aPresu').value)||0;
+  const h=JSON.parse(CFG.cfgHora||'{}'); const t=Date.now();
+  ['nombre','presupuesto'].forEach(k=>h[k]=t); CFG.cfgHora=JSON.stringify(h);
+  await guardarCfg(); vibrar(16); toast('Guardado');
+  pintarCabecera(); pintarTodo(); abrirAjustes();
+  if(SB.sesion) sincronizar(true);
+}
+
+/* ---------- Cuentas ---------- */
+function abrirAjCuentas(){
+  document.getElementById('hoja').innerHTML=`
+    <div class="cabm"><h1 style="font-size:19px">Mis cuentas</h1><button class="x" onclick="abrirAjustes()">✕</button></div>
+    <div class="card vidrio">
       <p style="font-size:11.5px;color:var(--suave);margin-bottom:12px">Cada cuenta tiene un rol. <b>Billetera</b>: de ahí sale tu gasto. <b>Bóveda</b>: guarda, no gastas desde ahí.</p>
       ${CUENTAS.map((c,i)=>`
         <div style="background:var(--vidrio-alto);border:1px solid var(--filo);border-radius:15px;padding:13px;margin-bottom:9px">
@@ -1895,58 +1976,25 @@ function abrirAjustes(){
         <input type="date" class="inp" id="aDesde" value="${CFG.desde||''}" style="font-size:13.5px"></div>
       <div class="aviso a" style="margin:0"><span>ℹ</span><span>Lo anterior a esa fecha no descuenta de tus cuentas: ya estaba incluido en el saldo inicial.</span></div>
     </div>
+    <button class="btn" onclick="guardarAjCuentas()">Guardar</button>`;
+  document.getElementById('modal').classList.add('on');
+}
+async function guardarAjCuentas(){
+  CUENTAS=CUENTAS.map(c=>({...c, n:(c.n||'').trim()||'Cuenta'}));
+  CFG.cuentas=CUENTAS;
+  CFG.desde=document.getElementById('aDesde').value||'';
+  const h=JSON.parse(CFG.cfgHora||'{}'); const t=Date.now();
+  ['cuentas','desde'].forEach(k=>h[k]=t); CFG.cfgHora=JSON.stringify(h);
+  await guardarCfg(); vibrar(16); toast('Guardado');
+  pintarTodo(); abrirAjustes();
+  if(SB.sesion) sincronizar(true);
+}
 
+/* ---------- Categorías ---------- */
+function abrirAjCategorias(){
+  document.getElementById('hoja').innerHTML=`
+    <div class="cabm"><h1 style="font-size:19px">Mis categorías</h1><button class="x" onclick="abrirAjustes()">✕</button></div>
     <div class="card vidrio">
-      <h2>Tu nombre</h2>
-      <p style="font-size:11.5px;color:var(--suave);margin-bottom:11px">Para el saludo del Panel. Opcional.</p>
-      <input class="inp" id="aNombre" value="${esc(CFG.nombre||'')}" placeholder="Luis" style="margin-bottom:0">
-    </div>
-
-    <div class="card vidrio">
-      <h2>Presupuesto mensual</h2>
-      <p style="font-size:11.5px;color:var(--suave);margin-bottom:11px">Tu meta de gasto. Lo decides tú, no se calcula solo.</p>
-      <input class="inp" inputmode="decimal" id="aPresu" value="${CFG.presupuesto||0}">
-    </div>
-
-    <div class="card vidrio">
-      <h2>Seguridad</h2>
-      ${haySeguridad()? `
-        <div class="aviso v" style="margin-bottom:12px"><span>✓</span><span>PIN activado</span></div>
-        <button class="btn sec peq" onclick="abrirSeguridadPin(false)">Cambiar PIN</button>
-        <button class="btn rosa" style="margin-top:7px" onclick="quitarPin()">Quitar PIN</button>
-        ${BIO_HAY? `
-          <div class="sep"></div>
-          <div class="marca-fila" style="padding:5px 0">
-            <span class="ico" style="background:rgba(255,176,32,.16);color:var(--sol)">👁</span>
-            <span class="tx"><b>Face ID / Touch ID</b><span>Desbloquear sin escribir el PIN</span></span>
-            <span class="sw ${CFG.bioActivo?'on':''}" onclick="${CFG.bioActivo?'desactivarBiometria()':'activarBiometria()'}"><i></i></span>
-          </div>` : ''}
-      ` : `
-        <p style="font-size:11.5px;color:var(--suave);margin-bottom:11px">Pide un PIN de 4 dígitos para abrir la app. No cifra tus datos guardados, solo bloquea la pantalla de entrada.</p>
-        <button class="btn peq" onclick="abrirSeguridadPin(true)">Crear PIN</button>
-      `}
-    </div>
-
-    <div class="card vidrio">
-      <h2>Apariencia</h2>
-      <div class="chips" style="margin-bottom:14px">
-        <button class="chip ${(CFG.tema||'oscuro')==='oscuro'?'on':''}" onclick="ponerTema('oscuro')"><i style="background:#0B0810;border:1px solid var(--filo-alto)"></i>🌙 Oscuro</button>
-        <button class="chip ${CFG.tema==='claro'?'on':''}" onclick="ponerTema('claro')"><i style="background:#F4F1EC;border:1px solid var(--filo-alto)"></i>☀️ Claro</button>
-      </div>
-      <p class="eti" style="margin-bottom:9px">Color de cada categoría</p>
-      ${catsGasto().concat(CATS_ING).map(c=>`
-        <div class="fila-sp" style="padding:9px 0">
-          <div class="t" style="display:flex;align-items:center;gap:9px">
-            <span style="width:13px;height:13px;border-radius:50%;background:${c.c};display:block;flex:0 0 13px"></span>
-            <b style="font-size:13px">${esc(c.n)}</b></div>
-          <input type="color" value="${c.c}" onchange="ponerColor('${c.id}',this.value)"
-            style="width:38px;height:30px;border:1px solid var(--filo);border-radius:9px;background:none;padding:2px;cursor:pointer">
-        </div>`).join('')}
-      ${Object.keys(CFG.catColor||{}).length? `<button class="btn sec peq" style="margin-top:11px" onclick="resetColores()">Restaurar colores originales</button>`:''}
-    </div>
-
-    <div class="card vidrio">
-      <h2>Mis categorías</h2>
       <p style="font-size:11.5px;color:var(--suave);margin-bottom:11px">Además de las 8 base. Menos es mejor: con muchas dejas de clasificar bien.</p>
       ${(CFG.catsExtra||[]).length? (CFG.catsExtra||[]).map(c=>`
         <div class="fila-sp"><div class="t"><b>${c.e} ${esc(c.n)}</b><span>${c.g}</span></div>
@@ -1960,10 +2008,15 @@ function abrirAjustes(){
         <option value="Variable" selected>Variable necesario — decides cuánto</option>
         <option value="Discrecional">Discrecional — decides si sí o no</option>
       </select>
-    </div>
+    </div>`;
+  document.getElementById('modal').classList.add('on');
+}
 
+/* ---------- Compromisos ---------- */
+function abrirAjCuotas(){
+  document.getElementById('hoja').innerHTML=`
+    <div class="cabm"><h1 style="font-size:19px">Compromisos en cuotas</h1><button class="x" onclick="abrirAjustes()">✕</button></div>
     <div class="card vidrio">
-      <h2>Compromisos en cuotas</h2>
       <p style="font-size:11.5px;color:var(--suave);margin-bottom:12px">Compras que pagas en partes. Sirve para saber cuánto de tu mes ya está reservado.</p>
       ${COMPS.length? COMPS.map(c=>{
         const falta=(c.total-c.pagadas)*c.monto;
@@ -1996,8 +2049,65 @@ function abrirAjustes(){
         <div id="cPrev"></div>
         <button class="btn sec peq" onclick="addComp()">Agregar cuota</button>
       </div>
-    </div>
+    </div>`;
+  document.getElementById('modal').classList.add('on');
+  previewCuota();
+}
 
+/* ---------- Apariencia ---------- */
+function abrirAjApariencia(){
+  document.getElementById('hoja').innerHTML=`
+    <div class="cabm"><h1 style="font-size:19px">Apariencia</h1><button class="x" onclick="abrirAjustes()">✕</button></div>
+    <div class="card vidrio">
+      <h2>Tema</h2>
+      <div class="chips" style="margin-bottom:0">
+        <button class="chip ${(CFG.tema||'oscuro')==='oscuro'?'on':''}" onclick="ponerTema('oscuro')"><i style="background:#0B0810;border:1px solid var(--filo-alto)"></i>🌙 Oscuro</button>
+        <button class="chip ${CFG.tema==='claro'?'on':''}" onclick="ponerTema('claro')"><i style="background:#F4F1EC;border:1px solid var(--filo-alto)"></i>☀️ Claro</button>
+      </div>
+    </div>
+    <div class="card vidrio">
+      <h2>Color de cada categoría</h2>
+      ${catsGasto().concat(CATS_ING).map(c=>`
+        <div class="fila-sp" style="padding:9px 0">
+          <div class="t" style="display:flex;align-items:center;gap:9px">
+            <span style="width:13px;height:13px;border-radius:50%;background:${c.c};display:block;flex:0 0 13px"></span>
+            <b style="font-size:13px">${esc(c.n)}</b></div>
+          <input type="color" value="${c.c}" onchange="ponerColor('${c.id}',this.value)"
+            style="width:38px;height:30px;border:1px solid var(--filo);border-radius:9px;background:none;padding:2px;cursor:pointer">
+        </div>`).join('')}
+      ${Object.keys(CFG.catColor||{}).length? `<button class="btn sec peq" style="margin-top:11px" onclick="resetColores()">Restaurar colores originales</button>`:''}
+    </div>`;
+  document.getElementById('modal').classList.add('on');
+}
+
+/* ---------- Seguridad ---------- */
+function abrirAjSeguridad(){
+  document.getElementById('hoja').innerHTML=`
+    <div class="cabm"><h1 style="font-size:19px">Seguridad</h1><button class="x" onclick="abrirAjustes()">✕</button></div>
+    <div class="card vidrio">
+      ${haySeguridad()? `
+        <div class="aviso v" style="margin-bottom:12px"><span>✓</span><span>PIN activado</span></div>
+        <button class="btn sec peq" onclick="abrirSeguridadPin(false)">Cambiar PIN</button>
+        <button class="btn rosa" style="margin-top:7px" onclick="quitarPin()">Quitar PIN</button>
+        ${BIO_HAY? `
+          <div class="sep"></div>
+          <div class="marca-fila" style="padding:5px 0">
+            <span class="ico" style="background:rgba(255,176,32,.16);color:var(--sol)">👁</span>
+            <span class="tx"><b>Face ID / Touch ID</b><span>Desbloquear sin escribir el PIN</span></span>
+            <span class="sw ${CFG.bioActivo?'on':''}" onclick="${CFG.bioActivo?'desactivarBiometria()':'activarBiometria()'}"><i></i></span>
+          </div>` : ''}
+      ` : `
+        <p style="font-size:11.5px;color:var(--suave);margin-bottom:11px">Pide un PIN de 4 dígitos para abrir la app. No cifra tus datos guardados, solo bloquea la pantalla de entrada.</p>
+        <button class="btn peq" onclick="abrirSeguridadPin(true)">Crear PIN</button>
+      `}
+    </div>`;
+  document.getElementById('modal').classList.add('on');
+}
+
+/* ---------- Datos y respaldo ---------- */
+function abrirAjDatos(){
+  document.getElementById('hoja').innerHTML=`
+    <div class="cabm"><h1 style="font-size:19px">Importar y respaldo</h1><button class="x" onclick="abrirAjustes()">✕</button></div>
     <div class="card vidrio">
       <h2>Importar desde Excel</h2>
       <p style="font-size:11.5px;color:var(--suave);margin-bottom:11px">Guarda tu Excel como CSV y súbelo. Podrás elegir qué columna es cada dato antes de importar.</p>
@@ -2005,7 +2115,6 @@ function abrirAjustes(){
       <button class="btn sec peq" onclick="document.getElementById('impFile').click()">Elegir archivo CSV</button>
       <button class="btn sec peq" style="margin-top:7px" onclick="abrirPegar()">O pegar los datos</button>
     </div>
-
     <div class="card vidrio">
       <h2>Respaldo</h2>
       <p style="font-size:11.5px;color:var(--suave);margin-bottom:11px">${MOVS.length} movimientos guardados.</p>
@@ -2013,10 +2122,15 @@ function abrirAjustes(){
       <button class="btn sec peq" onclick="exportarJSON()" style="margin-top:7px">Descargar respaldo completo</button>
       <input type="file" id="resFile" accept="application/json,.json" onchange="leerRespaldo(this)" style="display:none">
       <button class="btn sec peq" onclick="document.getElementById('resFile').click()" style="margin-top:7px">Restaurar desde un respaldo</button>
-    </div>
+    </div>`;
+  document.getElementById('modal').classList.add('on');
+}
 
+/* ---------- Nube ---------- */
+function abrirAjNube(){
+  document.getElementById('hoja').innerHTML=`
+    <div class="cabm"><h1 style="font-size:19px">Sincronización</h1><button class="x" onclick="abrirAjustes()">✕</button></div>
     <div class="card vidrio">
-      <h2>Nube</h2>
       ${SB.sesion? `
         <div class="aviso v" style="margin-bottom:11px"><span>✓</span><span>Sesión iniciada como <b>${esc(CFG.sbMail)}</b></span></div>
         <div class="fila-sp"><div class="t"><b>Pendientes por subir</b>
@@ -2038,10 +2152,16 @@ function abrirAjustes(){
       <div class="campo"><label class="eti">Publishable key</label>
         <input class="inp" id="aKey" value="${esc(CFG.sbKey||'')}" placeholder="sb_publishable_..." style="font-size:12.5px"></div>
     </div>
-
-    <button class="btn" onclick="salvarAjustes()">Guardar ajustes</button>`;
+    <button class="btn" onclick="guardarAjNube()">Guardar</button>`;
   document.getElementById('modal').classList.add('on');
-  previewCuota();
+}
+async function guardarAjNube(){
+  CFG.sbUrl=document.getElementById('aUrl').value.trim();
+  CFG.sbKey=document.getElementById('aKey').value.trim();
+  await guardarCfg(); vibrar(16); toast('Guardado');
+  pintarSync(); abrirAjustes();
+  if(SB.listo && !SB.sesion) setTimeout(abrirLogin,400);
+  else if(SB.sesion) sincronizar(true);
 }
 
 function previewCuota(){
@@ -2057,17 +2177,25 @@ function previewCuota(){
     Te faltan <b>S/ ${fmt(falta)}</b> en ${t-p} cuota(s)</span></div>`;
 }
 
-function agregarCuenta(){
-  CUENTAS.push({id:'C'+uid().slice(0,6).toUpperCase(), n:'Nueva cuenta', rol:'BOVEDA', ini:0});
-  vibrar(); abrirAjustes();
+async function persistirCuentas(){
+  CFG.cuentas=CUENTAS; const h=JSON.parse(CFG.cfgHora||'{}'); const t=Date.now(); ['cuentas'].forEach(k=>h[k]=t); CFG.cfgHora=JSON.stringify(h);
+  await guardarCfg(); if(SB.sesion) sincronizar(true);
 }
-function rolCuenta(i,r){ CUENTAS[i].rol=r; vibrar(); abrirAjustes(); }
-function quitarCuenta(i){
+async function persistirCategorias(){
+  const h=JSON.parse(CFG.cfgHora||'{}'); const t=Date.now(); ['catsExtra'].forEach(k=>h[k]=t); CFG.cfgHora=JSON.stringify(h);
+  await guardarCfg(); if(SB.sesion) sincronizar(true);
+}
+async function agregarCuenta(){
+  CUENTAS.push({id:'C'+uid().slice(0,6).toUpperCase(), n:'Nueva cuenta', rol:'BOVEDA', ini:0});
+  vibrar(); await persistirCuentas(); abrirAjCuentas();
+}
+async function rolCuenta(i,r){ CUENTAS[i].rol=r; vibrar(); await persistirCuentas(); abrirAjCuentas(); }
+async function quitarCuenta(i){
   const c=CUENTAS[i];
   if(MOVS.some(m=>m.cuenta===c.id||m.destino===c.id)){ toast('Esa cuenta tiene movimientos'); return; }
-  CUENTAS.splice(i,1); vibrar(); abrirAjustes();
+  CUENTAS.splice(i,1); vibrar(); await persistirCuentas(); abrirAjCuentas();
 }
-function agregarCat(){
+async function agregarCat(){
   const n=(document.getElementById('ncNom').value||'').trim();
   if(!n){ toast('Escribe un nombre'); return; }
   const g=document.getElementById('ncGrupo').value;
@@ -2075,11 +2203,100 @@ function agregarCat(){
   CFG.catsExtra=(CFG.catsExtra||[]).concat([{
     id:'X'+uid().slice(0,6).toUpperCase(), n, c:cols[(CFG.catsExtra||[]).length%cols.length], e:'●', g
   }]);
-  vibrar(); abrirAjustes();
+  vibrar(); await persistirCategorias(); abrirAjCategorias();
 }
-function quitarCat(id){
+async function quitarCat(id){
   if(MOVS.some(m=>m.categoria===id)){ toast('Esa categoría tiene movimientos'); return; }
-  CFG.catsExtra=(CFG.catsExtra||[]).filter(c=>c.id!==id); vibrar(); abrirAjustes();
+  CFG.catsExtra=(CFG.catsExtra||[]).filter(c=>c.id!==id);
+  vibrar(); await persistirCategorias(); abrirAjCategorias();
+}
+
+function esPrimeraVez(){
+  return !CFG.nombre && !Array.isArray(CFG.cuentas) && MOVS.length===0;
+}
+
+let OB_PASO=1, OB_NOMBRE='', OB_CTAS=[
+  {n:'Simple', rol:'BILLETERA', ini:''},
+  {n:'Millonaria', rol:'BOVEDA', ini:''}
+], OB_PRESU='';
+
+function abrirBienvenida(){
+  OB_PASO=1; OB_NOMBRE=''; OB_PRESU='';
+  OB_CTAS=[{n:'Simple', rol:'BILLETERA', ini:''},{n:'Millonaria', rol:'BOVEDA', ini:''}];
+  pintarBienvenida();
+  document.getElementById('modal').classList.add('on');
+}
+
+function pintarBienvenida(){
+  let html='';
+  if(OB_PASO===1){
+    html=`
+      <div style="text-align:center;padding:20px 8px 10px">
+        <div style="font-size:44px;margin-bottom:10px">🪙</div>
+        <h1 style="font-size:22px;font-family:'Inter',sans-serif;font-weight:800;margin-bottom:8px">Bienvenido a Networth</h1>
+        <p style="font-size:13.5px;color:var(--suave);line-height:1.6">3 datos rápidos y quedas listo. Toma menos de un minuto.</p>
+      </div>
+      <div class="card vidrio" style="margin-top:18px">
+        <p class="eti" style="margin-bottom:9px">¿Cómo te llamas?</p>
+        <input class="inp" id="obNombre" placeholder="Tu nombre" value="${esc(OB_NOMBRE)}" style="font-size:15px">
+        <p style="font-size:11px;color:var(--suave);margin-top:8px">Es para el saludo del Panel. Puedes dejarlo vacío.</p>
+      </div>
+      <button class="btn" style="margin-top:16px" onclick="obPaso2()">Continuar</button>`;
+  } else if(OB_PASO===2){
+    html=`
+      <div class="cabm"><h1 style="font-size:19px">Tus cuentas</h1><span style="font-size:11px;color:var(--suave)">2 de 3</span></div>
+      <p style="font-size:12.5px;color:var(--suave);margin-bottom:14px">Una <b>billetera</b> es de donde sale tu gasto diario. Una <b>bóveda</b> guarda, y puedes tener varias (Interbank, BCP...).</p>
+      ${OB_CTAS.map((c,i)=>`
+        <div class="card vidrio" style="margin-bottom:9px">
+          <div style="display:flex;gap:7px;margin-bottom:9px">
+            <input class="inp" value="${esc(c.n)}" oninput="OB_CTAS[${i}].n=this.value" style="font-size:14px">
+            <span class="chip mini2" style="flex:0 0 auto">${c.rol==='BOVEDA'?'🏦':'👛'}</span>
+          </div>
+          <label class="eti" style="display:block;margin-bottom:5px">Saldo actual, según tu banco</label>
+          <input class="inp" inputmode="decimal" placeholder="0.00" value="${c.ini}" oninput="OB_CTAS[${i}].ini=this.value" style="font-size:14px">
+        </div>`).join('')}
+      <button class="btn sec peq" onclick="obAgregarCuenta()">+ Agregar otra cuenta</button>
+      <button class="btn" style="margin-top:11px" onclick="obPaso3()">Continuar</button>
+      <button class="btn sec peq" style="margin-top:7px" onclick="obPaso1()">Atrás</button>`;
+  } else {
+    html=`
+      <div class="cabm"><h1 style="font-size:19px">Tu presupuesto</h1><span style="font-size:11px;color:var(--suave)">3 de 3</span></div>
+      <p style="font-size:12.5px;color:var(--suave);margin-bottom:14px">¿Cuánto quieres gastar este mes? Es tu meta, no un cálculo — si no sabes, pon un estimado y lo ajustas con el tiempo.</p>
+      <div class="card vidrio">
+        <input class="inp" inputmode="decimal" placeholder="1500" id="obPresu" value="${OB_PRESU}" style="font-size:18px;text-align:center;font-weight:700">
+      </div>
+      <button class="btn" style="margin-top:16px" onclick="obTerminar()">Empezar a usar Networth</button>
+      <button class="btn sec peq" style="margin-top:7px" onclick="obPaso2()">Atrás</button>`;
+  }
+  document.getElementById('hoja').innerHTML=html;
+}
+function obPaso1(){ OB_PASO=1; pintarBienvenida(); }
+function obPaso2(){
+  OB_NOMBRE=(document.getElementById('obNombre').value||'').trim();
+  OB_PASO=2; pintarBienvenida();
+}
+function obPaso3(){
+  OB_CTAS.forEach(c=>c.ini=parseFloat(c.ini)||0);
+  OB_PASO=3; pintarBienvenida();
+}
+function obAgregarCuenta(){
+  OB_CTAS.push({n:'Nueva cuenta', rol:'BOVEDA', ini:''});
+  pintarBienvenida();
+}
+async function obTerminar(){
+  OB_PRESU=document.getElementById('obPresu').value;
+  CFG.nombre=OB_NOMBRE;
+  CFG.presupuesto=parseFloat(OB_PRESU)||0;
+  CUENTAS=OB_CTAS.map((c,i)=>({id:i===0?'SIMPLE':i===1?'MILLONARIA':'C'+uid().slice(0,6).toUpperCase(),
+    n:(c.n||'Cuenta').trim(), rol:c.rol, ini:parseFloat(c.ini)||0}));
+  CFG.cuentas=CUENTAS;
+  CFG.desde=hoyISO();
+  const h=JSON.parse(CFG.cfgHora||'{}'); const t=Date.now();
+  ['presupuesto','desde','cuentas','nombre'].forEach(k=>h[k]=t);
+  CFG.cfgHora=JSON.stringify(h);
+  await guardarCfg();
+  cerrarModal(); vibrar(20); pintarCabecera(); pintarTodo();
+  if(SB.sesion) sincronizar(true);
 }
 
 function abrirManual(){
@@ -2139,22 +2356,6 @@ function abrirManual(){
     <button class="btn" onclick="abrirAjustes()">Entendido</button>`;
 }
 
-async function salvarAjustes(){
-  CFG.presupuesto=parseFloat(document.getElementById('aPresu').value)||0;
-  CFG.nombre=(document.getElementById('aNombre').value||'').trim();
-  CFG.desde=document.getElementById('aDesde').value||'';
-  CUENTAS=CUENTAS.map(c=>({...c, n:(c.n||'').trim()||'Cuenta'}));
-  CFG.cuentas=CUENTAS;
-  const h=JSON.parse(CFG.cfgHora||'{}'); const t=Date.now();
-  ['presupuesto','desde','cuentas','catsExtra','conc','catColor','nombre'].forEach(k=>h[k]=t);
-  CFG.cfgHora=JSON.stringify(h);
-  CFG.sbUrl=document.getElementById('aUrl').value.trim();
-  CFG.sbKey=document.getElementById('aKey').value.trim();
-  await guardarCfg(); cerrarModal(); vibrar(18); toast('Ajustes guardados');
-  pintarSync(); pintarTodo();
-  if(SB.listo && !SB.sesion) setTimeout(abrirLogin,400);
-  else if(SB.sesion) sincronizar(true);
-}
 async function addComp(){
   const d=document.getElementById('cDesc').value.trim();
   const m=parseFloat(document.getElementById('cMonto').value)||0;
@@ -2162,12 +2363,12 @@ async function addComp(){
   const p=Math.min(parseInt(document.getElementById('cPag').value)||0, t);
   if(!d||!m||!t){ toast('Completa descripción, monto y total'); return; }
   const c={id:uid(),desc:d,monto:m,total:t,pagadas:p,cat:document.getElementById('cCat').value,sync:false};
-  await put('comps',c); COMPS.push(c); vibrar(); toast('Cuota agregada'); abrirAjustes();
+  await put('comps',c); COMPS.push(c); vibrar(); toast('Cuota agregada'); abrirAjCuotas();
 }
 async function pagarCuota(id){
   const c=COMPS.find(x=>x.id===id); if(!c) return;
   if(c.pagadas<c.total){ c.pagadas++; c.sync=false; await put('comps',c); sincronizar(true); vibrar(); toast('Cuota '+c.pagadas+'/'+c.total); }
-  abrirAjustes();
+  abrirAjCuotas();
 }
 async function borrarPrest(id){
   const p=PREST.find(x=>x.id===id); if(!p) return;
@@ -2181,7 +2382,7 @@ async function borrarPrest(id){
 async function borrarComp(id){
   const c=COMPS.find(x=>x.id===id);
   if(c){ c.borrado=true; c.sync=false; await put('comps',c); }
-  COMPS=COMPS.filter(x=>x.id!==id); vibrar(); abrirAjustes(); sincronizar(true);
+  COMPS=COMPS.filter(x=>x.id!==id); vibrar(); abrirAjCuotas(); sincronizar(true);
 }
 
 /* ==================================================================
@@ -2253,7 +2454,7 @@ function leerArchivo(el){
 }
 function abrirPegar(){
   document.getElementById('hoja').innerHTML=`
-    <div class="cabm"><h1 style="font-size:19px">Pegar datos</h1><button class="x" onclick="abrirAjustes()">✕</button></div>
+    <div class="cabm"><h1 style="font-size:19px">Pegar datos</h1><button class="x" onclick="abrirAjDatos()">✕</button></div>
     <p style="font-size:12.5px;color:var(--suave);margin-bottom:11px">Copia las filas desde Excel (incluyendo la fila de títulos) y pégalas aquí.</p>
     <textarea class="inp" id="pgTxt" rows="9" placeholder="Fecha	Monto	Categoria	Nota" style="font-size:12px;min-height:170px"></textarea>
     <button class="btn" style="margin-top:11px" onclick="procesarTexto(document.getElementById('pgTxt').value)">Continuar</button>`;
@@ -2333,7 +2534,7 @@ function pantallaMapeo(){
       <span class="num" style="font-size:14px;color:${ing?'var(--verde)':'var(--texto)'}">${ing?'+':'−'}S/ ${fmt(r.monto)}</span></div>`;}).join('');
 
   document.getElementById('hoja').innerHTML=`
-    <div class="cabm"><h1 style="font-size:19px">Importar</h1><button class="x" onclick="abrirAjustes()">✕</button></div>
+    <div class="cabm"><h1 style="font-size:19px">Importar</h1><button class="x" onclick="abrirAjDatos()">✕</button></div>
     <div class="aviso v" style="margin-bottom:12px"><span>✓</span><span>Se leyeron <b>${IMP.filas.length}</b> filas con ${IMP.cab.length} columnas</span></div>
 
     <div class="card vidrio">
@@ -2558,14 +2759,14 @@ async function activarBiometria(){
     CFG.bioActivo = true;
     await guardarCfg();
     toast('Face ID / Touch ID activado');
-    abrirAjustes();
+    abrirAjSeguridad();
   }catch(e){
     toast('No se pudo activar. Intenta de nuevo');
   }
 }
 async function desactivarBiometria(){
   CFG.bioActivo=false; CFG.bioCredId='';
-  await guardarCfg(); abrirAjustes();
+  await guardarCfg(); abrirAjSeguridad();
 }
 
 /* ---------------- restaurar respaldo ---------------- */
@@ -2596,7 +2797,7 @@ function pantallaRestaurar(){
   const nuevosMov = RES.movs.filter(m=>!MOVS.some(x=>x.id===m.id)).length;
 
   document.getElementById('hoja').innerHTML=`
-    <div class="cabm"><h1 style="font-size:19px">Restaurar respaldo</h1><button class="x" onclick="abrirAjustes()">✕</button></div>
+    <div class="cabm"><h1 style="font-size:19px">Restaurar respaldo</h1><button class="x" onclick="abrirAjDatos()">✕</button></div>
 
     <div class="card vidrio">
       <h2>Lo que contiene el archivo</h2>
@@ -2776,6 +2977,7 @@ function pintarTodo(){
   BIO_HAY = await bioDisponible();
   mostrarBloqueo();
   pintarCabecera();
+  if(esPrimeraVez() && DESBLOQUEADO) setTimeout(abrirBienvenida, 400);
   document.getElementById('fecha').value=F.fecha;
   pintarForm(); pintarEtiquetas();
   pintarTodo(); medirBarra();

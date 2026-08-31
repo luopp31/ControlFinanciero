@@ -8,6 +8,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Networth">
 <title>Networth · Valor neto</title>
+<link rel="manifest" href="../public/manifesto.json">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700;14..32,800;14..32,900&display=swap" rel="stylesheet">
@@ -3002,7 +3003,7 @@ function pintarTodo(){
   setInterval(()=>{ if(!document.hidden) sincronizar(true); }, 300000);
 
   if('serviceWorker' in navigator){
-    navigator.serviceWorker.register('sw.js').then(reg=>{
+    navigator.serviceWorker.register('./lib/sw.js', { scope: './' }).then(reg=>{
       // Si la app se queda abierta días sin cerrarse, nunca vuelve a
       // pedir index.html y nunca se entera de una versión nueva.
       // Por eso se revisa sola: al volver de segundo plano, y cada 20 min

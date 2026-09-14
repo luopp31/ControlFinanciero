@@ -626,7 +626,7 @@ const CFG_DEF = {
 
 let DB=null, MOVS=[], CFG={...CFG_DEF}, COMPS=[], PREST=[];
 let vista='panel';
-let filtroPrest='TODOS';
+let filtroPrest='TODOS', buscarPrest='';
 let F = {monto:'', tipo:'GASTO', cat:'ALIMENTACION', cuenta:'SIMPLE', destino:'MILLONARIA', evitable:false, compartido:false, emergencia:false, fecha:hoyISO(),
          dir:'PRESTE', persona:'', acordado:'', prestId:'', etiqueta:''};
 
@@ -1613,40 +1613,16 @@ function pintarAnalisis(){
 
     <div class="card vidrio">
       <h2>Préstamos y deudas</h2>
-      ${PREST.length? (()=>{
-        const listaP = PREST.filter(p=>filtroPrest==='TODOS'||p.tipo===filtroPrest);
-        const acumulado = listaP.reduce((s,p)=>s+estadoPrest(p).pendienteCapital,0);
-        const etiquetaAcum = filtroPrest==='DEBO'? 'Total que debo' : filtroPrest==='PRESTE'? 'Total que me deben' : 'Neto por cobrar';
-        const valorAcum = filtroPrest==='TODOS'? porCobrar()-porPagar() : acumulado;
-        const colorAcum = filtroPrest==='DEBO'? 'var(--rosa)' : (valorAcum>=0?'var(--verde)':'var(--rosa)');
-        return `
-        <div class="chips" style="margin-bottom:11px">
-          <button class="chip ${filtroPrest==='TODOS'?'on':''}" onclick="setFiltroPrest('TODOS')">Todos</button>
-          <button class="chip ${filtroPrest==='PRESTE'?'on':''}" onclick="setFiltroPrest('PRESTE')"><i style="background:var(--verde)"></i>Me deben</button>
-          <button class="chip ${filtroPrest==='DEBO'?'on':''}" onclick="setFiltroPrest('DEBO')"><i style="background:var(--rosa)"></i>Les debo</button>
+      ${PREST.length? `
+        <input class="inp" id="prestBusca" placeholder="Buscar por persona…" value="${esc(buscarPrest)}"
+          oninput="onBuscarPrest(this.value)" autocomplete="off" style="margin-bottom:11px;font-size:13.5px">
+        <div class="chips" style="margin-bottom:11px" id="prestFiltros">
+          <button class="chip ${filtroPrest==='TODOS'?'on':''}" data-f="TODOS" onclick="setFiltroPrest('TODOS')">Todos</button>
+          <button class="chip ${filtroPrest==='PRESTE'?'on':''}" data-f="PRESTE" onclick="setFiltroPrest('PRESTE')"><i style="background:var(--verde)"></i>Me deben</button>
+          <button class="chip ${filtroPrest==='DEBO'?'on':''}" data-f="DEBO" onclick="setFiltroPrest('DEBO')"><i style="background:var(--rosa)"></i>Les debo</button>
         </div>
-        <div style="display:flex;justify-content:space-between;align-items:baseline;padding:2px 0 13px;border-bottom:1px solid var(--filo);margin-bottom:2px">
-          <b style="font-size:13px;color:var(--suave)">${etiquetaAcum}</b>
-          <b class="num" style="font-size:18px;color:${colorAcum}">S/ ${fmt(valorAcum)}</b></div>
-        ${listaP.length? listaP.slice().sort((a,b)=>estadoPrest(a).saldado-estadoPrest(b).saldado||b.creado-a.creado).map(p=>{
-          const e=estadoPrest(p), pct=e.meta? Math.min(100,e.devuelto/e.meta*100):0;
-          const meDeben=p.tipo==='PRESTE';
-          return `<div style="padding:12px 0;border-bottom:1px solid rgba(255,255,255,.055)">
-            <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px">
-              <b style="font-size:14px">${esc(p.persona)}
-                <span class="flag ${meDeben?'':'az'}" style="background:${meDeben?'rgba(61,227,154,.14)':'rgba(255,92,134,.14)'};color:${meDeben?'var(--verde)':'var(--rosa)'};border-color:${meDeben?'rgba(61,227,154,.28)':'rgba(255,92,134,.28)'}">${meDeben?'ME DEBE':'LE DEBO'}</span></b>
-              <b class="num" style="font-size:15px;${e.saldado?'opacity:.4':''}">${e.saldado?'Saldado':'S/ '+fmt(e.falta)}</b></div>
-            <div class="pista"><i style="width:${pct}%;background:linear-gradient(90deg,${meDeben?'rgba(61,227,154,.5),var(--verde)':'rgba(255,92,134,.5),var(--rosa)'})"></i></div>
-            <div style="display:flex;justify-content:space-between;margin-top:6px;font-size:11px;color:var(--suave)">
-              <span>Cobrado S/ ${fmt(e.devuelto)} de S/ ${fmt(e.meta)}</span>
-              <span>${e.meta>e.capital? '+S/ '+fmt(e.meta-e.capital)+' interés' : 'sin interés'}</span></div>
-            <div style="display:flex;gap:8px;margin-top:9px">
-              <button class="btn sec peq" style="margin:0;flex:1" onclick="abrirEditarPrest('${p.id}')">Editar</button>
-              ${e.saldado?'':`<button class="btn sec peq" style="margin:0;flex:1" onclick="borrarPrest('${p.id}')">Eliminar</button>`}
-            </div>
-          </div>`;}).join('')
-          : '<div class="vacio" style="padding:20px"><span class="em">⇌</span>Nadie en este filtro</div>'}`;
-      })() : '<div class="vacio" style="padding:22px"><span class="em">⇌</span>Sin préstamos ni deudas<br><span style="font-size:12px">Se registran con el tipo Préstamo</span></div>'}
+        <div id="prestCuerpo"></div>`
+        : '<div class="vacio" style="padding:22px"><span class="em">⇌</span>Sin préstamos ni deudas<br><span style="font-size:12px">Se registran con el tipo Préstamo</span></div>'}
     </div>
 
     <div class="card vidrio">
@@ -1657,6 +1633,53 @@ function pintarAnalisis(){
           <span class="num" style="font-size:15px">S/ ${fmt(v.monto)}</span></div>`).join('')
         : '<div class="vacio" style="padding:22px"><span class="em">◑</span>Marca un gasto como compartido<br><span style="font-size:12px">para verlo aquí</span></div>'}
     </div>`;
+  pintarPrestCuerpo();
+}
+
+function onBuscarPrest(v){ buscarPrest=v; pintarPrestCuerpo(); }
+function setFiltroPrest(f){
+  filtroPrest=f; vibrar();
+  document.querySelectorAll('#prestFiltros .chip').forEach(b=>b.classList.toggle('on', b.dataset.f===f));
+  pintarPrestCuerpo();
+}
+function pintarPrestCuerpo(){
+  const cont=document.getElementById('prestCuerpo'); if(!cont) return;
+  const q=buscarPrest.trim().toLowerCase();
+  const listaP = PREST.filter(p=>(filtroPrest==='TODOS'||p.tipo===filtroPrest) && (!q||p.persona.toLowerCase().includes(q)));
+  const acumulado = listaP.reduce((s,p)=>s+estadoPrest(p).pendienteCapital,0);
+  const totalPrestado = listaP.reduce((s,p)=>s+estadoPrest(p).capital,0);
+  const totalDevuelto = listaP.reduce((s,p)=>s+estadoPrest(p).devuelto,0);
+  const etiquetaAcum = filtroPrest==='DEBO'? 'Total que debo' : filtroPrest==='PRESTE'? 'Total que me deben' : 'Neto por cobrar';
+  const valorAcum = (!q && filtroPrest==='TODOS')? porCobrar()-porPagar() : acumulado;
+  const colorAcum = q? 'var(--sol)' : (filtroPrest==='DEBO'? 'var(--rosa)' : (valorAcum>=0?'var(--verde)':'var(--rosa)'));
+
+  cont.innerHTML = `
+    <div style="padding:2px 0 13px;border-bottom:1px solid var(--filo);margin-bottom:2px">
+      <div style="display:flex;justify-content:space-between;align-items:baseline">
+        <b style="font-size:13px;color:var(--suave)">${q? listaP.length+' préstamo'+(listaP.length!==1?'s':'')+' con "'+esc(buscarPrest.trim())+'"' : etiquetaAcum}</b>
+        <b class="num" style="font-size:18px;color:${colorAcum}">S/ ${fmt(valorAcum)}</b></div>
+      ${q&&listaP.length? `<div style="display:flex;justify-content:space-between;margin-top:6px;font-size:11px;color:var(--suave)">
+        <span>Prestado en total: S/ ${fmt(totalPrestado)}</span>
+        <span>Devuelto: S/ ${fmt(totalDevuelto)}</span></div>` : ''}
+    </div>
+    ${listaP.length? listaP.slice().sort((a,b)=>estadoPrest(a).saldado-estadoPrest(b).saldado||b.creado-a.creado).map(p=>{
+      const e=estadoPrest(p), pct=e.meta? Math.min(100,e.devuelto/e.meta*100):0;
+      const meDeben=p.tipo==='PRESTE';
+      return `<div style="padding:12px 0;border-bottom:1px solid rgba(255,255,255,.055)">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px">
+          <b style="font-size:14px">${esc(p.persona)}
+            <span class="flag ${meDeben?'':'az'}" style="background:${meDeben?'rgba(61,227,154,.14)':'rgba(255,92,134,.14)'};color:${meDeben?'var(--verde)':'var(--rosa)'};border-color:${meDeben?'rgba(61,227,154,.28)':'rgba(255,92,134,.28)'}">${meDeben?'ME DEBE':'LE DEBO'}</span></b>
+          <b class="num" style="font-size:15px;${e.saldado?'opacity:.4':''}">${e.saldado?'Saldado':'S/ '+fmt(e.falta)}</b></div>
+        <div class="pista"><i style="width:${pct}%;background:linear-gradient(90deg,${meDeben?'rgba(61,227,154,.5),var(--verde)':'rgba(255,92,134,.5),var(--rosa)'})"></i></div>
+        <div style="display:flex;justify-content:space-between;margin-top:6px;font-size:11px;color:var(--suave)">
+          <span>Cobrado S/ ${fmt(e.devuelto)} de S/ ${fmt(e.meta)}</span>
+          <span>${e.meta>e.capital? '+S/ '+fmt(e.meta-e.capital)+' interés' : 'sin interés'}</span></div>
+        <div style="display:flex;gap:8px;margin-top:9px">
+          <button class="btn sec peq" style="margin:0;flex:1" onclick="abrirEditarPrest('${p.id}')">Editar</button>
+          ${e.saldado?'':`<button class="btn sec peq" style="margin:0;flex:1" onclick="borrarPrest('${p.id}')">Eliminar</button>`}
+        </div>
+      </div>`;}).join('')
+      : `<div class="vacio" style="padding:20px"><span class="em">⇌</span>${q?'Sin préstamos con ese nombre':'Nadie en este filtro'}</div>`}`;
 }
 
 /* ---------------- CONCILIAR ---------------- */
@@ -2388,8 +2411,6 @@ async function pagarCuota(id){
   if(c.pagadas<c.total){ c.pagadas++; c.sync=false; await put('comps',c); sincronizar(true); vibrar(); toast('Cuota '+c.pagadas+'/'+c.total); }
   abrirAjCuotas();
 }
-function setFiltroPrest(f){ filtroPrest=f; vibrar(); pintarAnalisis(); }
-
 function abrirEditarPrest(id){
   const p=PREST.find(x=>x.id===id); if(!p) return;
   const meDeben=p.tipo==='PRESTE';

@@ -3,7 +3,7 @@
    Sube la versión (CACHE) cada vez que publiques cambios. */
 
 const CACHE = 'sol-v1';
-const ESENCIAL = ['../index.html', '../../public/manifesto.json'];
+const ESENCIAL = ['./index.html', './public/manifesto.json'];
 
 self.addEventListener('install', e => {
   e.waitUntil(

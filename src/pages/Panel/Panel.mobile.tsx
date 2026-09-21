@@ -1,27 +1,46 @@
 import { CuentaCard } from '../../components/CuentaCard';
 import { MovimientoRow } from '../../components/MovimientoRow';
 import { GraficoTendencia } from '../../components/GraficoTendencia';
-import { formatearMonto } from '../../lib/formato';
+import { IconEye, IconEyeSlash } from '../../components/icons';
+import { useConfig } from '../../hooks/useConfig';
+import { formatearMontoOcultable } from '../../lib/formato';
+import { saludoPorHora } from '../../lib/saludo';
 import type { PanelViewProps } from './types';
 
-export function PanelMobile({ cuentas, movimientos, valorNetoActual, serie, recientes }: PanelViewProps) {
+export function PanelMobile({ nombre, cuentas, movimientos, valorNetoActual, serie, recientes }: PanelViewProps) {
+  const { config, alternarOcultarSaldos } = useConfig();
+  const oculto = !!config.ocultarSaldos;
+
   return (
     <div style={{ padding: '28px 18px 40px', display: 'flex', flexDirection: 'column', gap: 24 }}>
-      <div>
-        <p style={eyebrow}>Greedy</p>
-        <h1 style={{ fontSize: 22, fontWeight: 800, letterSpacing: '-0.02em', margin: '0 0 4px' }}>Valor neto</h1>
-        <p style={{ fontSize: 32, fontWeight: 700, fontVariantNumeric: 'tabular-nums', margin: 0 }}>
-          S/ {formatearMonto(valorNetoActual)}
-        </p>
-      </div>
+      <h1 style={{ margin: 0, fontSize: 19, fontWeight: 800, letterSpacing: '-0.02em' }}>
+        {saludoPorHora()}
+        {nombre ? `, ${nombre.split(' ')[0]}` : ''}
+      </h1>
 
-      <div className="glass-card">
+      <div className="hero-valor">
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+          <p style={{ margin: 0, fontSize: 11.5, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.7)' }}>
+            Greedy · Valor neto
+          </p>
+          <button
+            type="button"
+            onClick={alternarOcultarSaldos}
+            aria-label={oculto ? 'Mostrar saldos' : 'Ocultar saldos'}
+            style={{ all: 'unset', cursor: 'pointer', color: 'rgba(255,255,255,0.7)', display: 'flex' }}
+          >
+            {oculto ? <IconEyeSlash width={18} height={18} /> : <IconEye width={18} height={18} />}
+          </button>
+        </div>
+        <p style={{ fontSize: 34, fontWeight: 800, fontVariantNumeric: 'tabular-nums', margin: '0 0 18px', letterSpacing: '-0.02em' }}>
+          S/ {formatearMontoOcultable(valorNetoActual, oculto)}
+        </p>
         <GraficoTendencia puntos={serie} />
       </div>
 
       <div>
         <p style={seccionTitulo}>Cuentas</p>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12 }}>
           {cuentas.map((c) => (
             <CuentaCard key={c.id} cuenta={c} movimientos={movimientos} />
           ))}
@@ -41,15 +60,6 @@ export function PanelMobile({ cuentas, movimientos, valorNetoActual, serie, reci
     </div>
   );
 }
-
-const eyebrow: React.CSSProperties = {
-  fontSize: 11.5,
-  fontWeight: 700,
-  letterSpacing: '0.08em',
-  textTransform: 'uppercase',
-  color: 'var(--muted-fg)',
-  margin: '0 0 6px',
-};
 
 const seccionTitulo: React.CSSProperties = {
   fontSize: 12.5,

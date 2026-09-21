@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import {
+  gastoPorCategoria,
   saldo,
   saldoTotal,
   estadoPrestamo,
@@ -125,6 +126,34 @@ describe('valorNeto', () => {
     ];
     const esperado = saldoTotal(cuentas, []) + porCobrar(prestamos, []) - porPagar(prestamos, []);
     expect(valorNeto(cuentas, [], prestamos)).toBe(esperado);
+  });
+});
+
+describe('gastoPorCategoria', () => {
+  it('suma el gasto de cada categoría dentro del rango, de mayor a menor', () => {
+    const movs: Movimiento[] = [
+      { id: '1', fecha: '2026-09-05', monto: 50, tipo: 'GASTO', categoria: 'ALIMENTACION', cuentaId: 'A' },
+      { id: '2', fecha: '2026-09-10', monto: 30, tipo: 'GASTO', categoria: 'ALIMENTACION', cuentaId: 'A' },
+      { id: '3', fecha: '2026-09-10', monto: 100, tipo: 'GASTO', categoria: 'TRANSPORTE', cuentaId: 'A' },
+    ];
+    expect(gastoPorCategoria(movs, '2026-09-01', '2026-09-30')).toEqual([
+      { categoria: 'TRANSPORTE', monto: 100 },
+      { categoria: 'ALIMENTACION', monto: 80 },
+    ]);
+  });
+
+  it('ignora movimientos fuera de rango, borrados, y que no sean GASTO', () => {
+    const movs: Movimiento[] = [
+      { id: '1', fecha: '2026-08-31', monto: 50, tipo: 'GASTO', categoria: 'ALIMENTACION', cuentaId: 'A' },
+      { id: '2', fecha: '2026-09-05', monto: 30, tipo: 'GASTO', categoria: 'ALIMENTACION', cuentaId: 'A', borrado: true },
+      { id: '3', fecha: '2026-09-05', monto: 200, tipo: 'INGRESO', categoria: 'SUELDO', cuentaId: 'A' },
+    ];
+    expect(gastoPorCategoria(movs, '2026-09-01', '2026-09-30')).toEqual([]);
+  });
+
+  it('agrupa los gastos sin categoría bajo SINID', () => {
+    const movs: Movimiento[] = [{ id: '1', fecha: '2026-09-05', monto: 40, tipo: 'GASTO', cuentaId: 'A' }];
+    expect(gastoPorCategoria(movs, '2026-09-01', '2026-09-30')).toEqual([{ categoria: 'SINID', monto: 40 }]);
   });
 });
 

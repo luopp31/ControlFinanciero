@@ -23,7 +23,7 @@ export function CuentasMobile({ cuentas, movimientos, crearCuenta }: CuentasView
       </div>
 
       {!vacio && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12 }}>
           {cuentas.map((c) => (
             <CuentaCard key={c.id} cuenta={c} movimientos={movimientos} />
           ))}

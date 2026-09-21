@@ -13,6 +13,12 @@ const PAD_DER = 8;
 const PAD_ARR = 16;
 const PAD_ABAJO = 28;
 
+// Mismos tonos que el gráfico del panel de la app anterior (legacy/index.html:1341-1344):
+// una sola línea que se tiñe entera de rojo o verde según el signo del cambio del
+// período — el efecto "eToro" que pidió el usuario — no rojo/verde por tramo.
+const VERDE = { solido: '#3DE39A', claro: '#8BF0C4', pillBg: 'rgba(61,227,154,0.16)' };
+const ROSA = { solido: '#FF5C86', claro: '#FF9FB7', pillBg: 'rgba(255,92,134,0.16)' };
+
 function formatearFechaCorta(iso: string): string {
   const [, mes, dia] = iso.split('-');
   const meses = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
@@ -20,10 +26,12 @@ function formatearFechaCorta(iso: string): string {
 }
 
 /**
- * Gráfico de línea de una sola serie (valor neto en el tiempo). Sigue la guía del
- * skill dataviz: 2px de línea, relleno de área al 10%, sin leyenda (una sola serie,
- * el título ya dice qué es), crosshair + tooltip al pasar el mouse, y la marca +
- * etiqueta del último punto en vez de una cifra por cada punto.
+ * Gráfico de línea de una sola serie (valor neto en el tiempo), pensado para vivir
+ * dentro de la tarjeta hero (fondo navy oscuro siempre, en ambos temas — ver
+ * .hero-valor en index.css) — por eso los textos/grid son claros a propósito, no
+ * tokens de tema. Sigue la guía del skill dataviz en lo demás: 2px de línea, área al
+ * ~35%, sin leyenda (una sola serie), crosshair + tooltip al pasar el mouse, y la
+ * marca del último punto en vez de una cifra por cada punto.
  */
 export function GraficoTendencia({ puntos, moneda = 'S/' }: { puntos: Punto[]; moneda?: string }) {
   const gradientId = useId();
@@ -67,6 +75,7 @@ export function GraficoTendencia({ puntos, moneda = 'S/' }: { puntos: Punto[]; m
   const ultimo = puntos[puntos.length - 1].valor;
   const cambio = ultimo - primero;
   const pctCambio = primero !== 0 ? (cambio / Math.abs(primero)) * 100 : 0;
+  const tono = cambio >= 0 ? VERDE : ROSA;
 
   function posicionAIndice(clientX: number, svg: SVGSVGElement) {
     const rect = svg.getBoundingClientRect();
@@ -85,22 +94,21 @@ export function GraficoTendencia({ puntos, moneda = 'S/' }: { puntos: Punto[]; m
 
   return (
     <div>
-      <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginBottom: 10 }}>
+      <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginBottom: 10, flexWrap: 'wrap' }}>
         <span
           style={{
             fontSize: 12,
             fontWeight: 700,
             padding: '3px 9px',
             borderRadius: 999,
-            background: cambio >= 0 ? 'var(--accent-soft)' : 'var(--destructive-soft)',
-            color: cambio >= 0 ? 'var(--accent)' : 'var(--destructive)',
+            background: tono.pillBg,
+            color: tono.solido,
           }}
         >
-          {cambio >= 0 ? '+' : '−'}
-          {moneda} {formatearMonto(Math.abs(cambio))} ({pctCambio >= 0 ? '+' : '−'}
+          {cambio >= 0 ? '▲' : '▼'} {moneda} {formatearMonto(Math.abs(cambio))} ({pctCambio >= 0 ? '+' : '−'}
           {Math.abs(pctCambio).toFixed(1)}%)
         </span>
-        <span style={{ fontSize: 11.5, color: 'var(--muted-fg)' }}>
+        <span style={{ fontSize: 11.5, color: 'rgba(255,255,255,0.6)' }}>
           desde el {formatearFechaCorta(puntos[0].fecha)}
         </span>
       </div>
@@ -114,13 +122,17 @@ export function GraficoTendencia({ puntos, moneda = 'S/' }: { puntos: Punto[]; m
         onPointerLeave={() => setHoverIdx(null)}
       >
         <defs>
-          <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="var(--primary)" stopOpacity="0.16" />
-            <stop offset="100%" stopColor="var(--primary)" stopOpacity="0" />
+          <linearGradient id={`${gradientId}-area`} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor={tono.solido} stopOpacity="0.38" />
+            <stop offset="100%" stopColor={tono.solido} stopOpacity="0" />
+          </linearGradient>
+          <linearGradient id={`${gradientId}-linea`} x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stopColor={tono.claro} />
+            <stop offset="100%" stopColor={tono.solido} />
           </linearGradient>
         </defs>
 
-        {/* líneas de referencia: máximo, cero (si aplica), mínimo */}
+        {/* líneas de referencia: máximo y mínimo */}
         {[max, min].map((v, i) => {
           const altoUtil = ALTO - PAD_ARR - PAD_ABAJO;
           const rango = max - min || 1;
@@ -132,17 +144,24 @@ export function GraficoTendencia({ puntos, moneda = 'S/' }: { puntos: Punto[]; m
               x2={ANCHO - PAD_DER}
               y1={y}
               y2={y}
-              stroke="var(--card-border)"
+              stroke="rgba(255,255,255,0.14)"
               strokeWidth={1}
             />
           );
         })}
 
-        <path d={pathArea} fill={`url(#${gradientId})`} stroke="none" />
-        <path d={pathLinea} fill="none" stroke="var(--primary)" strokeWidth={2} strokeLinejoin="round" strokeLinecap="round" />
+        <path d={pathArea} fill={`url(#${gradientId}-area)`} stroke="none" />
+        <path
+          d={pathLinea}
+          fill="none"
+          stroke={`url(#${gradientId}-linea)`}
+          strokeWidth={2.3}
+          strokeLinejoin="round"
+          strokeLinecap="round"
+        />
 
-        {/* marca + etiqueta del último punto (no uno por punto) */}
-        <circle cx={coords[coords.length - 1].x} cy={coords[coords.length - 1].y} r={4} fill="var(--primary)" stroke="var(--card)" strokeWidth={2} />
+        {/* marca del último punto (no una etiqueta por cada punto) */}
+        <circle cx={coords[coords.length - 1].x} cy={coords[coords.length - 1].y} r={4} fill={tono.solido} stroke="#FFFFFF" strokeWidth={2} />
 
         {hoverIdx !== null && coordActivo && (
           <>
@@ -151,31 +170,33 @@ export function GraficoTendencia({ puntos, moneda = 'S/' }: { puntos: Punto[]; m
               x2={coordActivo.x}
               y1={PAD_ARR}
               y2={ALTO - PAD_ABAJO}
-              stroke="var(--muted-fg)"
+              stroke="rgba(255,255,255,0.35)"
               strokeWidth={1}
               strokeDasharray="3 3"
             />
-            <circle cx={coordActivo.x} cy={coordActivo.y} r={4} fill="var(--primary)" stroke="var(--card)" strokeWidth={2} />
+            <circle cx={coordActivo.x} cy={coordActivo.y} r={4} fill={tono.solido} stroke="#FFFFFF" strokeWidth={2} />
           </>
         )}
       </svg>
 
       <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 4 }}>
-        <span style={{ fontSize: 10.5, color: 'var(--muted-fg)' }}>{formatearFechaCorta(puntos[0].fecha)}</span>
-        <span style={{ fontSize: 10.5, color: 'var(--muted-fg)' }}>{formatearFechaCorta(puntos[puntos.length - 1].fecha)}</span>
+        <span style={{ fontSize: 10.5, color: 'rgba(255,255,255,0.5)' }}>{formatearFechaCorta(puntos[0].fecha)}</span>
+        <span style={{ fontSize: 10.5, color: 'rgba(255,255,255,0.5)' }}>
+          {formatearFechaCorta(puntos[puntos.length - 1].fecha)}
+        </span>
       </div>
 
       <div
         style={{
           marginTop: 8,
           fontSize: 12.5,
-          color: 'var(--muted-fg)',
+          color: 'rgba(255,255,255,0.6)',
           fontVariantNumeric: 'tabular-nums',
         }}
         aria-live="polite"
       >
         {formatearFechaCorta(puntoActivo.fecha)}:{' '}
-        <strong style={{ color: 'var(--fg)' }}>
+        <strong style={{ color: '#FFFFFF' }}>
           {moneda} {formatearMonto(puntoActivo.valor)}
         </strong>
       </div>

@@ -10,6 +10,16 @@ export function menosDiasISO(n: number): string {
   return isoDe(d);
 }
 
+/** Primer día del mes actual, en ISO — para filtrar "este mes". */
+export function inicioMesISO(desde: Date = new Date()): string {
+  return isoDe(new Date(desde.getFullYear(), desde.getMonth(), 1));
+}
+
+/** Primer día del año actual, en ISO — para filtrar "este año". */
+export function inicioAnioISO(desde: Date = new Date()): string {
+  return isoDe(new Date(desde.getFullYear(), 0, 1));
+}
+
 function isoDe(d: Date): string {
   const mes = String(d.getMonth() + 1).padStart(2, '0');
   const dia = String(d.getDate()).padStart(2, '0');

@@ -26,6 +26,7 @@ export interface Config {
   nombre: string;
   catsExtra: unknown[];
   catColor: Record<string, string>;
+  ocultarSaldos?: boolean;
   version: number;
 }
 
@@ -74,6 +75,15 @@ export function put<T>(store: Store, value: T): Promise<IDBValidKey> {
 
 export function remove(store: Store, id: IDBValidKey): Promise<undefined> {
   return tx<undefined>(store, 'readwrite', (s) => s.delete(id));
+}
+
+/** Borra todo lo guardado en este dispositivo (cuentas, movimientos, préstamos,
+ * compromisos y config) — para volver a ver el onboarding desde cero o probar
+ * con otra cuenta local, sin tocar nada en la nube. */
+export async function borrarTodoLocal(): Promise<void> {
+  for (const store of STORES) {
+    await tx<undefined>(store, 'readwrite', (s) => s.clear());
+  }
 }
 
 const CONFIG_KEY = 'config';

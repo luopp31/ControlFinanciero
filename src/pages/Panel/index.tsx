@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useIsDesktop } from '../../hooks/useIsDesktop';
 import { useCuentas } from '../../hooks/useCuentas';
 import { useMovimientos } from '../../hooks/useMovimientos';
+import { useConfig } from '../../hooks/useConfig';
 import { getAll } from '../../lib/db';
 import { menosDiasISO } from '../../lib/fecha';
 import { serieValorNeto, valorNeto, type Prestamo } from '../../lib/finanzas';
@@ -14,6 +15,7 @@ export function Panel() {
   const isDesktop = useIsDesktop();
   const { cuentas, cargando: cargandoCuentas } = useCuentas();
   const { movimientos, cargando: cargandoMovs } = useMovimientos();
+  const { config, cargando: cargandoConfig } = useConfig();
   const [prestamos, setPrestamos] = useState<Prestamo[]>([]);
 
   useEffect(() => {
@@ -29,7 +31,7 @@ export function Panel() {
     };
   }, [cuentas, movimientos, prestamos]);
 
-  if (cargandoCuentas || cargandoMovs) return null;
+  if (cargandoCuentas || cargandoMovs || cargandoConfig) return null;
 
   if (cuentas.length === 0) {
     return (
@@ -41,6 +43,6 @@ export function Panel() {
     );
   }
 
-  const props = { cuentas, movimientos, prestamos, valorNetoActual, serie, recientes };
+  const props = { nombre: config.nombre, cuentas, movimientos, prestamos, valorNetoActual, serie, recientes };
   return isDesktop ? <PanelDesktop {...props} /> : <PanelMobile {...props} />;
 }

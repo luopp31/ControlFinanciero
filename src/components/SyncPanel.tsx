@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../hooks/useAuth';
+import { borrarTodoLocal } from '../lib/db';
 import { sincronizarTodo } from '../lib/sync';
 import { IconCloudArrowUp, IconCloudCheck, IconCloudSlash } from './icons';
 import { botonPrimario, botonSecundario, etiquetaStyle, inputStyle } from './formStyles';
 
 type EstadoSync = 'inactivo' | 'sincronizando' | 'ok' | 'error';
 
-export function SyncPanel() {
+export function SyncPanel({ mostrarEtiqueta = true }: { mostrarEtiqueta?: boolean }) {
   const { configurado, session, cargando, iniciarSesion, registrarse, cerrarSesion } = useAuth();
   const [abierto, setAbierto] = useState(false);
   const [modoRegistro, setModoRegistro] = useState(false);
@@ -17,6 +18,19 @@ export function SyncPanel() {
   const [estadoSync, setEstadoSync] = useState<EstadoSync>('inactivo');
   const [errorSync, setErrorSync] = useState('');
   const [ultimaVez, setUltimaVez] = useState<string | null>(null);
+  const [confirmandoReinicio, setConfirmandoReinicio] = useState(false);
+  const [reiniciando, setReiniciando] = useState(false);
+
+  async function reiniciarLocal() {
+    if (!confirmandoReinicio) {
+      setConfirmandoReinicio(true);
+      return;
+    }
+    setReiniciando(true);
+    if (session) await cerrarSesion();
+    await borrarTodoLocal();
+    window.location.reload();
+  }
 
   async function sincronizar() {
     setEstadoSync('sincronizando');
@@ -30,6 +44,10 @@ export function SyncPanel() {
       setErrorSync(r.error);
     }
   }
+
+  useEffect(() => {
+    if (!abierto) setConfirmandoReinicio(false);
+  }, [abierto]);
 
   useEffect(() => {
     if (session) sincronizar();
@@ -74,21 +92,21 @@ export function SyncPanel() {
       <button
         type="button"
         onClick={() => setAbierto(true)}
-        aria-label="Sincronización"
-        title={!configurado ? 'Supabase no configurado' : session ? 'Sincronización' : 'Iniciar sesión'}
+        aria-label="Cuenta y sesión"
+        title="Cuenta, sincronización y cerrar sesión"
         style={{
           all: 'unset',
           cursor: 'pointer',
-          width: 34,
-          height: 34,
-          borderRadius: 10,
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'center',
+          gap: 6,
+          padding: mostrarEtiqueta ? '8px 12px 8px 10px' : '8px',
+          borderRadius: 999,
           color: session && estadoSync === 'ok' ? 'var(--accent)' : 'var(--muted-fg)',
         }}
       >
-        <Icono width={18} height={18} />
+        <Icono width={17} height={17} />
+        {mostrarEtiqueta && <span style={{ fontSize: 12.5, fontWeight: 700 }}>Cuenta</span>}
       </button>
 
       {abierto && (
@@ -119,9 +137,6 @@ export function SyncPanel() {
                   Falta el archivo .env con tu URL y anon key de Supabase. Tus datos siguen guardándose en este
                   dispositivo mientras tanto.
                 </p>
-                <button type="button" onClick={() => setAbierto(false)} style={botonSecundario}>
-                  Cerrar
-                </button>
               </>
             ) : session ? (
               <>
@@ -181,6 +196,35 @@ export function SyncPanel() {
                 </button>
               </form>
             )}
+
+            <div style={{ borderTop: '1px solid var(--card-border)', paddingTop: 14, display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <p style={{ margin: 0, fontSize: 12, color: 'var(--muted-fg)' }}>
+                {confirmandoReinicio
+                  ? 'Se borra todo lo guardado en este dispositivo (cuentas, movimientos, préstamos, compromisos) — no se puede deshacer.'
+                  : 'Para ver la bienvenida de nuevo o probar con otra cuenta desde cero.'}
+              </p>
+              <button
+                type="button"
+                onClick={reiniciarLocal}
+                disabled={reiniciando}
+                style={{
+                  padding: '11px 16px',
+                  borderRadius: 12,
+                  border: `1px solid ${confirmandoReinicio ? 'var(--destructive)' : 'var(--card-border)'}`,
+                  background: confirmandoReinicio ? 'var(--destructive-soft)' : 'transparent',
+                  color: confirmandoReinicio ? 'var(--destructive)' : 'var(--muted-fg)',
+                  fontWeight: 700,
+                  fontSize: 13.5,
+                  cursor: reiniciando ? 'not-allowed' : 'pointer',
+                }}
+              >
+                {reiniciando ? 'Borrando…' : confirmandoReinicio ? 'Sí, borrar y empezar de nuevo' : 'Empezar de nuevo'}
+              </button>
+            </div>
+
+            <button type="button" onClick={() => setAbierto(false)} style={botonSecundario}>
+              Cerrar
+            </button>
           </div>
         </div>
       )}

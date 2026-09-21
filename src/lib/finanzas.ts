@@ -79,6 +79,7 @@ export const TIPOS: { id: TipoMovimiento; nombre: string }[] = [
   { id: 'REEMBOLSO', nombre: 'Reembolso' },
   { id: 'TRASPASO', nombre: 'Traspaso' },
   { id: 'AHORRO', nombre: 'Ahorro' },
+  { id: 'PRESTAMO', nombre: 'Préstamo' },
 ];
 
 export type TipoPrestamo = 'PRESTE' | 'DEBO';
@@ -177,6 +178,27 @@ export function porPagar(prestamos: Prestamo[], movimientos: Movimiento[]): numb
   return prestamos
     .filter((p) => !p.borrado && p.tipo === 'DEBO')
     .reduce((s, p) => s + estadoPrestamo(p, movimientos).pendienteCapital, 0);
+}
+
+export interface CategoriaTotal {
+  categoria: string;
+  monto: number;
+}
+
+/** Total gastado por categoría dentro de [desde, hasta] (fechas ISO, ambas
+ * incluidas), de mayor a menor — sólo movimientos de tipo GASTO. Los gastos
+ * sin categoría se agrupan bajo 'SINID', igual que en la app anterior. */
+export function gastoPorCategoria(movimientos: Movimiento[], desde: string, hasta: string): CategoriaTotal[] {
+  const totales = new Map<string, number>();
+  for (const m of movimientosActivos(movimientos)) {
+    if (m.tipo !== 'GASTO') continue;
+    if (m.fecha < desde || m.fecha > hasta) continue;
+    const categoria = m.categoria || 'SINID';
+    totales.set(categoria, (totales.get(categoria) ?? 0) + m.monto);
+  }
+  return Array.from(totales.entries())
+    .map(([categoria, monto]) => ({ categoria, monto }))
+    .sort((a, b) => b.monto - a.monto);
 }
 
 /**

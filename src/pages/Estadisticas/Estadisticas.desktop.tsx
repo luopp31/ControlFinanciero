@@ -1,4 +1,4 @@
-import { CATS } from '../../lib/finanzas';
+import { CATS, colorCategoria } from '../../lib/finanzas';
 import { formatearMonto } from '../../lib/formato';
 import { CATEGORIA_ICONOS } from '../../components/icons';
 import { segmentoStyle, segmentoTrackStyle } from '../../components/formStyles';
@@ -15,7 +15,7 @@ function infoCategoria(id: string) {
   return CATS.find((c) => c.id === id) ?? { id, nombre: id, icono: 'question' as const, color: '#5A5368' };
 }
 
-export function EstadisticasDesktop({ periodo, onCambiarPeriodo, categorias, total }: EstadisticasViewProps) {
+export function EstadisticasDesktop({ periodo, onCambiarPeriodo, categorias, total, catColor }: EstadisticasViewProps) {
   return (
     <div style={{ maxWidth: 720, margin: '0 auto', padding: '48px 32px', display: 'flex', flexDirection: 'column', gap: 28 }}>
       <div>
@@ -47,6 +47,7 @@ export function EstadisticasDesktop({ periodo, onCambiarPeriodo, categorias, tot
           <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
             {categorias.map((c) => {
               const info = infoCategoria(c.categoria);
+              const color = colorCategoria(info, catColor);
               const Icono = CATEGORIA_ICONOS[info.icono];
               const pct = total > 0 ? (c.monto / total) * 100 : 0;
               return (
@@ -60,8 +61,8 @@ export function EstadisticasDesktop({ periodo, onCambiarPeriodo, categorias, tot
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      background: `${info.color}26`,
-                      color: info.color,
+                      background: `${color}26`,
+                      color,
                     }}
                   >
                     {Icono ? <Icono width={19} height={19} /> : null}
@@ -72,7 +73,7 @@ export function EstadisticasDesktop({ periodo, onCambiarPeriodo, categorias, tot
                       <span style={{ fontVariantNumeric: 'tabular-nums' }}>S/ {formatearMonto(c.monto)}</span>
                     </div>
                     <div style={{ height: 7, borderRadius: 4, background: 'var(--muted)', overflow: 'hidden' }}>
-                      <div style={{ height: '100%', width: `${Math.max(2, pct)}%`, background: info.color, borderRadius: 4 }} />
+                      <div style={{ height: '100%', width: `${Math.max(2, pct)}%`, background: color, borderRadius: 4 }} />
                     </div>
                   </div>
                   <span style={{ fontSize: 12, color: 'var(--muted-fg)', flex: '0 0 36px', textAlign: 'right' }}>

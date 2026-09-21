@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useConfig } from '../../hooks/useConfig';
 import { useIsDesktop } from '../../hooks/useIsDesktop';
 import { useMovimientos } from '../../hooks/useMovimientos';
 import { gastoPorCategoria } from '../../lib/finanzas';
@@ -17,6 +18,7 @@ function desdeDe(periodo: Periodo): string {
 export function Estadisticas() {
   const isDesktop = useIsDesktop();
   const { movimientos, cargando } = useMovimientos();
+  const { config, cargando: cargandoConfig } = useConfig();
   const [periodo, setPeriodo] = useState<Periodo>('mes');
 
   const { categorias, total } = useMemo(() => {
@@ -25,8 +27,8 @@ export function Estadisticas() {
     return { categorias, total };
   }, [movimientos, periodo]);
 
-  if (cargando) return null;
+  if (cargando || cargandoConfig) return null;
 
-  const props = { periodo, onCambiarPeriodo: setPeriodo, categorias, total };
+  const props = { periodo, onCambiarPeriodo: setPeriodo, categorias, total, catColor: config.catColor };
   return isDesktop ? <EstadisticasDesktop {...props} /> : <EstadisticasMobile {...props} />;
 }

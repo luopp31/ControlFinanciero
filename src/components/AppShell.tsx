@@ -15,7 +15,7 @@ import {
 import { SyncPanel } from './SyncPanel';
 import { RegistroRapido } from './RegistroRapido';
 
-export type Vista = 'panel' | 'movimientos' | 'cuentas' | 'compromisos' | 'estadisticas';
+export type Vista = 'panel' | 'movimientos' | 'cuentas' | 'compromisos' | 'estadisticas' | 'ajustes';
 
 type IconComp = (props: SVGProps<SVGSVGElement>) => React.JSX.Element;
 
@@ -87,7 +87,7 @@ export function AppShell({
             );
           })}
           <div style={{ marginTop: 'auto', paddingBottom: 12 }}>
-            <SyncPanel mostrarEtiqueta={false} />
+            <SyncPanel mostrarEtiqueta={false} onAbrirAjustes={() => onCambiarVista('ajustes')} />
           </div>
         </nav>
         <div style={{ flex: 1, minWidth: 0 }}>{children}</div>
@@ -109,7 +109,7 @@ export function AppShell({
           boxShadow: 'var(--shadow)',
         }}
       >
-        <SyncPanel />
+        <SyncPanel onAbrirAjustes={() => onCambiarVista('ajustes')} />
       </div>
       <div style={{ flex: 1, paddingTop: 'calc(24px + env(safe-area-inset-top))', paddingBottom: 92 }}>{children}</div>
       <nav

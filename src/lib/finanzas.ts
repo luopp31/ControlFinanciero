@@ -53,6 +53,12 @@ export interface Categoria {
   color: string;
 }
 
+/** Color efectivo de una categoría: el que el usuario haya elegido en Ajustes
+ * (Config.catColor), o si no personalizó nada, el de identidad por defecto. */
+export function colorCategoria(cat: Categoria, catColor?: Record<string, string>): string {
+  return catColor?.[cat.id] ?? cat.color;
+}
+
 // Portado de legacy/index.html:573-589.
 export const CATS: Categoria[] = [
   { id: 'ALIMENTACION', nombre: 'Alimentación', icono: 'fork-knife', color: '#FFB020' },

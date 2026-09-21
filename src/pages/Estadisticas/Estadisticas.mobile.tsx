@@ -1,4 +1,4 @@
-import { CATS } from '../../lib/finanzas';
+import { CATS, colorCategoria } from '../../lib/finanzas';
 import { formatearMonto } from '../../lib/formato';
 import { CATEGORIA_ICONOS } from '../../components/icons';
 import { segmentoStyle, segmentoTrackStyle } from '../../components/formStyles';
@@ -15,7 +15,7 @@ function infoCategoria(id: string) {
   return CATS.find((c) => c.id === id) ?? { id, nombre: id, icono: 'question' as const, color: '#5A5368' };
 }
 
-export function EstadisticasMobile({ periodo, onCambiarPeriodo, categorias, total }: EstadisticasViewProps) {
+export function EstadisticasMobile({ periodo, onCambiarPeriodo, categorias, total, catColor }: EstadisticasViewProps) {
   return (
     <div style={{ padding: '28px 18px 40px', display: 'flex', flexDirection: 'column', gap: 20 }}>
       <div>
@@ -51,6 +51,7 @@ export function EstadisticasMobile({ periodo, onCambiarPeriodo, categorias, tota
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             {categorias.map((c) => {
               const info = infoCategoria(c.categoria);
+              const color = colorCategoria(info, catColor);
               const Icono = CATEGORIA_ICONOS[info.icono];
               const pct = total > 0 ? (c.monto / total) * 100 : 0;
               return (
@@ -64,8 +65,8 @@ export function EstadisticasMobile({ periodo, onCambiarPeriodo, categorias, tota
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      background: `${info.color}26`,
-                      color: info.color,
+                      background: `${color}26`,
+                      color,
                     }}
                   >
                     {Icono ? <Icono width={17} height={17} /> : null}
@@ -78,7 +79,7 @@ export function EstadisticasMobile({ periodo, onCambiarPeriodo, categorias, tota
                       </span>
                     </div>
                     <div style={{ height: 6, borderRadius: 3, background: 'var(--muted)', overflow: 'hidden' }}>
-                      <div style={{ height: '100%', width: `${Math.max(2, pct)}%`, background: info.color, borderRadius: 3 }} />
+                      <div style={{ height: '100%', width: `${Math.max(2, pct)}%`, background: color, borderRadius: 3 }} />
                     </div>
                   </div>
                   <span style={{ fontSize: 11.5, color: 'var(--muted-fg)', flex: '0 0 32px', textAlign: 'right' }}>

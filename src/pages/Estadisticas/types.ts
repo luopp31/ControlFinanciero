@@ -7,4 +7,5 @@ export interface EstadisticasViewProps {
   onCambiarPeriodo: (p: Periodo) => void;
   categorias: CategoriaTotal[];
   total: number;
+  catColor: Record<string, string>;
 }

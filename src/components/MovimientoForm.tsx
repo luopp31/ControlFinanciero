@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import {
   CATS,
   CATS_ING,
+  colorCategoria,
   estadoPrestamo,
   saldo,
   TIPOS,
@@ -383,7 +384,7 @@ export function MovimientoForm({ cuentas, onCrear, onCancelar, valoresIniciales,
 
       {necesitaCategoria && (
         <button type="button" onClick={() => setPicker('categoria')} style={campoSelStyle}>
-          <span style={campoSelIconoStyle(categoriaSel?.color ?? '#9A93AC')}>
+          <span style={campoSelIconoStyle(categoriaSel ? colorCategoria(categoriaSel, config.catColor) : '#9A93AC')}>
             {categoriaSel ? (
               (() => {
                 const Icono = CATEGORIA_ICONOS[categoriaSel.icono];
@@ -462,6 +463,7 @@ export function MovimientoForm({ cuentas, onCrear, onCancelar, valoresIniciales,
             <div style={{ ...pickerGridStyle, gridTemplateColumns: 'repeat(3, 1fr)' }}>
               {catalogo.map((c) => {
                 const Icono = CATEGORIA_ICONOS[c.icono];
+                const color = colorCategoria(c, config.catColor);
                 return (
                   <button
                     key={c.id}
@@ -470,9 +472,9 @@ export function MovimientoForm({ cuentas, onCrear, onCancelar, valoresIniciales,
                       setCategoria(c.id);
                       setPicker(null);
                     }}
-                    style={pickerItemStyle(categoria === c.id, c.color)}
+                    style={pickerItemStyle(categoria === c.id, color)}
                   >
-                    <span style={pickerItemIconoStyle(c.color)}>
+                    <span style={pickerItemIconoStyle(color)}>
                       <Icono width={19} height={19} />
                     </span>
                     <span style={{ fontSize: 11.5, fontWeight: 600, textAlign: 'center', lineHeight: 1.2 }}>

@@ -1,3 +1,5 @@
+import { PildoraComparacion } from '../../components/ComparacionPeriodo';
+import { TendenciaMensual } from '../../components/TendenciaMensual';
 import { CATS, colorCategoria } from '../../lib/finanzas';
 import { formatearMonto } from '../../lib/formato';
 import { CATEGORIA_ICONOS } from '../../components/icons';
@@ -15,7 +17,17 @@ function infoCategoria(id: string) {
   return CATS.find((c) => c.id === id) ?? { id, nombre: id, icono: 'question' as const, color: '#5A5368' };
 }
 
-export function EstadisticasMobile({ periodo, onCambiarPeriodo, categorias, total, catColor }: EstadisticasViewProps) {
+export function EstadisticasMobile({
+  periodo,
+  onCambiarPeriodo,
+  categorias,
+  total,
+  ingresos,
+  comparacionGasto,
+  comparacionIngreso,
+  tendencia,
+  catColor,
+}: EstadisticasViewProps) {
   return (
     <div style={{ padding: '28px 18px 40px', display: 'flex', flexDirection: 'column', gap: 20 }}>
       <div>
@@ -36,11 +48,21 @@ export function EstadisticasMobile({ periodo, onCambiarPeriodo, categorias, tota
         ))}
       </div>
 
-      <div className="glass-card">
-        <p style={{ margin: '0 0 4px', fontSize: 12, fontWeight: 700, color: 'var(--muted-fg)', textTransform: 'uppercase', letterSpacing: '.05em' }}>
-          Gasto total
-        </p>
-        <p style={{ margin: 0, fontSize: 30, fontWeight: 800, fontVariantNumeric: 'tabular-nums' }}>S/ {formatearMonto(total)}</p>
+      <div style={{ display: 'flex', gap: 12 }}>
+        <div className="glass-card" style={{ flex: 1 }}>
+          <p style={tituloStat}>Ingresos</p>
+          <p style={{ margin: '2px 0 8px', fontSize: 20, fontWeight: 800, fontVariantNumeric: 'tabular-nums' }}>
+            S/ {formatearMonto(ingresos)}
+          </p>
+          <PildoraComparacion comparacion={comparacionIngreso} subirEsBueno={true} />
+        </div>
+        <div className="glass-card" style={{ flex: 1 }}>
+          <p style={tituloStat}>Gastos</p>
+          <p style={{ margin: '2px 0 8px', fontSize: 20, fontWeight: 800, fontVariantNumeric: 'tabular-nums' }}>
+            S/ {formatearMonto(total)}
+          </p>
+          <PildoraComparacion comparacion={comparacionGasto} subirEsBueno={false} />
+        </div>
       </div>
 
       <div className="glass-card">
@@ -91,6 +113,11 @@ export function EstadisticasMobile({ periodo, onCambiarPeriodo, categorias, tota
           </div>
         )}
       </div>
+
+      <div className="glass-card">
+        <p style={{ margin: '0 0 14px', fontSize: 14, fontWeight: 700 }}>Tendencia mensual</p>
+        <TendenciaMensual datos={tendencia} />
+      </div>
     </div>
   );
 }
@@ -102,4 +129,13 @@ const eyebrow: React.CSSProperties = {
   textTransform: 'uppercase',
   color: 'var(--muted-fg)',
   margin: '0 0 6px',
+};
+
+const tituloStat: React.CSSProperties = {
+  margin: 0,
+  fontSize: 11,
+  fontWeight: 700,
+  color: 'var(--muted-fg)',
+  textTransform: 'uppercase',
+  letterSpacing: '.05em',
 };

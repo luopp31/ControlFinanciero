@@ -10,9 +10,16 @@ export function formatearMontoOcultable(n: number, oculto: boolean): string {
   return oculto ? '••••.••' : formatearMonto(n);
 }
 
+const MESES_CORTOS = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+
 /** "22 sep" a partir de una fecha ISO (YYYY-MM-DD). */
 export function formatearFechaCorta(iso: string): string {
   const [, mes, dia] = iso.split('-');
-  const meses = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
-  return `${Number(dia)} ${meses[Number(mes) - 1]}`;
+  return `${Number(dia)} ${MESES_CORTOS[Number(mes) - 1]}`;
+}
+
+/** "sep" a partir de una clave de mes 'YYYY-MM'. */
+export function formatearMesCorto(mesISO: string): string {
+  const [, mes] = mesISO.split('-');
+  return MESES_CORTOS[Number(mes) - 1];
 }

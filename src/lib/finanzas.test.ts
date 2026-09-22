@@ -9,6 +9,9 @@ import {
   totalAhorrado,
   pagosDeCompromiso,
   totalPagadoDeCompromiso,
+  totalIngresos,
+  totalGastos,
+  totalesPorMes,
   valorNeto,
   serieValorNeto,
   type Cuenta,
@@ -159,6 +162,33 @@ describe('pagosDeCompromiso / totalPagadoDeCompromiso', () => {
   it('suma solo los pagos dentro del rango de fechas', () => {
     expect(totalPagadoDeCompromiso('netflix', movs, '2026-01-01', '2026-12-31')).toBeCloseTo(91.8);
     expect(totalPagadoDeCompromiso('netflix', movs, '2026-01-01', '2026-01-31')).toBeCloseTo(45.9);
+  });
+});
+
+describe('totalIngresos / totalGastos / totalesPorMes', () => {
+  const movs: Movimiento[] = [
+    { id: '1', fecha: '2026-01-10', monto: 2000, tipo: 'INGRESO', cuentaId: 'SIMPLE' },
+    { id: '2', fecha: '2026-01-15', monto: 50, tipo: 'REEMBOLSO', cuentaId: 'SIMPLE' },
+    { id: '3', fecha: '2026-01-20', monto: 300, tipo: 'GASTO', cuentaId: 'SIMPLE' },
+    { id: '4', fecha: '2026-02-05', monto: 100, tipo: 'AHORRO', cuentaId: 'SIMPLE' },
+    { id: '5', fecha: '2026-02-10', monto: 150, tipo: 'GASTO', cuentaId: 'SIMPLE' },
+  ];
+
+  it('totalIngresos suma INGRESO y REEMBOLSO, no otros tipos', () => {
+    expect(totalIngresos(movs, '2026-01-01', '2026-01-31')).toBe(2050);
+    expect(totalIngresos(movs, '2026-02-01', '2026-02-28')).toBe(0);
+  });
+
+  it('totalGastos solo cuenta tipo GASTO, no AHORRO', () => {
+    expect(totalGastos(movs, '2026-02-01', '2026-02-28')).toBe(150);
+  });
+
+  it('totalesPorMes arma ingreso y gasto reales por cada mes pedido', () => {
+    expect(totalesPorMes(movs, ['2026-01', '2026-02', '2026-03'])).toEqual([
+      { mes: '2026-01', ingreso: 2050, gasto: 300 },
+      { mes: '2026-02', ingreso: 0, gasto: 150 },
+      { mes: '2026-03', ingreso: 0, gasto: 0 },
+    ]);
   });
 });
 

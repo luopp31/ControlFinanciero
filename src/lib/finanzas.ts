@@ -237,6 +237,42 @@ export function gastoPorCategoria(movimientos: Movimiento[], desde: string, hast
     .sort((a, b) => b.monto - a.monto);
 }
 
+/** Total ingresado (INGRESO + REEMBOLSO) dentro de [desde, hasta]. */
+export function totalIngresos(movimientos: Movimiento[], desde: string, hasta: string): number {
+  return movimientosActivos(movimientos)
+    .filter((m) => (m.tipo === 'INGRESO' || m.tipo === 'REEMBOLSO') && m.fecha >= desde && m.fecha <= hasta)
+    .reduce((s, m) => s + m.monto, 0);
+}
+
+/** Total gastado (solo tipo GASTO) dentro de [desde, hasta] — el mismo total
+ * que suman las filas de gastoPorCategoria(). */
+export function totalGastos(movimientos: Movimiento[], desde: string, hasta: string): number {
+  return movimientosActivos(movimientos)
+    .filter((m) => m.tipo === 'GASTO' && m.fecha >= desde && m.fecha <= hasta)
+    .reduce((s, m) => s + m.monto, 0);
+}
+
+export interface TotalMensual {
+  /** 'YYYY-MM' */
+  mes: string;
+  ingreso: number;
+  gasto: number;
+}
+
+/** Ingreso y gasto reales por mes, para cada clave 'YYYY-MM' en `meses`
+ * (ver ultimosMesesISO en lib/fecha) — la tendencia mes a mes. */
+export function totalesPorMes(movimientos: Movimiento[], meses: string[]): TotalMensual[] {
+  return meses.map((mes) => {
+    const desde = `${mes}-01`;
+    const hasta = `${mes}-31`;
+    return {
+      mes,
+      ingreso: totalIngresos(movimientos, desde, hasta),
+      gasto: totalGastos(movimientos, desde, hasta),
+    };
+  });
+}
+
 /**
  * Valor neto = saldo en cuentas + lo que te deben − lo que debes + lo ahorrado.
  * Importante: cualquier gráfico o resumen de valor neto debe usar ESTA función

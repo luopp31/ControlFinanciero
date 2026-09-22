@@ -1,3 +1,5 @@
+import { PildoraComparacion } from '../../components/ComparacionPeriodo';
+import { TendenciaMensual } from '../../components/TendenciaMensual';
 import { CATS, colorCategoria } from '../../lib/finanzas';
 import { formatearMonto } from '../../lib/formato';
 import { CATEGORIA_ICONOS } from '../../components/icons';
@@ -15,7 +17,17 @@ function infoCategoria(id: string) {
   return CATS.find((c) => c.id === id) ?? { id, nombre: id, icono: 'question' as const, color: '#5A5368' };
 }
 
-export function EstadisticasDesktop({ periodo, onCambiarPeriodo, categorias, total, catColor }: EstadisticasViewProps) {
+export function EstadisticasDesktop({
+  periodo,
+  onCambiarPeriodo,
+  categorias,
+  total,
+  ingresos,
+  comparacionGasto,
+  comparacionIngreso,
+  tendencia,
+  catColor,
+}: EstadisticasViewProps) {
   return (
     <div style={{ maxWidth: 720, margin: '0 auto', padding: '48px 32px', display: 'flex', flexDirection: 'column', gap: 28 }}>
       <div>
@@ -23,19 +35,28 @@ export function EstadisticasDesktop({ periodo, onCambiarPeriodo, categorias, tot
         <h1 style={{ fontSize: 28, fontWeight: 800, letterSpacing: '-0.02em', margin: 0 }}>Estadísticas</h1>
       </div>
 
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 24 }}>
-        <div style={{ ...segmentoTrackStyle, maxWidth: 420 }}>
-          {PERIODOS.map((p) => (
-            <button key={p.id} type="button" onClick={() => onCambiarPeriodo(p.id)} style={segmentoStyle(periodo === p.id, 'var(--primary)')}>
-              {p.nombre}
-            </button>
-          ))}
-        </div>
-        <div style={{ textAlign: 'right' }}>
-          <p style={{ margin: '0 0 2px', fontSize: 11.5, fontWeight: 700, color: 'var(--muted-fg)', textTransform: 'uppercase', letterSpacing: '.05em' }}>
-            Gasto total
+      <div style={{ ...segmentoTrackStyle, maxWidth: 420 }}>
+        {PERIODOS.map((p) => (
+          <button key={p.id} type="button" onClick={() => onCambiarPeriodo(p.id)} style={segmentoStyle(periodo === p.id, 'var(--primary)')}>
+            {p.nombre}
+          </button>
+        ))}
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+        <div className="glass-card">
+          <p style={tituloStat}>Ingresos</p>
+          <p style={{ margin: '2px 0 8px', fontSize: 24, fontWeight: 800, fontVariantNumeric: 'tabular-nums' }}>
+            S/ {formatearMonto(ingresos)}
           </p>
-          <p style={{ margin: 0, fontSize: 26, fontWeight: 800, fontVariantNumeric: 'tabular-nums' }}>S/ {formatearMonto(total)}</p>
+          <PildoraComparacion comparacion={comparacionIngreso} subirEsBueno={true} />
+        </div>
+        <div className="glass-card">
+          <p style={tituloStat}>Gastos</p>
+          <p style={{ margin: '2px 0 8px', fontSize: 24, fontWeight: 800, fontVariantNumeric: 'tabular-nums' }}>
+            S/ {formatearMonto(total)}
+          </p>
+          <PildoraComparacion comparacion={comparacionGasto} subirEsBueno={false} />
         </div>
       </div>
 
@@ -85,6 +106,11 @@ export function EstadisticasDesktop({ periodo, onCambiarPeriodo, categorias, tot
           </div>
         )}
       </div>
+
+      <div className="glass-card">
+        <p style={{ margin: '0 0 16px', fontSize: 15, fontWeight: 700 }}>Tendencia mensual</p>
+        <TendenciaMensual datos={tendencia} />
+      </div>
     </div>
   );
 }
@@ -96,4 +122,13 @@ const eyebrow: React.CSSProperties = {
   textTransform: 'uppercase',
   color: 'var(--muted-fg)',
   margin: '0 0 8px',
+};
+
+const tituloStat: React.CSSProperties = {
+  margin: 0,
+  fontSize: 11.5,
+  fontWeight: 700,
+  color: 'var(--muted-fg)',
+  textTransform: 'uppercase',
+  letterSpacing: '.05em',
 };

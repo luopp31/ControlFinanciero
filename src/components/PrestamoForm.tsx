@@ -1,12 +1,13 @@
 import { useId, useState } from 'react';
-import type { TipoPrestamo } from '../lib/finanzas';
+import type { Cuenta, TipoPrestamo } from '../lib/finanzas';
 import { hoyISO } from '../lib/fecha';
 import { botonPrimario, botonSecundario, chipStyle, etiquetaStyle, inputStyle } from './formStyles';
 
 type ValoresPrestamo = { persona: string; tipo: TipoPrestamo; capital: number; fecha: string };
 
 interface PrestamoFormProps {
-  onCrear: (datos: ValoresPrestamo) => Promise<unknown>;
+  cuentas: Cuenta[];
+  onCrear: (datos: ValoresPrestamo, cuentaId: string) => Promise<unknown>;
   onCancelar?: () => void;
   valoresIniciales?: ValoresPrestamo;
   etiquetaGuardar?: string;
@@ -17,28 +18,32 @@ const TIPOS: { id: TipoPrestamo; etiqueta: string }[] = [
   { id: 'DEBO', etiqueta: 'Le debo' },
 ];
 
-export function PrestamoForm({ onCrear, onCancelar, valoresIniciales, etiquetaGuardar }: PrestamoFormProps) {
+export function PrestamoForm({ cuentas, onCrear, onCancelar, valoresIniciales, etiquetaGuardar }: PrestamoFormProps) {
   const personaId = useId();
   const editando = !!valoresIniciales;
   const [persona, setPersona] = useState(valoresIniciales?.persona ?? '');
   const [tipo, setTipo] = useState<TipoPrestamo>(valoresIniciales?.tipo ?? 'PRESTE');
   const [capital, setCapital] = useState(valoresIniciales ? String(valoresIniciales.capital) : '');
+  const [cuentaId, setCuentaId] = useState(cuentas[0]?.id ?? '');
   const [guardando, setGuardando] = useState(false);
 
   const capitalValido = capital.trim() !== '' && !Number.isNaN(Number(capital)) && Number(capital) > 0;
-  const listo = persona.trim() !== '' && capitalValido;
+  const listo = persona.trim() !== '' && capitalValido && (editando || cuentaId !== '');
 
   async function enviar(e: React.FormEvent) {
     e.preventDefault();
     if (!listo || guardando) return;
     setGuardando(true);
     try {
-      await onCrear({
-        persona: persona.trim(),
-        tipo,
-        capital: Number(capital),
-        fecha: valoresIniciales?.fecha ?? hoyISO(),
-      });
+      await onCrear(
+        {
+          persona: persona.trim(),
+          tipo,
+          capital: Number(capital),
+          fecha: valoresIniciales?.fecha ?? hoyISO(),
+        },
+        cuentaId,
+      );
       if (editando) {
         onCancelar?.();
       } else {
@@ -92,6 +97,19 @@ export function PrestamoForm({ onCrear, onCancelar, valoresIniciales, etiquetaGu
           style={{ ...inputStyle, fontVariantNumeric: 'tabular-nums' }}
         />
       </div>
+
+      {!editando && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          <span style={etiquetaStyle}>{tipo === 'PRESTE' ? 'Sale de' : 'Entra a'}</span>
+          <select value={cuentaId} onChange={(e) => setCuentaId(e.target.value)} style={inputStyle}>
+            {cuentas.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.nombre}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
 
       <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
         {onCancelar && (

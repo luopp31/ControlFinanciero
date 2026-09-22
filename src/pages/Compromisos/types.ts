@@ -6,7 +6,10 @@ export interface CompromisosViewProps {
   movimientos: Movimiento[];
   prestamos: Prestamo[];
   suscripciones: Compromiso[];
-  crearPrestamo: (datos: { persona: string; tipo: TipoPrestamo; capital: number; fecha: string }) => Promise<unknown>;
+  crearPrestamo: (
+    datos: { persona: string; tipo: TipoPrestamo; capital: number; fecha: string },
+    cuentaId: string,
+  ) => Promise<unknown>;
   actualizarPrestamo: (id: string, datos: { persona: string; tipo: TipoPrestamo; capital: number; fecha: string }) => Promise<unknown>;
   borrarPrestamo: (id: string) => void;
   registrarPago: (prestamo: Prestamo, monto: number, cuentaId: string) => Promise<unknown>;

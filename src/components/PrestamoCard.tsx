@@ -33,6 +33,7 @@ export function PrestamoCard({
     return (
       <div className="glass-card">
         <PrestamoForm
+          cuentas={cuentas}
           valoresIniciales={{
             persona: prestamo.persona,
             tipo: prestamo.tipo,

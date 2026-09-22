@@ -61,8 +61,9 @@ export function CompromisosMobile({
           {mostrarForm ? (
             <div className="glass-card">
               <PrestamoForm
-                onCrear={async (datos) => {
-                  const r = await crearPrestamo(datos);
+                cuentas={cuentas}
+                onCrear={async (datos, cuentaId) => {
+                  const r = await crearPrestamo(datos, cuentaId);
                   setMostrarForm(false);
                   return r;
                 }}

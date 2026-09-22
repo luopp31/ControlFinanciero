@@ -30,7 +30,7 @@ export function CompromisosDesktop({
         <section style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           <p style={seccionTitulo}>Préstamos</p>
           <div className="glass-card">
-            <PrestamoForm onCrear={crearPrestamo} />
+            <PrestamoForm cuentas={cuentas} onCrear={crearPrestamo} />
           </div>
           {prestamos.length === 0 ? (
             <p style={{ fontSize: 13.5, color: 'var(--muted-fg)' }}>Aún no registras préstamos.</p>

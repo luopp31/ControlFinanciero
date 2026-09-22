@@ -19,6 +19,22 @@ export function Compromisos() {
 
   const suscripciones = compromisos.filter((c) => c.tipo === 'SUSCRIPCION');
 
+  async function crearPrestamoConMovimiento(
+    datos: { persona: string; tipo: Prestamo['tipo']; capital: number; fecha: string },
+    cuentaId: string,
+  ) {
+    const nuevo = await crearPrestamo(datos);
+    await crearMovimiento({
+      fecha: datos.fecha,
+      monto: datos.capital,
+      tipo: 'PRESTAMO',
+      cuentaId,
+      dir: datos.tipo,
+      prestId: nuevo.id,
+    });
+    return nuevo;
+  }
+
   async function registrarPago(prestamo: Prestamo, monto: number, cuentaId: string) {
     await crearMovimiento({
       fecha: hoyISO(),
@@ -39,7 +55,7 @@ export function Compromisos() {
     movimientos,
     prestamos,
     suscripciones,
-    crearPrestamo,
+    crearPrestamo: crearPrestamoConMovimiento,
     actualizarPrestamo,
     borrarPrestamo,
     registrarPago,

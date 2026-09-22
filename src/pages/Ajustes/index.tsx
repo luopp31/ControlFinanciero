@@ -122,6 +122,11 @@ function SeccionPerfil({
     try {
       if (modoRegistro) await registrarse(email, password);
       else await iniciarSesion(email, password);
+      // Sincroniza apenas hay sesión, sin esperar a que toquen "Sincronizar
+      // ahora" a mano — si no, lo que ya tenías en este dispositivo se queda
+      // sin subir hasta que alguien se acuerde de tocar ese botón.
+      const r = await sincronizarTodo();
+      if (!r.ok) setErrorLogin(`Conectado, pero no se pudo sincronizar: ${r.error}`);
     } catch (err) {
       setErrorLogin(err instanceof Error ? err.message : 'No se pudo continuar');
     } finally {

@@ -1,5 +1,5 @@
 import { supabase } from './supabase';
-import { getAll, put, type Compromiso } from './db';
+import { getAll, put, getConfig, putConfig, type Compromiso, type Config } from './db';
 import type { Cuenta, Movimiento, Prestamo } from './finanzas';
 import { avisarCambioDeDatos } from './eventos';
 
@@ -48,6 +48,7 @@ const movimientosSync: TablaSync<Movimiento> = {
     destino_id: m.destinoId ?? null,
     dir: m.dir ?? null,
     prest_id: m.prestId ?? null,
+    compromiso_id: m.compromisoId ?? null,
     nota: m.nota ?? null,
     borrado: !!m.borrado,
   }),
@@ -61,6 +62,7 @@ const movimientosSync: TablaSync<Movimiento> = {
     destinoId: (r.destino_id as string) ?? null,
     dir: (r.dir as Movimiento['dir']) ?? null,
     prestId: (r.prest_id as string) ?? null,
+    compromisoId: (r.compromiso_id as string) ?? null,
     nota: (r.nota as string) ?? null,
     borrado: !!r.borrado,
     actualizado: r.actualizado as string,
@@ -160,12 +162,84 @@ async function sincronizarTabla<L extends { id: string; actualizado?: string; si
   }
 }
 
+function bajarConfig(r: Record<string, unknown>, version: number): Config {
+  return {
+    presupuesto: Number(r.presupuesto ?? 0),
+    nombre: (r.nombre as string) ?? '',
+    catsExtra: (r.cats_extra as unknown[]) ?? [],
+    catColor: (r.cat_color as Record<string, string>) ?? {},
+    ocultarSaldos: !!r.ocultar_saldos,
+    tema: (r.tema as Config['tema']) ?? undefined,
+    version,
+  };
+}
+
+function subirConfig(c: Config, usuarioId: string) {
+  return {
+    usuario_id: usuarioId,
+    presupuesto: c.presupuesto,
+    nombre: c.nombre,
+    cats_extra: c.catsExtra,
+    cat_color: c.catColor,
+    ocultar_saldos: !!c.ocultarSaldos,
+    tema: c.tema ?? null,
+    version: c.version,
+  };
+}
+
+/**
+ * Sincroniza la config (perfil, tema, saldos ocultos, colores) con la fila
+ * única del usuario en Supabase, usando "version" en vez del timestamp local
+ * para decidir quién gana -- ese fue el bug de la app anterior: un
+ * dispositivo recién instalado, con hora de reloj más "nueva" pero cero
+ * datos reales, podía pisar la config buena. Con version, gana quien de
+ * verdad tiene más cambios acumulados, sin importar la hora de cada reloj.
+ */
+async function sincronizarConfig(): Promise<void> {
+  if (!supabase) return;
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return;
+
+  const local = (await getConfig()) ?? { presupuesto: 0, nombre: '', catsExtra: [], catColor: {}, version: 0 };
+
+  const { data: remoto, error: errLeer } = await supabase.from('config').select('*').eq('usuario_id', user.id).maybeSingle();
+  if (errLeer) throw new Error(`config: ${errLeer.message}`);
+
+  if (!remoto) {
+    const { error: errInsert } = await supabase.from('config').insert(subirConfig(local, user.id));
+    if (errInsert) throw new Error(`config: ${errInsert.message}`);
+    return;
+  }
+
+  const versionRemota = Number(remoto.version ?? 0);
+
+  if (local.version > versionRemota) {
+    const { data: filasActualizadas, error: errUpdate } = await supabase
+      .from('config')
+      .update(subirConfig(local, user.id))
+      .eq('usuario_id', user.id)
+      .eq('version', versionRemota)
+      .select();
+    if (errUpdate) throw new Error(`config: ${errUpdate.message}`);
+    // 0 filas = alguien más escribió entre medio (carrera) -- nos quedamos
+    // con lo remoto en vez de arriesgarnos a pisar ese cambio a ciegas.
+    if (!filasActualizadas || filasActualizadas.length === 0) {
+      await putConfig(bajarConfig(remoto, versionRemota));
+    }
+  } else if (versionRemota > local.version) {
+    await putConfig(bajarConfig(remoto, versionRemota));
+  }
+}
+
 export async function sincronizarTodo(): Promise<{ ok: true } | { ok: false; error: string }> {
   if (!supabase) return { ok: false, error: 'Supabase no está configurado.' };
   try {
     for (const t of TABLAS) {
       await sincronizarTabla(t);
     }
+    await sincronizarConfig();
     avisarCambioDeDatos();
     return { ok: true };
   } catch (e) {

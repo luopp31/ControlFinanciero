@@ -20,7 +20,7 @@ export function Compromisos() {
   const suscripciones = compromisos.filter((c) => c.tipo === 'SUSCRIPCION');
 
   async function crearPrestamoConMovimiento(
-    datos: { persona: string; tipo: Prestamo['tipo']; capital: number; fecha: string },
+    datos: { persona: string; tipo: Prestamo['tipo']; capital: number; acordado?: number | null; fecha: string },
     cuentaId: string,
   ) {
     const nuevo = await crearPrestamo(datos);

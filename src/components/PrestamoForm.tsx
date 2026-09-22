@@ -3,7 +3,13 @@ import type { Cuenta, TipoPrestamo } from '../lib/finanzas';
 import { hoyISO } from '../lib/fecha';
 import { botonPrimario, botonSecundario, chipStyle, etiquetaStyle, inputStyle } from './formStyles';
 
-type ValoresPrestamo = { persona: string; tipo: TipoPrestamo; capital: number; fecha: string };
+type ValoresPrestamo = {
+  persona: string;
+  tipo: TipoPrestamo;
+  capital: number;
+  acordado?: number | null;
+  fecha: string;
+};
 
 interface PrestamoFormProps {
   cuentas: Cuenta[];
@@ -20,10 +26,12 @@ const TIPOS: { id: TipoPrestamo; etiqueta: string }[] = [
 
 export function PrestamoForm({ cuentas, onCrear, onCancelar, valoresIniciales, etiquetaGuardar }: PrestamoFormProps) {
   const personaId = useId();
+  const acordadoId = useId();
   const editando = !!valoresIniciales;
   const [persona, setPersona] = useState(valoresIniciales?.persona ?? '');
   const [tipo, setTipo] = useState<TipoPrestamo>(valoresIniciales?.tipo ?? 'PRESTE');
   const [capital, setCapital] = useState(valoresIniciales ? String(valoresIniciales.capital) : '');
+  const [acordado, setAcordado] = useState(valoresIniciales?.acordado ? String(valoresIniciales.acordado) : '');
   const [cuentaId, setCuentaId] = useState(cuentas[0]?.id ?? '');
   const [guardando, setGuardando] = useState(false);
 
@@ -35,11 +43,13 @@ export function PrestamoForm({ cuentas, onCrear, onCancelar, valoresIniciales, e
     if (!listo || guardando) return;
     setGuardando(true);
     try {
+      const acordadoNum = Number(acordado);
       await onCrear(
         {
           persona: persona.trim(),
           tipo,
           capital: Number(capital),
+          acordado: acordadoNum > 0 ? acordadoNum : null,
           fecha: valoresIniciales?.fecha ?? hoyISO(),
         },
         cuentaId,
@@ -49,6 +59,7 @@ export function PrestamoForm({ cuentas, onCrear, onCancelar, valoresIniciales, e
       } else {
         setPersona('');
         setCapital('');
+        setAcordado('');
       }
     } finally {
       setGuardando(false);
@@ -94,6 +105,20 @@ export function PrestamoForm({ cuentas, onCrear, onCancelar, valoresIniciales, e
           value={capital}
           onChange={(e) => setCapital(e.target.value)}
           placeholder="0.00"
+          style={{ ...inputStyle, fontVariantNumeric: 'tabular-nums' }}
+        />
+      </div>
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+        <label htmlFor={acordadoId} style={etiquetaStyle}>
+          Monto acordado a devolver <span style={{ fontWeight: 400, textTransform: 'none' }}>(opcional)</span>
+        </label>
+        <input
+          id={acordadoId}
+          inputMode="decimal"
+          value={acordado}
+          onChange={(e) => setAcordado(e.target.value)}
+          placeholder="Igual al monto si lo dejas vacío"
           style={{ ...inputStyle, fontVariantNumeric: 'tabular-nums' }}
         />
       </div>

@@ -17,7 +17,10 @@ export function PrestamoCard({
   movimientos: Movimiento[];
   cuentas: Cuenta[];
   onRegistrarPago: (monto: number, cuentaId: string) => Promise<unknown>;
-  onEditar: (id: string, datos: { persona: string; tipo: TipoPrestamo; capital: number; fecha: string }) => Promise<unknown>;
+  onEditar: (
+    id: string,
+    datos: { persona: string; tipo: TipoPrestamo; capital: number; acordado?: number | null; fecha: string },
+  ) => Promise<unknown>;
   onBorrar: (id: string) => void;
 }) {
   const [mostrarPago, setMostrarPago] = useState(false);
@@ -38,6 +41,7 @@ export function PrestamoCard({
             persona: prestamo.persona,
             tipo: prestamo.tipo,
             capital: prestamo.capital,
+            acordado: prestamo.acordado,
             fecha: prestamo.fecha,
           }}
           etiquetaGuardar="Guardar cambios"

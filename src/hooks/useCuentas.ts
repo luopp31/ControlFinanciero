@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { getAll, put } from '../lib/db';
 import type { Cuenta } from '../lib/finanzas';
 import { avisarCambioDeDatos, suscribirCambiosDeDatos } from '../lib/eventos';
+import { programarSyncAutomatico } from '../lib/sync';
 
 export function useCuentas() {
   const [cuentas, setCuentas] = useState<Cuenta[]>([]);
@@ -35,6 +36,7 @@ export function useCuentas() {
       await put('cuentas', cuenta);
       await recargar();
       avisarCambioDeDatos();
+      programarSyncAutomatico();
       return cuenta;
     },
     [recargar]
@@ -47,6 +49,7 @@ export function useCuentas() {
       await put('cuentas', { ...actual, ...cambios, actualizado: new Date().toISOString(), sincronizado: false });
       await recargar();
       avisarCambioDeDatos();
+      programarSyncAutomatico();
     },
     [cuentas, recargar]
   );
@@ -60,6 +63,7 @@ export function useCuentas() {
       await put('cuentas', { ...actual, borrado: true, actualizado: new Date().toISOString(), sincronizado: false });
       await recargar();
       avisarCambioDeDatos();
+      programarSyncAutomatico();
     },
     [cuentas, recargar]
   );

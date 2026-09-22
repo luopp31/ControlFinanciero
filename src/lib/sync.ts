@@ -246,3 +246,28 @@ export async function sincronizarTodo(): Promise<{ ok: true } | { ok: false; err
     return { ok: false, error: e instanceof Error ? e.message : 'Error desconocido' };
   }
 }
+
+let temporizadorAutoSync: ReturnType<typeof setTimeout> | null = null;
+const ESPERA_AUTO_SYNC_MS = 1500;
+
+/**
+ * Programa una sincronización unos segundos después del último cambio
+ * local, si hay sesión activa — para no depender de que alguien se acuerde
+ * de tocar "Sincronizar ahora". Los hooks (useCuentas, useMovimientos, etc.)
+ * llaman esto después de cada crear/editar/borrar; varios cambios seguidos
+ * (ej. crear un préstamo dispara dos escrituras) se agrupan en una sola
+ * sincronización en vez de disparar una por cada una.
+ */
+export function programarSyncAutomatico(): void {
+  if (!supabase) return;
+  if (temporizadorAutoSync) clearTimeout(temporizadorAutoSync);
+  temporizadorAutoSync = setTimeout(async () => {
+    temporizadorAutoSync = null;
+    if (!supabase) return;
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    if (!session) return;
+    await sincronizarTodo();
+  }, ESPERA_AUTO_SYNC_MS);
+}

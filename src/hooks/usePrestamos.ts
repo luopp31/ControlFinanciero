@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { getAll, put } from '../lib/db';
 import type { Prestamo } from '../lib/finanzas';
 import { avisarCambioDeDatos, suscribirCambiosDeDatos } from '../lib/eventos';
+import { programarSyncAutomatico } from '../lib/sync';
 
 export function usePrestamos() {
   const [prestamos, setPrestamos] = useState<Prestamo[]>([]);
@@ -35,6 +36,7 @@ export function usePrestamos() {
       await put('prestamos', prestamo);
       await recargar();
       avisarCambioDeDatos();
+      programarSyncAutomatico();
       return prestamo;
     },
     [recargar]
@@ -47,6 +49,7 @@ export function usePrestamos() {
       await put('prestamos', { ...actual, ...cambios, actualizado: new Date().toISOString(), sincronizado: false });
       await recargar();
       avisarCambioDeDatos();
+      programarSyncAutomatico();
     },
     [prestamos, recargar]
   );
@@ -58,6 +61,7 @@ export function usePrestamos() {
       await put('prestamos', { ...actual, borrado: true, actualizado: new Date().toISOString(), sincronizado: false });
       await recargar();
       avisarCambioDeDatos();
+      programarSyncAutomatico();
     },
     [prestamos, recargar]
   );

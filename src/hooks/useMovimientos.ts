@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { getAll, put } from '../lib/db';
 import type { Movimiento } from '../lib/finanzas';
 import { avisarCambioDeDatos, suscribirCambiosDeDatos } from '../lib/eventos';
+import { programarSyncAutomatico } from '../lib/sync';
 
 export function useMovimientos() {
   const [movimientos, setMovimientos] = useState<Movimiento[]>([]);
@@ -38,6 +39,7 @@ export function useMovimientos() {
       await put('movimientos', movimiento);
       await recargar();
       avisarCambioDeDatos();
+      programarSyncAutomatico();
       return movimiento;
     },
     [recargar]
@@ -50,6 +52,7 @@ export function useMovimientos() {
       await put('movimientos', { ...actual, ...cambios, actualizado: new Date().toISOString(), sincronizado: false });
       await recargar();
       avisarCambioDeDatos();
+      programarSyncAutomatico();
     },
     [movimientos, recargar]
   );
@@ -61,6 +64,7 @@ export function useMovimientos() {
       await put('movimientos', { ...actual, borrado: true, actualizado: new Date().toISOString(), sincronizado: false });
       await recargar();
       avisarCambioDeDatos();
+      programarSyncAutomatico();
     },
     [movimientos, recargar]
   );

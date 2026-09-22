@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { getAll, put, type Compromiso } from '../lib/db';
 import { avisarCambioDeDatos, suscribirCambiosDeDatos } from '../lib/eventos';
+import { programarSyncAutomatico } from '../lib/sync';
 
 export function useCompromisos() {
   const [compromisos, setCompromisos] = useState<Compromiso[]>([]);
@@ -34,6 +35,7 @@ export function useCompromisos() {
       await put('compromisos', compromiso);
       await recargar();
       avisarCambioDeDatos();
+      programarSyncAutomatico();
       return compromiso;
     },
     [recargar]
@@ -46,6 +48,7 @@ export function useCompromisos() {
       await put('compromisos', { ...actual, ...cambios, actualizado: new Date().toISOString(), sincronizado: false });
       await recargar();
       avisarCambioDeDatos();
+      programarSyncAutomatico();
     },
     [compromisos, recargar]
   );
@@ -57,6 +60,7 @@ export function useCompromisos() {
       await put('compromisos', { ...actual, borrado: true, actualizado: new Date().toISOString(), sincronizado: false });
       await recargar();
       avisarCambioDeDatos();
+      programarSyncAutomatico();
     },
     [compromisos, recargar]
   );

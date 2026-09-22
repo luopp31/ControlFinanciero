@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { getConfig, putConfig, type Config, type Tema } from '../lib/db';
 import { avisarCambioDeDatos, suscribirCambiosDeDatos } from '../lib/eventos';
+import { programarSyncAutomatico } from '../lib/sync';
 
 const CONFIG_DEFAULT: Config = { presupuesto: 0, nombre: '', catsExtra: [], catColor: {}, version: 0 };
 
@@ -37,6 +38,7 @@ export function useConfig() {
     setConfig(actualizado);
     await putConfig(actualizado);
     avisarCambioDeDatos();
+    programarSyncAutomatico();
   }, []);
 
   const guardarNombre = useCallback((nombre: string) => mutar({ nombre }), [mutar]);

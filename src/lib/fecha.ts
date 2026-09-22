@@ -20,7 +20,7 @@ export function inicioAnioISO(desde: Date = new Date()): string {
   return isoDe(new Date(desde.getFullYear(), 0, 1));
 }
 
-function isoDe(d: Date): string {
+export function isoDe(d: Date): string {
   const mes = String(d.getMonth() + 1).padStart(2, '0');
   const dia = String(d.getDate()).padStart(2, '0');
   return `${d.getFullYear()}-${mes}-${dia}`;
@@ -31,7 +31,7 @@ function parsearISO(iso: string): Date {
   return new Date(anio, mes - 1, dia);
 }
 
-function diasEnMes(anio: number, mesIndice0: number): number {
+export function diasEnMes(anio: number, mesIndice0: number): number {
   return new Date(anio, mesIndice0 + 1, 0).getDate();
 }
 

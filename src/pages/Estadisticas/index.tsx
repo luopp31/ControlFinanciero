@@ -1,13 +1,16 @@
 import { useMemo, useState } from 'react';
 import { useConfig } from '../../hooks/useConfig';
+import { useCuentas } from '../../hooks/useCuentas';
 import { useIsDesktop } from '../../hooks/useIsDesktop';
 import { useMovimientos } from '../../hooks/useMovimientos';
+import { usePrestamos } from '../../hooks/usePrestamos';
 import { compararPeriodos } from '../../components/ComparacionPeriodo';
-import { gastoPorCategoria, totalGastos, totalIngresos, totalesPorMes } from '../../lib/finanzas';
+import { gastoPorCategoria, totalGastos, totalIngresos, totalesPorMes, valorNeto } from '../../lib/finanzas';
 import { hoyISO, inicioAnioISO, inicioMesISO, menosDiasISO, rangoAnteriorIgualDuracion, ultimosMesesISO } from '../../lib/fecha';
+import { promedioGastoMensual } from '../../lib/simulacion';
 import { EstadisticasDesktop } from './Estadisticas.desktop';
 import { EstadisticasMobile } from './Estadisticas.mobile';
-import type { Periodo } from './types';
+import type { Modo, Periodo } from './types';
 
 const MESES_TENDENCIA = 6;
 
@@ -20,9 +23,12 @@ function desdeDe(periodo: Periodo): string {
 
 export function Estadisticas() {
   const isDesktop = useIsDesktop();
+  const { cuentas, cargando: cargandoCuentas } = useCuentas();
   const { movimientos, cargando } = useMovimientos();
+  const { prestamos, cargando: cargandoPrestamos } = usePrestamos();
   const { config, cargando: cargandoConfig } = useConfig();
   const [periodo, setPeriodo] = useState<Periodo>('mes');
+  const [modo, setModo] = useState<Modo>('historial');
 
   const datos = useMemo(() => {
     const desde = desdeDe(periodo);
@@ -40,12 +46,23 @@ export function Estadisticas() {
     );
 
     const tendencia = totalesPorMes(movimientos, ultimosMesesISO(MESES_TENDENCIA));
+    const valorNetoActual = valorNeto(cuentas, movimientos, prestamos);
+    const promedioGastoSugerido = promedioGastoMensual(movimientos);
 
-    return { categorias, total, ingresos, comparacionGasto, comparacionIngreso, tendencia };
-  }, [movimientos, periodo]);
+    return {
+      categorias,
+      total,
+      ingresos,
+      comparacionGasto,
+      comparacionIngreso,
+      tendencia,
+      valorNetoActual,
+      promedioGastoSugerido,
+    };
+  }, [movimientos, cuentas, prestamos, periodo]);
 
-  if (cargando || cargandoConfig) return null;
+  if (cargando || cargandoConfig || cargandoCuentas || cargandoPrestamos) return null;
 
-  const props = { periodo, onCambiarPeriodo: setPeriodo, catColor: config.catColor, ...datos };
+  const props = { periodo, onCambiarPeriodo: setPeriodo, modo, onCambiarModo: setModo, catColor: config.catColor, ...datos };
   return isDesktop ? <EstadisticasDesktop {...props} /> : <EstadisticasMobile {...props} />;
 }

@@ -1,6 +1,6 @@
 import type { Cuenta, Movimiento } from '../lib/finanzas';
 import { saldo } from '../lib/finanzas';
-import { formatearMontoOcultable } from '../lib/formato';
+import { formatearFechaCorta, formatearMontoOcultable } from '../lib/formato';
 import { useConfig } from '../hooks/useConfig';
 import { IconBank, IconWallet } from './icons';
 
@@ -56,7 +56,7 @@ export function CuentaCard({ cuenta, movimientos }: { cuenta: Cuenta; movimiento
         S/ {formatearMontoOcultable(monto, cargandoConfig || !!config.ocultarSaldos)}
       </p>
       <p style={{ margin: 0, fontSize: 10, fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', color: 'var(--muted-fg)' }}>
-        Desde el {cuenta.desde}
+        Desde el {formatearFechaCorta(cuenta.desde)}
       </p>
     </div>
   );

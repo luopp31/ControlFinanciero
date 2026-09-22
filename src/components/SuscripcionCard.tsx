@@ -1,14 +1,8 @@
 import type { Compromiso } from '../lib/db';
 import { proximoCobroISO } from '../lib/fecha';
-import { formatearMonto } from '../lib/formato';
+import { formatearFechaCorta, formatearMonto } from '../lib/formato';
 import { iconoDeMarca } from './marcas';
 import { IconArrowsClockwise } from './icons';
-
-function formatearFechaCorta(iso: string): string {
-  const [, mes, dia] = iso.split('-');
-  const meses = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
-  return `${Number(dia)} ${meses[Number(mes) - 1]}`;
-}
 
 export function SuscripcionCard({
   suscripcion,

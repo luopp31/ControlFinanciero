@@ -1,5 +1,5 @@
 import { useId, useMemo, useState } from 'react';
-import { formatearMonto } from '../lib/formato';
+import { formatearFechaCorta, formatearMonto } from '../lib/formato';
 
 interface Punto {
   fecha: string;
@@ -18,12 +18,6 @@ const PAD_ABAJO = 28;
 // período — el efecto "eToro" que pidió el usuario — no rojo/verde por tramo.
 const VERDE = { solido: '#3DE39A', claro: '#8BF0C4', pillBg: 'rgba(61,227,154,0.16)' };
 const ROSA = { solido: '#FF5C86', claro: '#FF9FB7', pillBg: 'rgba(255,92,134,0.16)' };
-
-function formatearFechaCorta(iso: string): string {
-  const [, mes, dia] = iso.split('-');
-  const meses = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
-  return `${Number(dia)} ${meses[Number(mes) - 1]}`;
-}
 
 /**
  * Gráfico de línea de una sola serie (valor neto en el tiempo), pensado para vivir

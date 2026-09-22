@@ -1,5 +1,5 @@
 import { CATS, CATS_ING, type Cuenta, type Movimiento } from '../lib/finanzas';
-import { formatearMonto } from '../lib/formato';
+import { formatearFechaCorta, formatearMonto } from '../lib/formato';
 import { CATEGORIA_ICONOS, IconQuestion, TIPO_COLOR, TIPO_ICONOS } from './icons';
 
 const TIPO_NOMBRE: Record<string, string> = {
@@ -79,7 +79,7 @@ export function MovimientoRow({
         <div style={{ fontSize: 13.5, fontWeight: 600 }}>{nombre}</div>
         <div style={{ fontSize: 11.5, color: 'var(--muted-fg)' }}>
           {cuenta?.nombre ?? '—'}
-          {destino ? ` → ${destino.nombre}` : ''} · {movimiento.fecha}
+          {destino ? ` → ${destino.nombre}` : ''} · {formatearFechaCorta(movimiento.fecha)}
           {movimiento.nota ? ` · ${movimiento.nota}` : ''}
         </div>
       </div>

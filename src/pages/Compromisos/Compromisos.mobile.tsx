@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { BuscadorPrestamos, filtrarPrestamosPorPersona } from '../../components/BuscadorPrestamos';
 import { PrestamoCard } from '../../components/PrestamoCard';
 import { PrestamoForm } from '../../components/PrestamoForm';
 import { SuscripcionCard } from '../../components/SuscripcionCard';
@@ -22,6 +23,8 @@ export function CompromisosMobile({
 }: CompromisosViewProps) {
   const [subtab, setSubtab] = useState<Subtab>('prestamos');
   const [mostrarForm, setMostrarForm] = useState(false);
+  const [busqueda, setBusqueda] = useState('');
+  const prestamosFiltrados = filtrarPrestamosPorPersona(prestamos, busqueda);
 
   return (
     <div style={{ padding: '28px 18px 40px', display: 'flex', flexDirection: 'column', gap: 20 }}>
@@ -76,10 +79,20 @@ export function CompromisosMobile({
               Registrar préstamo
             </button>
           )}
+          {prestamos.length > 0 && (
+            <BuscadorPrestamos
+              busqueda={busqueda}
+              onBuscarChange={setBusqueda}
+              prestamosFiltrados={prestamosFiltrados}
+              movimientos={movimientos}
+            />
+          )}
           {prestamos.length === 0 ? (
             <p style={{ fontSize: 13.5, color: 'var(--muted-fg)' }}>Aún no registras préstamos.</p>
+          ) : prestamosFiltrados.length === 0 ? (
+            <p style={{ fontSize: 13.5, color: 'var(--muted-fg)' }}>Sin préstamos con ese nombre.</p>
           ) : (
-            prestamos.map((p) => (
+            prestamosFiltrados.map((p) => (
               <PrestamoCard
                 key={p.id}
                 prestamo={p}

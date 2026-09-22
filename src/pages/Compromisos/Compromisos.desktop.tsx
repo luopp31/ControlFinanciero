@@ -1,3 +1,5 @@
+import { useState } from 'react';
+import { BuscadorPrestamos, filtrarPrestamosPorPersona } from '../../components/BuscadorPrestamos';
 import { PrestamoCard } from '../../components/PrestamoCard';
 import { PrestamoForm } from '../../components/PrestamoForm';
 import { SuscripcionCard } from '../../components/SuscripcionCard';
@@ -16,6 +18,9 @@ export function CompromisosDesktop({
   crearSuscripcion,
   borrarSuscripcion,
 }: CompromisosViewProps) {
+  const [busqueda, setBusqueda] = useState('');
+  const prestamosFiltrados = filtrarPrestamosPorPersona(prestamos, busqueda);
+
   return (
     <div style={{ maxWidth: 1040, margin: '0 auto', padding: '48px 32px', display: 'flex', flexDirection: 'column', gap: 32 }}>
       <div>
@@ -32,10 +37,20 @@ export function CompromisosDesktop({
           <div className="glass-card">
             <PrestamoForm cuentas={cuentas} onCrear={crearPrestamo} />
           </div>
+          {prestamos.length > 0 && (
+            <BuscadorPrestamos
+              busqueda={busqueda}
+              onBuscarChange={setBusqueda}
+              prestamosFiltrados={prestamosFiltrados}
+              movimientos={movimientos}
+            />
+          )}
           {prestamos.length === 0 ? (
             <p style={{ fontSize: 13.5, color: 'var(--muted-fg)' }}>Aún no registras préstamos.</p>
+          ) : prestamosFiltrados.length === 0 ? (
+            <p style={{ fontSize: 13.5, color: 'var(--muted-fg)' }}>Sin préstamos con ese nombre.</p>
           ) : (
-            prestamos.map((p) => (
+            prestamosFiltrados.map((p) => (
               <PrestamoCard
                 key={p.id}
                 prestamo={p}

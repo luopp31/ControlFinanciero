@@ -186,6 +186,15 @@ export function porPagar(prestamos: Prestamo[], movimientos: Movimiento[]): numb
     .reduce((s, p) => s + estadoPrestamo(p, movimientos).pendienteCapital, 0);
 }
 
+/** Total puesto en "ahorro": sale del saldo de la cuenta de origen (como un
+ * gasto), pero sigue siendo del usuario, así que se suma de vuelta al valor
+ * neto — el mismo efecto que tendría un traspaso a una cuenta no rastreada. */
+export function totalAhorrado(movimientos: Movimiento[]): number {
+  return movimientosActivos(movimientos)
+    .filter((m) => m.tipo === 'AHORRO')
+    .reduce((s, m) => s + m.monto, 0);
+}
+
 export interface CategoriaTotal {
   categoria: string;
   monto: number;
@@ -208,7 +217,7 @@ export function gastoPorCategoria(movimientos: Movimiento[], desde: string, hast
 }
 
 /**
- * Valor neto = saldo en cuentas + lo que te deben − lo que debes.
+ * Valor neto = saldo en cuentas + lo que te deben − lo que debes + lo ahorrado.
  * Importante: cualquier gráfico o resumen de valor neto debe usar ESTA función
  * completa, nunca solo saldoTotal() — ese fue uno de los bugs de la app anterior
  * (el número principal incluía préstamos pero la curva no, y nunca coincidían).
@@ -221,7 +230,8 @@ export function valorNeto(
   return (
     saldoTotal(cuentas, movimientos) +
     porCobrar(prestamos, movimientos) -
-    porPagar(prestamos, movimientos)
+    porPagar(prestamos, movimientos) +
+    totalAhorrado(movimientos)
   );
 }
 

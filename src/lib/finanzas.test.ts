@@ -6,6 +6,7 @@ import {
   estadoPrestamo,
   porCobrar,
   porPagar,
+  totalAhorrado,
   valorNeto,
   serieValorNeto,
   type Cuenta,
@@ -126,6 +127,16 @@ describe('valorNeto', () => {
     ];
     const esperado = saldoTotal(cuentas, []) + porCobrar(prestamos, []) - porPagar(prestamos, []);
     expect(valorNeto(cuentas, [], prestamos)).toBe(esperado);
+  });
+
+  it('un ahorro resta el saldo de la cuenta pero no el valor neto — sigue siendo del usuario', () => {
+    const cuentas = [cuenta({ id: 'SIMPLE', saldoInicial: 1000 })];
+    const movs: Movimiento[] = [
+      { id: '1', fecha: '2026-09-16', monto: 100, tipo: 'AHORRO', cuentaId: 'SIMPLE' },
+    ];
+    expect(saldoTotal(cuentas, movs)).toBe(900);
+    expect(totalAhorrado(movs)).toBe(100);
+    expect(valorNeto(cuentas, movs, [])).toBe(1000);
   });
 });
 

@@ -28,10 +28,12 @@ export function PrestamoForm({ cuentas, onCrear, onCancelar, valoresIniciales, e
   const personaId = useId();
   const acordadoId = useId();
   const editando = !!valoresIniciales;
+  const fechaId = useId();
   const [persona, setPersona] = useState(valoresIniciales?.persona ?? '');
   const [tipo, setTipo] = useState<TipoPrestamo>(valoresIniciales?.tipo ?? 'PRESTE');
   const [capital, setCapital] = useState(valoresIniciales ? String(valoresIniciales.capital) : '');
   const [acordado, setAcordado] = useState(valoresIniciales?.acordado ? String(valoresIniciales.acordado) : '');
+  const [fecha, setFecha] = useState(valoresIniciales?.fecha ?? hoyISO());
   const [cuentaId, setCuentaId] = useState(cuentas[0]?.id ?? '');
   const [guardando, setGuardando] = useState(false);
 
@@ -50,7 +52,7 @@ export function PrestamoForm({ cuentas, onCrear, onCancelar, valoresIniciales, e
           tipo,
           capital: Number(capital),
           acordado: acordadoNum > 0 ? acordadoNum : null,
-          fecha: valoresIniciales?.fecha ?? hoyISO(),
+          fecha,
         },
         cuentaId,
       );
@@ -135,6 +137,13 @@ export function PrestamoForm({ cuentas, onCrear, onCancelar, valoresIniciales, e
           </select>
         </div>
       )}
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+        <label htmlFor={fechaId} style={etiquetaStyle}>
+          Fecha
+        </label>
+        <input id={fechaId} type="date" value={fecha} onChange={(e) => setFecha(e.target.value)} style={inputStyle} />
+      </div>
 
       <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
         {onCancelar && (

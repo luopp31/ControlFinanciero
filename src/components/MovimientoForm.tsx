@@ -107,7 +107,13 @@ export function MovimientoForm({ cuentas, onCrear, onCancelar, valoresIniciales,
 
   const esOtro = TIPOS_OTRO.includes(tipo);
   const esPrestamo = tipo === 'PRESTAMO';
-  const esNuevoPrestamo = dirPrestamo === 'PRESTE' || dirPrestamo === 'DEBO';
+  // Editar un movimiento de préstamo YA vinculado a un préstamo existente no
+  // debe tratarse como "nuevo préstamo" (pedir persona de nuevo, o peor,
+  // crear un préstamo duplicado al guardar) — solo se editan monto/fecha/
+  // cuenta/nota, el vínculo (dir + prestId) queda como estaba.
+  const editandoPrestamoLigado = editando && esPrestamo && !!valoresIniciales?.prestId;
+  const esNuevoPrestamo = !editandoPrestamoLigado && (dirPrestamo === 'PRESTE' || dirPrestamo === 'DEBO');
+  const prestamoLigado = editandoPrestamoLigado ? prestamos.find((p) => p.id === valoresIniciales?.prestId) : undefined;
   const necesitaCategoria = tipo === 'GASTO' || tipo === 'INGRESO';
   const necesitaDestino = tipo === 'TRASPASO';
   const catalogo = tipo === 'INGRESO' ? CATS_ING : CATS;
@@ -127,7 +133,8 @@ export function MovimientoForm({ cuentas, onCrear, onCancelar, valoresIniciales,
     tipo === 'GASTO' ? acentoGasto() : tipo === 'INGRESO' ? acentoIngreso() : acentoColor(TIPO_COLOR[tipo] ?? '#9A93AC');
 
   const montoValido = monto.trim() !== '' && !Number.isNaN(Number(monto)) && Number(monto) > 0;
-  const prestamoValido = !esPrestamo || (esNuevoPrestamo ? personaPrestamo.trim() !== '' : prestIdEfectivo !== '');
+  const prestamoValido =
+    !esPrestamo || editandoPrestamoLigado || (esNuevoPrestamo ? personaPrestamo.trim() !== '' : prestIdEfectivo !== '');
   const listo =
     montoValido &&
     cuentaId !== '' &&
@@ -164,7 +171,9 @@ export function MovimientoForm({ cuentas, onCrear, onCancelar, valoresIniciales,
     try {
       let prestId: string | null = null;
       if (esPrestamo) {
-        if (esNuevoPrestamo) {
+        if (editandoPrestamoLigado) {
+          prestId = valoresIniciales?.prestId ?? null;
+        } else if (esNuevoPrestamo) {
           const montoNum = Number(monto);
           const acordadoNum = Number(acordado);
           const nuevo = await crearPrestamo({
@@ -255,7 +264,15 @@ export function MovimientoForm({ cuentas, onCrear, onCancelar, valoresIniciales,
         <span style={{ fontSize: 18, fontWeight: 700, color: 'var(--muted-fg)', flex: '0 0 auto' }}>S/</span>
       </div>
 
-      {esPrestamo && (
+      {esPrestamo && editandoPrestamoLigado && (
+        <p style={{ margin: 0, fontSize: 12.5, color: 'var(--muted-fg)' }}>
+          {DIRS.find((d) => d.id === dirPrestamo)?.titulo}
+          {prestamoLigado ? ` — ${prestamoLigado.persona}` : ''}. El tipo y la persona no se pueden cambiar acá; si te
+          equivocaste, eliminá este movimiento y creá uno nuevo.
+        </p>
+      )}
+
+      {esPrestamo && !editandoPrestamoLigado && (
         <>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 8 }}>
             {DIRS.map((d) => (

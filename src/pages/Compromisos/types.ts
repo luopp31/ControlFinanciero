@@ -17,6 +17,7 @@ export interface CompromisosViewProps {
   borrarPrestamo: (id: string) => void;
   registrarPago: (prestamo: Prestamo, monto: number, cuentaId: string) => Promise<unknown>;
   crearSuscripcion: (datos: { nombre: string; monto: number; diaCobro: number }) => Promise<unknown>;
+  actualizarSuscripcion: (id: string, datos: { nombre: string; monto: number; diaCobro: number }) => Promise<unknown>;
   registrarPagoSuscripcion: (suscripcion: Compromiso, monto: number, cuentaId: string) => Promise<unknown>;
   borrarSuscripcion: (id: string) => void;
 }

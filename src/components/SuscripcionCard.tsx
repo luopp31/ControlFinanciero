@@ -6,21 +6,25 @@ import { formatearFechaCorta, formatearMonto } from '../lib/formato';
 import { iconoDeMarca } from './marcas';
 import { IconArrowsClockwise, IconHandshake } from './icons';
 import { botonPrimario, botonSecundario, inputStyle } from './formStyles';
+import { SuscripcionForm } from './SuscripcionForm';
 
 export function SuscripcionCard({
   suscripcion,
   movimientos,
   cuentas,
   onRegistrarPago,
+  onEditar,
   onBorrar,
 }: {
   suscripcion: Compromiso;
   movimientos: Movimiento[];
   cuentas: Cuenta[];
   onRegistrarPago: (monto: number, cuentaId: string) => Promise<unknown>;
+  onEditar: (id: string, datos: { nombre: string; monto: number; diaCobro: number }) => Promise<unknown>;
   onBorrar: (id: string) => void;
 }) {
   const [mostrarPago, setMostrarPago] = useState(false);
+  const [editando, setEditando] = useState(false);
   const [monto, setMonto] = useState('');
   const [cuentaId, setCuentaId] = useState(cuentas[0]?.id ?? '');
   const [guardando, setGuardando] = useState(false);
@@ -47,6 +51,19 @@ export function SuscripcionCard({
     } finally {
       setGuardando(false);
     }
+  }
+
+  if (editando) {
+    return (
+      <div className="glass-card">
+        <SuscripcionForm
+          valoresIniciales={{ nombre: suscripcion.nombre, monto: suscripcion.monto, diaCobro: suscripcion.diaCobro ?? 1 }}
+          etiquetaGuardar="Guardar cambios"
+          onCrear={(datos) => onEditar(suscripcion.id, datos)}
+          onCancelar={() => setEditando(false)}
+        />
+      </div>
+    );
   }
 
   return (
@@ -76,14 +93,23 @@ export function SuscripcionCard({
         <div style={{ fontVariantNumeric: 'tabular-nums', fontWeight: 700, fontSize: 14.5, whiteSpace: 'nowrap' }}>
           S/ {formatearMonto(suscripcion.monto)}
         </div>
-        <button
-          type="button"
-          onClick={() => onBorrar(suscripcion.id)}
-          aria-label="Eliminar suscripción"
-          style={{ all: 'unset', cursor: 'pointer', color: 'var(--muted-fg)', fontSize: 12 }}
-        >
-          Eliminar
-        </button>
+        <div style={{ display: 'flex', gap: 10, flex: '0 0 auto' }}>
+          <button
+            type="button"
+            onClick={() => setEditando(true)}
+            style={{ all: 'unset', cursor: 'pointer', color: 'var(--primary)', fontSize: 12 }}
+          >
+            Editar
+          </button>
+          <button
+            type="button"
+            onClick={() => onBorrar(suscripcion.id)}
+            aria-label="Eliminar suscripción"
+            style={{ all: 'unset', cursor: 'pointer', color: 'var(--muted-fg)', fontSize: 12 }}
+          >
+            Eliminar
+          </button>
+        </div>
       </div>
 
       {pagos.length > 0 && (

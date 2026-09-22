@@ -19,6 +19,7 @@ export function CompromisosMobile({
   borrarPrestamo,
   registrarPago,
   crearSuscripcion,
+  actualizarSuscripcion,
   registrarPagoSuscripcion,
   borrarSuscripcion,
 }: CompromisosViewProps) {
@@ -135,6 +136,7 @@ export function CompromisosMobile({
                 movimientos={movimientos}
                 cuentas={cuentas}
                 onRegistrarPago={(monto, cuentaId) => registrarPagoSuscripcion(s, monto, cuentaId)}
+                onEditar={actualizarSuscripcion}
                 onBorrar={borrarSuscripcion}
               />
             ))

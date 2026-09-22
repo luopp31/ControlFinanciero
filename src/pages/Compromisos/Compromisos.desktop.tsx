@@ -16,6 +16,7 @@ export function CompromisosDesktop({
   borrarPrestamo,
   registrarPago,
   crearSuscripcion,
+  actualizarSuscripcion,
   registrarPagoSuscripcion,
   borrarSuscripcion,
 }: CompromisosViewProps) {
@@ -80,6 +81,7 @@ export function CompromisosDesktop({
                 movimientos={movimientos}
                 cuentas={cuentas}
                 onRegistrarPago={(monto, cuentaId) => registrarPagoSuscripcion(s, monto, cuentaId)}
+                onEditar={actualizarSuscripcion}
                 onBorrar={borrarSuscripcion}
               />
             ))

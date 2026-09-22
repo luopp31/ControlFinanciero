@@ -1,16 +1,21 @@
 import { useId, useState } from 'react';
 import { botonPrimario, botonSecundario, etiquetaStyle, inputStyle } from './formStyles';
 
+type ValoresSuscripcion = { nombre: string; monto: number; diaCobro: number };
+
 interface SuscripcionFormProps {
-  onCrear: (datos: { nombre: string; monto: number; diaCobro: number }) => Promise<unknown>;
+  onCrear: (datos: ValoresSuscripcion) => Promise<unknown>;
   onCancelar?: () => void;
+  valoresIniciales?: ValoresSuscripcion;
+  etiquetaGuardar?: string;
 }
 
-export function SuscripcionForm({ onCrear, onCancelar }: SuscripcionFormProps) {
+export function SuscripcionForm({ onCrear, onCancelar, valoresIniciales, etiquetaGuardar }: SuscripcionFormProps) {
   const nombreId = useId();
-  const [nombre, setNombre] = useState('');
-  const [monto, setMonto] = useState('');
-  const [diaCobro, setDiaCobro] = useState('');
+  const editando = !!valoresIniciales;
+  const [nombre, setNombre] = useState(valoresIniciales?.nombre ?? '');
+  const [monto, setMonto] = useState(valoresIniciales ? String(valoresIniciales.monto) : '');
+  const [diaCobro, setDiaCobro] = useState(valoresIniciales ? String(valoresIniciales.diaCobro) : '');
   const [guardando, setGuardando] = useState(false);
 
   const montoValido = monto.trim() !== '' && !Number.isNaN(Number(monto)) && Number(monto) > 0;
@@ -24,9 +29,13 @@ export function SuscripcionForm({ onCrear, onCancelar }: SuscripcionFormProps) {
     setGuardando(true);
     try {
       await onCrear({ nombre: nombre.trim(), monto: Number(monto), diaCobro: Number(diaCobro) });
-      setNombre('');
-      setMonto('');
-      setDiaCobro('');
+      if (editando) {
+        onCancelar?.();
+      } else {
+        setNombre('');
+        setMonto('');
+        setDiaCobro('');
+      }
     } finally {
       setGuardando(false);
     }
@@ -77,7 +86,7 @@ export function SuscripcionForm({ onCrear, onCancelar }: SuscripcionFormProps) {
           </button>
         )}
         <button type="submit" disabled={!listo || guardando} style={botonPrimario(!listo || guardando)}>
-          {guardando ? 'Guardando…' : 'Registrar'}
+          {guardando ? 'Guardando…' : etiquetaGuardar ?? 'Registrar'}
         </button>
       </div>
     </form>

@@ -14,7 +14,7 @@ export function Compromisos() {
   const { cuentas, cargando: cargandoCuentas } = useCuentas();
   const { movimientos, cargando: cargandoMovs, crearMovimiento } = useMovimientos();
   const { prestamos, cargando: cargandoPrest, crearPrestamo, actualizarPrestamo, borrarPrestamo } = usePrestamos();
-  const { compromisos, cargando: cargandoComps, crearCompromiso, borrarCompromiso } = useCompromisos();
+  const { compromisos, cargando: cargandoComps, crearCompromiso, actualizarCompromiso, borrarCompromiso } = useCompromisos();
 
   if (cargandoCuentas || cargandoMovs || cargandoPrest || cargandoComps) return null;
 
@@ -73,6 +73,7 @@ export function Compromisos() {
     borrarPrestamo,
     registrarPago,
     crearSuscripcion,
+    actualizarSuscripcion: actualizarCompromiso,
     registrarPagoSuscripcion,
     borrarSuscripcion: borrarCompromiso,
   };

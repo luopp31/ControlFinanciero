@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { Compromiso } from '../lib/db';
-import { pagosDeCompromiso, totalPagadoDeCompromiso, type Cuenta, type Movimiento } from '../lib/finanzas';
+import { CATS, pagosDeCompromiso, totalPagadoDeCompromiso, type Cuenta, type Movimiento } from '../lib/finanzas';
 import { hoyISO, inicioAnioISO, proximoCobroISO } from '../lib/fecha';
 import { formatearFechaCorta, formatearMonto } from '../lib/formato';
 import { iconoDeMarca } from './marcas';
@@ -20,7 +20,7 @@ export function SuscripcionCard({
   movimientos: Movimiento[];
   cuentas: Cuenta[];
   onRegistrarPago: (monto: number, cuentaId: string) => Promise<unknown>;
-  onEditar: (id: string, datos: { nombre: string; monto: number; diaCobro: number }) => Promise<unknown>;
+  onEditar: (id: string, datos: { nombre: string; monto: number; diaCobro: number; categoria?: string | null }) => Promise<unknown>;
   onBorrar: (id: string) => void;
 }) {
   const [mostrarPago, setMostrarPago] = useState(false);
@@ -32,6 +32,7 @@ export function SuscripcionCard({
   const marca = iconoDeMarca(suscripcion.nombre);
   const Icono = marca?.Icono ?? IconArrowsClockwise;
   const proximo = suscripcion.diaCobro ? proximoCobroISO(suscripcion.diaCobro) : null;
+  const nombreCategoria = suscripcion.categoria ? CATS.find((c) => c.id === suscripcion.categoria)?.nombre : null;
   const pagos = pagosDeCompromiso(suscripcion.id, movimientos);
   const pagadoEsteAnio = totalPagadoDeCompromiso(suscripcion.id, movimientos, inicioAnioISO(), hoyISO());
 
@@ -57,7 +58,12 @@ export function SuscripcionCard({
     return (
       <div className="glass-card">
         <SuscripcionForm
-          valoresIniciales={{ nombre: suscripcion.nombre, monto: suscripcion.monto, diaCobro: suscripcion.diaCobro ?? 1 }}
+          valoresIniciales={{
+            nombre: suscripcion.nombre,
+            monto: suscripcion.monto,
+            diaCobro: suscripcion.diaCobro ?? 1,
+            categoria: suscripcion.categoria,
+          }}
           etiquetaGuardar="Guardar cambios"
           onCrear={(datos) => onEditar(suscripcion.id, datos)}
           onCancelar={() => setEditando(false)}
@@ -88,6 +94,7 @@ export function SuscripcionCard({
           <div style={{ fontSize: 14, fontWeight: 700 }}>{suscripcion.nombre}</div>
           <div style={{ fontSize: 11.5, color: 'var(--muted-fg)' }}>
             {proximo ? `Próximo cobro: ${formatearFechaCorta(proximo)}` : 'Sin día de cobro'}
+            {nombreCategoria ? ` · ${nombreCategoria}` : ''}
           </div>
         </div>
         <div style={{ fontVariantNumeric: 'tabular-nums', fontWeight: 700, fontSize: 14.5, whiteSpace: 'nowrap' }}>

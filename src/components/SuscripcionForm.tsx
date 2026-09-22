@@ -1,7 +1,8 @@
 import { useId, useState } from 'react';
+import { CATS } from '../lib/finanzas';
 import { botonPrimario, botonSecundario, etiquetaStyle, inputStyle } from './formStyles';
 
-type ValoresSuscripcion = { nombre: string; monto: number; diaCobro: number };
+type ValoresSuscripcion = { nombre: string; monto: number; diaCobro: number; categoria?: string | null };
 
 interface SuscripcionFormProps {
   onCrear: (datos: ValoresSuscripcion) => Promise<unknown>;
@@ -12,10 +13,12 @@ interface SuscripcionFormProps {
 
 export function SuscripcionForm({ onCrear, onCancelar, valoresIniciales, etiquetaGuardar }: SuscripcionFormProps) {
   const nombreId = useId();
+  const categoriaId = useId();
   const editando = !!valoresIniciales;
   const [nombre, setNombre] = useState(valoresIniciales?.nombre ?? '');
   const [monto, setMonto] = useState(valoresIniciales ? String(valoresIniciales.monto) : '');
   const [diaCobro, setDiaCobro] = useState(valoresIniciales ? String(valoresIniciales.diaCobro) : '');
+  const [categoria, setCategoria] = useState(valoresIniciales?.categoria ?? '');
   const [guardando, setGuardando] = useState(false);
 
   const montoValido = monto.trim() !== '' && !Number.isNaN(Number(monto)) && Number(monto) > 0;
@@ -28,13 +31,14 @@ export function SuscripcionForm({ onCrear, onCancelar, valoresIniciales, etiquet
     if (!listo || guardando) return;
     setGuardando(true);
     try {
-      await onCrear({ nombre: nombre.trim(), monto: Number(monto), diaCobro: Number(diaCobro) });
+      await onCrear({ nombre: nombre.trim(), monto: Number(monto), diaCobro: Number(diaCobro), categoria: categoria || null });
       if (editando) {
         onCancelar?.();
       } else {
         setNombre('');
         setMonto('');
         setDiaCobro('');
+        setCategoria('');
       }
     } finally {
       setGuardando(false);
@@ -77,6 +81,20 @@ export function SuscripcionForm({ onCrear, onCancelar, valoresIniciales, etiquet
             style={{ ...inputStyle, fontVariantNumeric: 'tabular-nums' }}
           />
         </div>
+      </div>
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+        <label htmlFor={categoriaId} style={etiquetaStyle}>
+          Categoría <span style={{ fontWeight: 400, textTransform: 'none' }}>(opcional)</span>
+        </label>
+        <select id={categoriaId} value={categoria} onChange={(e) => setCategoria(e.target.value)} style={inputStyle}>
+          <option value="">Sin categoría</option>
+          {CATS.map((c) => (
+            <option key={c.id} value={c.id}>
+              {c.nombre}
+            </option>
+          ))}
+        </select>
       </div>
 
       <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>

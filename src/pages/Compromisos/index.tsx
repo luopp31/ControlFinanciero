@@ -47,7 +47,7 @@ export function Compromisos() {
     });
   }
 
-  async function crearSuscripcion(datos: { nombre: string; monto: number; diaCobro: number }) {
+  async function crearSuscripcion(datos: { nombre: string; monto: number; diaCobro: number; categoria?: string | null }) {
     await crearCompromiso({ tipo: 'SUSCRIPCION', ...datos });
   }
 

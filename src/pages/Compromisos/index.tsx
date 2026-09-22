@@ -3,6 +3,7 @@ import { useCuentas } from '../../hooks/useCuentas';
 import { useMovimientos } from '../../hooks/useMovimientos';
 import { usePrestamos } from '../../hooks/usePrestamos';
 import { useCompromisos } from '../../hooks/useCompromisos';
+import type { Compromiso } from '../../lib/db';
 import { direccionPago, type Prestamo } from '../../lib/finanzas';
 import { hoyISO } from '../../lib/fecha';
 import { CompromisosDesktop } from './Compromisos.desktop';
@@ -50,6 +51,18 @@ export function Compromisos() {
     await crearCompromiso({ tipo: 'SUSCRIPCION', ...datos });
   }
 
+  async function registrarPagoSuscripcion(suscripcion: Compromiso, monto: number, cuentaId: string) {
+    await crearMovimiento({
+      fecha: hoyISO(),
+      monto,
+      tipo: 'GASTO',
+      cuentaId,
+      categoria: suscripcion.categoria ?? null,
+      compromisoId: suscripcion.id,
+      nota: suscripcion.nombre,
+    });
+  }
+
   const props = {
     cuentas,
     movimientos,
@@ -60,6 +73,7 @@ export function Compromisos() {
     borrarPrestamo,
     registrarPago,
     crearSuscripcion,
+    registrarPagoSuscripcion,
     borrarSuscripcion: borrarCompromiso,
   };
 

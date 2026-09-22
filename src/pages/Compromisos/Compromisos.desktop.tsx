@@ -16,6 +16,7 @@ export function CompromisosDesktop({
   borrarPrestamo,
   registrarPago,
   crearSuscripcion,
+  registrarPagoSuscripcion,
   borrarSuscripcion,
 }: CompromisosViewProps) {
   const [busqueda, setBusqueda] = useState('');
@@ -73,7 +74,14 @@ export function CompromisosDesktop({
             <p style={{ fontSize: 13.5, color: 'var(--muted-fg)' }}>Aún no registras suscripciones.</p>
           ) : (
             suscripciones.map((s) => (
-              <SuscripcionCard key={s.id} suscripcion={s} onBorrar={borrarSuscripcion} />
+              <SuscripcionCard
+                key={s.id}
+                suscripcion={s}
+                movimientos={movimientos}
+                cuentas={cuentas}
+                onRegistrarPago={(monto, cuentaId) => registrarPagoSuscripcion(s, monto, cuentaId)}
+                onBorrar={borrarSuscripcion}
+              />
             ))
           )}
         </section>

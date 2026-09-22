@@ -7,6 +7,8 @@ import {
   porCobrar,
   porPagar,
   totalAhorrado,
+  pagosDeCompromiso,
+  totalPagadoDeCompromiso,
   valorNeto,
   serieValorNeto,
   type Cuenta,
@@ -137,6 +139,26 @@ describe('valorNeto', () => {
     expect(saldoTotal(cuentas, movs)).toBe(900);
     expect(totalAhorrado(movs)).toBe(100);
     expect(valorNeto(cuentas, movs, [])).toBe(1000);
+  });
+});
+
+describe('pagosDeCompromiso / totalPagadoDeCompromiso', () => {
+  const movs: Movimiento[] = [
+    { id: '1', fecha: '2025-12-20', monto: 45.9, tipo: 'GASTO', cuentaId: 'SIMPLE', compromisoId: 'netflix' },
+    { id: '2', fecha: '2026-01-20', monto: 45.9, tipo: 'GASTO', cuentaId: 'SIMPLE', compromisoId: 'netflix' },
+    { id: '3', fecha: '2026-02-20', monto: 45.9, tipo: 'GASTO', cuentaId: 'SIMPLE', compromisoId: 'netflix' },
+    { id: '4', fecha: '2026-02-15', monto: 19.9, tipo: 'GASTO', cuentaId: 'SIMPLE', compromisoId: 'spotify' },
+    { id: '5', fecha: '2026-01-01', monto: 45.9, tipo: 'GASTO', cuentaId: 'SIMPLE', compromisoId: 'netflix', borrado: true },
+  ];
+
+  it('lista solo los pagos de ese compromiso, de más reciente a más antiguo', () => {
+    const pagos = pagosDeCompromiso('netflix', movs);
+    expect(pagos.map((m) => m.id)).toEqual(['3', '2', '1']);
+  });
+
+  it('suma solo los pagos dentro del rango de fechas', () => {
+    expect(totalPagadoDeCompromiso('netflix', movs, '2026-01-01', '2026-12-31')).toBeCloseTo(91.8);
+    expect(totalPagadoDeCompromiso('netflix', movs, '2026-01-01', '2026-01-31')).toBeCloseTo(45.9);
   });
 });
 

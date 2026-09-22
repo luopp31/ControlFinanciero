@@ -19,6 +19,7 @@ export function CompromisosMobile({
   borrarPrestamo,
   registrarPago,
   crearSuscripcion,
+  registrarPagoSuscripcion,
   borrarSuscripcion,
 }: CompromisosViewProps) {
   const [subtab, setSubtab] = useState<Subtab>('prestamos');
@@ -128,7 +129,14 @@ export function CompromisosMobile({
             <p style={{ fontSize: 13.5, color: 'var(--muted-fg)' }}>Aún no registras suscripciones.</p>
           ) : (
             suscripciones.map((s) => (
-              <SuscripcionCard key={s.id} suscripcion={s} onBorrar={borrarSuscripcion} />
+              <SuscripcionCard
+                key={s.id}
+                suscripcion={s}
+                movimientos={movimientos}
+                cuentas={cuentas}
+                onRegistrarPago={(monto, cuentaId) => registrarPagoSuscripcion(s, monto, cuentaId)}
+                onBorrar={borrarSuscripcion}
+              />
             ))
           )}
         </>

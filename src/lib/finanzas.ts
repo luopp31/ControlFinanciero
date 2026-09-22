@@ -39,6 +39,7 @@ export interface Movimiento {
   destinoId?: string | null; // solo TRASPASO
   dir?: DireccionPrestamo | null; // solo PRESTAMO
   prestId?: string | null; // solo PRESTAMO
+  compromisoId?: string | null; // pago real de una suscripción/cuota
   nota?: string | null;
   borrado?: boolean;
   actualizado?: string;
@@ -192,6 +193,26 @@ export function porPagar(prestamos: Prestamo[], movimientos: Movimiento[]): numb
 export function totalAhorrado(movimientos: Movimiento[]): number {
   return movimientosActivos(movimientos)
     .filter((m) => m.tipo === 'AHORRO')
+    .reduce((s, m) => s + m.monto, 0);
+}
+
+/** Pagos reales registrados para una suscripción/cuota, de más reciente a
+ * más antiguo. */
+export function pagosDeCompromiso(compromisoId: string, movimientos: Movimiento[]): Movimiento[] {
+  return movimientosActivos(movimientos)
+    .filter((m) => m.compromisoId === compromisoId)
+    .sort((a, b) => b.fecha.localeCompare(a.fecha));
+}
+
+/** Suma de los pagos de una suscripción/cuota cuya fecha cae en [desde, hasta]. */
+export function totalPagadoDeCompromiso(
+  compromisoId: string,
+  movimientos: Movimiento[],
+  desde: string,
+  hasta: string
+): number {
+  return pagosDeCompromiso(compromisoId, movimientos)
+    .filter((m) => m.fecha >= desde && m.fecha <= hasta)
     .reduce((s, m) => s + m.monto, 0);
 }
 

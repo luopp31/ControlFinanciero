@@ -4,7 +4,7 @@ import { CATS, pagosDeCompromiso, totalPagadoDeCompromiso, type Cuenta, type Mov
 import { hoyISO, inicioAnioISO, proximoCobroISO } from '../lib/fecha';
 import { formatearFechaCorta, formatearMonto } from '../lib/formato';
 import { iconoDeMarca } from './marcas';
-import { IconArrowsClockwise, IconHandshake } from './icons';
+import { IconArrowsClockwise, IconHandshake, IconPencilSimple, IconTrash } from './icons';
 import { botonPrimario, botonSecundario, inputStyle } from './formStyles';
 import { SuscripcionForm } from './SuscripcionForm';
 
@@ -104,17 +104,18 @@ export function SuscripcionCard({
           <button
             type="button"
             onClick={() => setEditando(true)}
-            style={{ all: 'unset', cursor: 'pointer', color: 'var(--primary)', fontSize: 12 }}
+            aria-label="Editar suscripción"
+            style={{ all: 'unset', cursor: 'pointer', color: 'var(--primary)', display: 'flex' }}
           >
-            Editar
+            <IconPencilSimple width={15} height={15} />
           </button>
           <button
             type="button"
             onClick={() => onBorrar(suscripcion.id)}
             aria-label="Eliminar suscripción"
-            style={{ all: 'unset', cursor: 'pointer', color: 'var(--muted-fg)', fontSize: 12 }}
+            style={{ all: 'unset', cursor: 'pointer', color: 'var(--muted-fg)', display: 'flex' }}
           >
-            Eliminar
+            <IconTrash width={15} height={15} />
           </button>
         </div>
       </div>

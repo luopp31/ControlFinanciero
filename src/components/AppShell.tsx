@@ -91,7 +91,7 @@ export function AppShell({
           </div>
         </nav>
         <div style={{ flex: 1, minWidth: 0 }}>{children}</div>
-        {vista !== 'movimientos' && <RegistroRapido />}
+        <RegistroRapido />
       </div>
     );
   }
@@ -163,7 +163,7 @@ export function AppShell({
           );
         })}
       </nav>
-      {vista !== 'movimientos' && <RegistroRapido />}
+      <RegistroRapido />
     </div>
   );
 }

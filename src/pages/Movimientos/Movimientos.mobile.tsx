@@ -1,17 +1,14 @@
 import { useState } from 'react';
 import { MovimientoForm } from '../../components/MovimientoForm';
 import { MovimientoRow } from '../../components/MovimientoRow';
-import { IconPlus } from '../../components/icons';
 import type { MovimientosViewProps } from './types';
 
 export function MovimientosMobile({
   cuentas,
   movimientos,
-  crearMovimiento,
   actualizarMovimiento,
   borrarMovimiento,
 }: MovimientosViewProps) {
-  const [mostrarForm, setMostrarForm] = useState(false);
   const [editandoId, setEditandoId] = useState<string | null>(null);
 
   return (
@@ -20,25 +17,6 @@ export function MovimientosMobile({
         <p style={eyebrow}>Greedy</p>
         <h1 style={{ fontSize: 22, fontWeight: 800, letterSpacing: '-0.02em', margin: 0 }}>Movimientos</h1>
       </div>
-
-      {mostrarForm ? (
-        <div className="glass-card">
-          <MovimientoForm
-            cuentas={cuentas}
-            onCrear={async (datos) => {
-              const r = await crearMovimiento(datos);
-              setMostrarForm(false);
-              return r;
-            }}
-            onCancelar={() => setMostrarForm(false)}
-          />
-        </div>
-      ) : (
-        <button type="button" onClick={() => setMostrarForm(true)} style={botonAgregar}>
-          <IconPlus width={16} height={16} />
-          Registrar movimiento
-        </button>
-      )}
 
       <div className="glass-card">
         {movimientos.length === 0 ? (
@@ -78,19 +56,4 @@ const eyebrow: React.CSSProperties = {
   textTransform: 'uppercase',
   color: 'var(--muted-fg)',
   margin: '0 0 6px',
-};
-
-const botonAgregar: React.CSSProperties = {
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  gap: 8,
-  padding: '13px 16px',
-  borderRadius: 14,
-  border: '1px dashed var(--card-border)',
-  background: 'transparent',
-  color: 'var(--primary)',
-  fontWeight: 700,
-  fontSize: 14,
-  cursor: 'pointer',
 };

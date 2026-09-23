@@ -1,6 +1,6 @@
 import { CATS, CATS_ING, type Cuenta, type Movimiento } from '../lib/finanzas';
 import { formatearFechaCorta, formatearMonto } from '../lib/formato';
-import { CATEGORIA_ICONOS, IconQuestion, TIPO_COLOR, TIPO_ICONOS } from './icons';
+import { CATEGORIA_ICONOS, IconPencilSimple, IconQuestion, IconTrash, TIPO_COLOR, TIPO_ICONOS } from './icons';
 
 const TIPO_NOMBRE: Record<string, string> = {
   GASTO: 'Gasto',
@@ -93,9 +93,9 @@ export function MovimientoRow({
               type="button"
               onClick={() => onEditar(movimiento.id)}
               aria-label="Editar movimiento"
-              style={{ all: 'unset', cursor: 'pointer', color: 'var(--primary)', fontSize: 12 }}
+              style={{ all: 'unset', cursor: 'pointer', color: 'var(--primary)', display: 'flex' }}
             >
-              Editar
+              <IconPencilSimple width={16} height={16} />
             </button>
           )}
           {onBorrar && (
@@ -103,9 +103,9 @@ export function MovimientoRow({
               type="button"
               onClick={() => onBorrar(movimiento.id)}
               aria-label="Eliminar movimiento"
-              style={{ all: 'unset', cursor: 'pointer', color: 'var(--muted-fg)', fontSize: 12 }}
+              style={{ all: 'unset', cursor: 'pointer', color: 'var(--muted-fg)', display: 'flex' }}
             >
-              Eliminar
+              <IconTrash width={16} height={16} />
             </button>
           )}
         </div>

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { estadoPrestamo, type Cuenta, type Movimiento, type Prestamo, type TipoPrestamo } from '../lib/finanzas';
 import { formatearMonto } from '../lib/formato';
-import { IconHandshake, IconUser } from './icons';
+import { IconHandshake, IconPencilSimple, IconTrash, IconUser } from './icons';
 import { botonPrimario, botonSecundario, inputStyle } from './formStyles';
 import { PrestamoForm } from './PrestamoForm';
 
@@ -160,16 +160,18 @@ export function PrestamoCard({
         <button
           type="button"
           onClick={() => setEditando(true)}
-          style={{ all: 'unset', cursor: 'pointer', color: 'var(--primary)', fontSize: 11.5 }}
+          aria-label="Editar préstamo"
+          style={{ all: 'unset', cursor: 'pointer', color: 'var(--primary)', display: 'flex' }}
         >
-          Editar
+          <IconPencilSimple width={15} height={15} />
         </button>
         <button
           type="button"
           onClick={() => onBorrar(prestamo.id)}
-          style={{ all: 'unset', cursor: 'pointer', color: 'var(--muted-fg)', fontSize: 11.5 }}
+          aria-label="Eliminar préstamo"
+          style={{ all: 'unset', cursor: 'pointer', color: 'var(--muted-fg)', display: 'flex' }}
         >
-          Eliminar
+          <IconTrash width={15} height={15} />
         </button>
       </div>
     </div>

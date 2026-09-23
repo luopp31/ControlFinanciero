@@ -23,3 +23,15 @@ export function formatearMesCorto(mesISO: string): string {
   const [, mes] = mesISO.split('-');
   return MESES_CORTOS[Number(mes) - 1];
 }
+
+const MESES_LARGOS = [
+  'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
+  'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre',
+];
+
+/** "Septiembre 2026" a partir de una clave de mes 'YYYY-MM'. */
+export function formatearMesLargo(mesISO: string): string {
+  const [anio, mes] = mesISO.split('-');
+  const nombre = MESES_LARGOS[Number(mes) - 1];
+  return `${nombre.charAt(0).toUpperCase()}${nombre.slice(1)} ${anio}`;
+}

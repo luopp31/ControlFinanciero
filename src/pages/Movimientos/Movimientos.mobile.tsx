@@ -1,11 +1,15 @@
 import { useState } from 'react';
 import { MovimientoForm } from '../../components/MovimientoForm';
 import { MovimientoRow } from '../../components/MovimientoRow';
+import { SelectorMes } from '../../components/SelectorMes';
 import type { MovimientosViewProps } from './types';
 
 export function MovimientosMobile({
   cuentas,
   movimientos,
+  mes,
+  onCambiarMes,
+  deshabilitarMesSiguiente,
   actualizarMovimiento,
   borrarMovimiento,
 }: MovimientosViewProps) {
@@ -18,9 +22,11 @@ export function MovimientosMobile({
         <h1 style={{ fontSize: 22, fontWeight: 800, letterSpacing: '-0.02em', margin: 0 }}>Movimientos</h1>
       </div>
 
+      <SelectorMes mes={mes} onCambiar={onCambiarMes} deshabilitarSiguiente={deshabilitarMesSiguiente} />
+
       <div className="glass-card">
         {movimientos.length === 0 ? (
-          <p style={{ fontSize: 13.5, color: 'var(--muted-fg)', margin: 0 }}>Aún no registras ningún movimiento.</p>
+          <p style={{ fontSize: 13.5, color: 'var(--muted-fg)', margin: 0 }}>Sin movimientos este mes.</p>
         ) : (
           movimientos.map((m) =>
             editandoId === m.id ? (

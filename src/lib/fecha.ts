@@ -2,6 +2,18 @@ export function hoyISO(): string {
   return isoDe(new Date());
 }
 
+/** El mes actual como clave 'YYYY-MM'. */
+export function mesActualISO(desde: Date = new Date()): string {
+  return `${desde.getFullYear()}-${String(desde.getMonth() + 1).padStart(2, '0')}`;
+}
+
+/** Suma (o resta, con delta negativo) meses a una clave 'YYYY-MM'. */
+export function sumarMeses(mesISO: string, delta: number): string {
+  const [anio, mes] = mesISO.split('-').map(Number);
+  const d = new Date(anio, mes - 1 + delta, 1);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+}
+
 /** Fecha ISO de hace `n` días (0 = hoy), en hora local — nunca UTC, para evitar
  * el desfase de un día que sufrió la app anterior cerca de la medianoche. */
 export function menosDiasISO(n: number): string {

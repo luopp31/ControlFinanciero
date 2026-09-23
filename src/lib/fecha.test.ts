@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { proximoCobroISO, rangoAnteriorIgualDuracion, ultimosMesesISO } from './fecha';
+import { mesActualISO, proximoCobroISO, rangoAnteriorIgualDuracion, sumarMeses, ultimosMesesISO } from './fecha';
 
 describe('proximoCobroISO', () => {
   it('devuelve este mes si el día de cobro no ha pasado aún', () => {
@@ -49,5 +49,25 @@ describe('ultimosMesesISO', () => {
 
   it('n=1 devuelve solo el mes de referencia', () => {
     expect(ultimosMesesISO(1, new Date(2026, 8, 15))).toEqual(['2026-09']);
+  });
+});
+
+describe('mesActualISO', () => {
+  it('devuelve el mes de la fecha dada como YYYY-MM', () => {
+    expect(mesActualISO(new Date(2026, 8, 22))).toBe('2026-09');
+  });
+});
+
+describe('sumarMeses', () => {
+  it('suma meses dentro del mismo año', () => {
+    expect(sumarMeses('2026-09', 1)).toBe('2026-10');
+  });
+
+  it('resta meses cruzando a fin de año', () => {
+    expect(sumarMeses('2026-01', -1)).toBe('2025-12');
+  });
+
+  it('suma meses cruzando a fin de año', () => {
+    expect(sumarMeses('2026-12', 1)).toBe('2027-01');
   });
 });

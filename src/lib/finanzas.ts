@@ -284,11 +284,15 @@ export function valorNeto(
   movimientos: Movimiento[],
   prestamos: Prestamo[]
 ): number {
+  // Igual que saldo(): lo anterior a la fecha de corte de su cuenta no cuenta
+  // (si no, un ahorro o préstamo viejo inflaría el valor neto sin tocar ningún saldo).
+  const desdePorCuenta = new Map(cuentas.map((c) => [c.id, c.desde || '']));
+  const vigentes = movimientos.filter((m) => m.fecha >= (desdePorCuenta.get(m.cuentaId) ?? ''));
   return (
     saldoTotal(cuentas, movimientos) +
-    porCobrar(prestamos, movimientos) -
-    porPagar(prestamos, movimientos) +
-    totalAhorrado(movimientos)
+    porCobrar(prestamos, vigentes) -
+    porPagar(prestamos, vigentes) +
+    totalAhorrado(vigentes)
   );
 }
 
@@ -308,6 +312,8 @@ export function serieValorNeto(
 ): { fecha: string; valor: number }[] {
   return fechas.map((fecha) => {
     const hastaFecha = movimientos.filter((m) => m.fecha <= fecha);
-    return { fecha, valor: valorNeto(cuentas, hastaFecha, prestamos) };
+    // Un préstamo posterior a este punto aún no existía: no cuenta.
+    const vigentes = prestamos.filter((p) => p.fecha <= fecha);
+    return { fecha, valor: valorNeto(cuentas, hastaFecha, vigentes) };
   });
 }

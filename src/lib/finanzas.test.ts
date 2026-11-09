@@ -243,4 +243,23 @@ describe('serieValorNeto', () => {
     const serie = serieValorNeto([c], movs, [], ['2026-09-15']);
     expect(serie).toEqual([{ fecha: '2026-09-15', valor: 0 }]);
   });
+
+  it('un ahorro anterior a la fecha desde de su cuenta no infla el valor neto', () => {
+    const c = cuenta({ id: 'SIMPLE', saldoInicial: 100, desde: '2026-09-15' });
+    const movs: Movimiento[] = [{ id: '1', fecha: '2026-09-01', monto: 40, tipo: 'AHORRO', cuentaId: 'SIMPLE' }];
+    expect(serieValorNeto([c], movs, [], ['2026-09-20'])).toEqual([{ fecha: '2026-09-20', valor: 100 }]);
+  });
+
+  it('no cuenta un préstamo en fechas anteriores a que existiera', () => {
+    const c = cuenta({ id: 'SIMPLE', saldoInicial: 100, desde: '2026-09-01' });
+    const p: Prestamo = { id: 'P', tipo: 'PRESTE', persona: 'Ana', capital: 50, fecha: '2026-09-10' };
+    const movs: Movimiento[] = [
+      { id: '1', fecha: '2026-09-10', monto: 50, tipo: 'PRESTAMO', dir: 'PRESTE', prestId: 'P', cuentaId: 'SIMPLE' },
+    ];
+    const serie = serieValorNeto([c], movs, [p], ['2026-09-09', '2026-09-10']);
+    expect(serie).toEqual([
+      { fecha: '2026-09-09', valor: 100 },
+      { fecha: '2026-09-10', valor: 100 },
+    ]);
+  });
 });

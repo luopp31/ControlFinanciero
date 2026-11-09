@@ -55,6 +55,8 @@ export interface Config {
   catColor: Record<string, string>;
   ocultarSaldos?: boolean;
   tema?: Tema;
+  /** Presupuesto mensual en soles; 0 o ausente = sin presupuesto. */
+  presupuesto?: number;
   version: number;
 }
 

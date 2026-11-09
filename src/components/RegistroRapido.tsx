@@ -1,8 +1,9 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useCuentas } from '../hooks/useCuentas';
 import { useMovimientos } from '../hooks/useMovimientos';
 import { useIsDesktop } from '../hooks/useIsDesktop';
 import { MovimientoForm } from './MovimientoForm';
+import { RegistroRapidoForm } from './RegistroRapidoForm';
 import { IconPlus, IconX } from './icons';
 
 const UMBRAL_CIERRE_PX = 90;
@@ -10,11 +11,35 @@ const UMBRAL_CIERRE_PX = 90;
 export function RegistroRapido() {
   const isDesktop = useIsDesktop();
   const { cuentas, cargando } = useCuentas();
-  const { crearMovimiento } = useMovimientos();
+  const { movimientos, crearMovimiento } = useMovimientos();
   const [abierto, setAbierto] = useState(false);
+  // null = registro rápido; string = formulario completo con el monto ya escrito.
+  const [montoCompleto, setMontoCompleto] = useState<string | null>(null);
   const [arrastreY, setArrastreY] = useState(0);
   const [arrastrando, setArrastrando] = useState(false);
   const inicioY = useRef(0);
+
+  // Con la hoja en `position: fixed`, el fondo (`body`) sigue siendo la única
+  // parte "scrolleable" del documento — así que si el monto queda enfocado,
+  // iOS intenta desplazar el `body` para "revelarlo" aunque ya sea visible
+  // (está fijo, no depende del scroll), y luego corrige: eso es el salto de
+  // ida y vuelta que se ve al escribir. Bloquear el scroll del body mientras
+  // la hoja está abierta evita que dispare esa corrección.
+  useEffect(() => {
+    if (!abierto) return;
+    const scrollY = window.scrollY;
+    const { style } = document.body;
+    const previo = { position: style.position, top: style.top, width: style.width };
+    style.position = 'fixed';
+    style.top = `-${scrollY}px`;
+    style.width = '100%';
+    return () => {
+      style.position = previo.position;
+      style.top = previo.top;
+      style.width = previo.width;
+      window.scrollTo(0, scrollY);
+    };
+  }, [abierto]);
 
   if (cargando || cuentas.length === 0) return null;
 
@@ -27,6 +52,7 @@ export function RegistroRapido() {
     (document.activeElement as HTMLElement | null)?.blur();
     setAbierto(false);
     setArrastreY(0);
+    setMontoCompleto(null);
   }
 
   function onPointerDown(e: React.PointerEvent) {
@@ -155,15 +181,30 @@ export function RegistroRapido() {
             </div>
 
             <div style={{ padding: '0 20px 24px', overflowY: 'auto' }}>
-              <MovimientoForm
-                cuentas={cuentas}
-                onCrear={async (datos) => {
-                  const r = await crearMovimiento(datos);
-                  cerrar();
-                  return r;
-                }}
-                onCancelar={cerrar}
-              />
+              {montoCompleto === null ? (
+                <RegistroRapidoForm
+                  cuentas={cuentas}
+                  movimientos={movimientos}
+                  retrasoEnfoqueMs={320}
+                  onGuardar={async (datos) => {
+                    const r = await crearMovimiento(datos);
+                    cerrar();
+                    return r;
+                  }}
+                  onMasOpciones={setMontoCompleto}
+                />
+              ) : (
+                <MovimientoForm
+                  cuentas={cuentas}
+                  montoInicial={montoCompleto}
+                  onCrear={async (datos) => {
+                    const r = await crearMovimiento(datos);
+                    cerrar();
+                    return r;
+                  }}
+                  onCancelar={cerrar}
+                />
+              )}
             </div>
           </div>
         </div>

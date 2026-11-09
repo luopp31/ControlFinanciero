@@ -187,18 +187,17 @@ export function montoGrandeInputStyle(acento: AcentoMonto, tieneValor: boolean):
   };
 }
 
-/** Se usa `fixed` en vez de `absolute` a propósito: dentro de la hoja
- * inferior de RegistroRapido, el contenedor de la hoja tiene `transform`
- * (para el arrastre), lo que lo vuelve el "containing block" de este
- * `fixed" — así el picker cubre justo el alto real de la hoja, no el alto
- * completo (y mayor) del formulario que tapa. Incrustado en un glass-card
- * sin ese `transform` de por medio, cubre el viewport completo — un picker
- * de pantalla completa, igual que el patrón original. */
+/** `createPortal` lo cuelga de `document.body`, no del contenedor de la hoja
+ * de RegistroRapido — por eso este `fixed` SIEMPRE cubre el viewport real
+ * completo (el `transform` de la hoja no aplica como "containing block" a un
+ * nodo que ya no es su descendiente en el DOM), y su borde superior cae justo
+ * bajo el notch/isla dinámica/barra de estado del teléfono si no se le suma
+ * el safe-area-inset-top. */
 export const pickerOverlayStyle: CSSProperties = {
   position: 'fixed',
   inset: 0,
   background: 'var(--card)',
-  padding: '18px 18px calc(18px + env(safe-area-inset-bottom))',
+  padding: 'calc(18px + env(safe-area-inset-top)) 18px calc(18px + env(safe-area-inset-bottom))',
   display: 'flex',
   flexDirection: 'column',
   gap: 14,

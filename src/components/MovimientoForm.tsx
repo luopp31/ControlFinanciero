@@ -1,4 +1,4 @@
-import { useId, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import {
   CATS,
@@ -57,6 +57,16 @@ interface MovimientoFormProps {
   onCancelar?: () => void;
   valoresIniciales?: ValoresMovimiento;
   etiquetaGuardar?: string;
+  /** Cuando el form aparece dentro de una hoja que todavía se está animando
+   * (RegistroRapido), enfocar el monto de inmediato con `autoFocus` hace que
+   * el teclado se abra a mitad de la animación de `transform` — el cursor
+   * nativo de iOS es una capa aparte que no se mueve junto con ese `transform`
+   * y "salta" a su lugar real recién cuando la hoja termina de moverse. Con
+   * este valor se retrasa el foco hasta después de esa animación en vez de
+   * usar `autoFocus`. */
+  retrasoEnfoqueMs?: number;
+  /** Monto ya escrito (viene del registro rápido al pulsar "Más opciones"). */
+  montoInicial?: string;
 }
 
 const TIPOS_OTRO: TipoMovimiento[] = ['REEMBOLSO', 'TRASPASO', 'AHORRO', 'PRESTAMO'];
@@ -80,7 +90,16 @@ const DIRS: { id: DireccionPrestamo; nombre: string; titulo: string; ayuda: stri
 
 type Picker = null | 'tipoOtro' | 'categoria' | 'cuenta' | 'destino';
 
-export function MovimientoForm({ cuentas, onCrear, onCancelar, valoresIniciales, etiquetaGuardar }: MovimientoFormProps) {
+export function MovimientoForm({
+  cuentas,
+  onCrear,
+  onCancelar,
+  valoresIniciales,
+  etiquetaGuardar,
+  retrasoEnfoqueMs,
+  montoInicial,
+}: MovimientoFormProps) {
+  const montoInputRef = useRef<HTMLInputElement>(null);
   const fechaId = useId();
   const notaId = useId();
   const personaId = useId();
@@ -95,7 +114,7 @@ export function MovimientoForm({ cuentas, onCrear, onCancelar, valoresIniciales,
   const [cuentaId, setCuentaId] = useState(valoresIniciales?.cuentaId ?? cuentas[0]?.id ?? '');
   const [destinoId, setDestinoId] = useState(valoresIniciales?.destinoId ?? '');
   const [categoria, setCategoria] = useState(valoresIniciales?.categoria ?? '');
-  const [monto, setMonto] = useState(valoresIniciales ? String(valoresIniciales.monto) : '');
+  const [monto, setMonto] = useState(valoresIniciales ? String(valoresIniciales.monto) : (montoInicial ?? ''));
   const [fecha, setFecha] = useState(valoresIniciales?.fecha ?? hoyISO());
   const [nota, setNota] = useState(valoresIniciales?.nota ?? '');
   const [guardando, setGuardando] = useState(false);
@@ -104,6 +123,12 @@ export function MovimientoForm({ cuentas, onCrear, onCancelar, valoresIniciales,
   const [prestIdSel, setPrestIdSel] = useState(valoresIniciales?.prestId ?? '');
   const [personaPrestamo, setPersonaPrestamo] = useState('');
   const [acordado, setAcordado] = useState('');
+
+  useEffect(() => {
+    if (editando || !retrasoEnfoqueMs) return;
+    const id = setTimeout(() => montoInputRef.current?.focus(), retrasoEnfoqueMs);
+    return () => clearTimeout(id);
+  }, [editando, retrasoEnfoqueMs]);
 
   const esOtro = TIPOS_OTRO.includes(tipo);
   const esPrestamo = tipo === 'PRESTAMO';
@@ -252,12 +277,13 @@ export function MovimientoForm({ cuentas, onCrear, onCancelar, valoresIniciales,
       >
         <span style={barraAcentoStyle(acento)} />
         <input
+          ref={montoInputRef}
           inputMode="decimal"
           value={monto}
           onChange={(e) => setMonto(e.target.value)}
           placeholder="0"
           autoComplete="off"
-          autoFocus={!editando}
+          autoFocus={!editando && !retrasoEnfoqueMs}
           onFocus={(e) => e.target.select()}
           style={montoGrandeInputStyle(acento, monto.trim() !== '')}
         />

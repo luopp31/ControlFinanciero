@@ -230,6 +230,7 @@ function bajarConfig(r: Record<string, unknown>, version: number): Config {
     catColor: (r.cat_color as Record<string, string>) ?? {},
     ocultarSaldos: !!r.ocultar_saldos,
     tema: (r.tema as Config['tema']) ?? undefined,
+    presupuesto: Number(r.presupuesto) || 0,
     version,
   };
 }
@@ -241,6 +242,7 @@ function subirConfig(c: Config, usuarioId: string) {
     cat_color: c.catColor,
     ocultar_saldos: !!c.ocultarSaldos,
     tema: c.tema ?? null,
+    presupuesto: c.presupuesto ?? 0,
     version: c.version,
   };
 }

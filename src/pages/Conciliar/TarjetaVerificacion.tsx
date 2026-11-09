@@ -46,7 +46,7 @@ export function TarjetaVerificacion({ cuenta, v }: { cuenta: Cuenta; v: Verifica
           )}
           {v.sinExplicarCent !== 0 && (
             <p style={{ margin: 0, color: 'var(--destructive)' }}>
-              Quedan {s(v.sinExplicarCent)} que ninguna fila explica: revisa el saldo inicial y la fecha de corte de {cuenta.nombre}.
+              Quedan {s(v.sinExplicarCent)} que ninguna fila explica: puede ser una fila mal clasificada, o el saldo inicial o la fecha de corte de {cuenta.nombre}.
             </p>
           )}
         </div>

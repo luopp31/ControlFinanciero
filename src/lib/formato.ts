@@ -29,6 +29,11 @@ const MESES_LARGOS = [
   'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre',
 ];
 
+/** "noviembre" a partir de una clave de mes 'YYYY-MM'. */
+export function formatearMes(mesISO: string): string {
+  return MESES_LARGOS[Number(mesISO.split('-')[1]) - 1];
+}
+
 /** "Septiembre 2026" a partir de una clave de mes 'YYYY-MM'. */
 export function formatearMesLargo(mesISO: string): string {
   const [anio, mes] = mesISO.split('-');

@@ -4,8 +4,8 @@ import { useCuentas } from '../../hooks/useCuentas';
 import { useMovimientos } from '../../hooks/useMovimientos';
 import { useConfig } from '../../hooks/useConfig';
 import { usePrestamos } from '../../hooks/usePrestamos';
-import { menosDiasISO } from '../../lib/fecha';
-import { serieValorNeto, valorNeto } from '../../lib/finanzas';
+import { mesActualISO, menosDiasISO } from '../../lib/fecha';
+import { serieValorNeto, totalGastos, valorNeto } from '../../lib/finanzas';
 import { PanelDesktop } from './Panel.desktop';
 import { PanelMobile } from './Panel.mobile';
 
@@ -18,12 +18,15 @@ export function Panel({ onAbrirConciliar }: { onAbrirConciliar: () => void }) {
   const { config, cargando: cargandoConfig } = useConfig();
   const { prestamos } = usePrestamos();
 
-  const { valorNetoActual, serie, recientes } = useMemo(() => {
+  const { valorNetoActual, serie, recientes, gastoMes, mes } = useMemo(() => {
+    const mes = mesActualISO();
     const fechas = Array.from({ length: DIAS_SERIE }, (_, i) => menosDiasISO(DIAS_SERIE - 1 - i));
     return {
       valorNetoActual: valorNeto(cuentas, movimientos, prestamos),
       serie: serieValorNeto(cuentas, movimientos, prestamos, fechas),
       recientes: movimientos.slice(0, 5),
+      mes,
+      gastoMes: totalGastos(movimientos, `${mes}-01`, `${mes}-31`),
     };
   }, [cuentas, movimientos, prestamos]);
 
@@ -39,6 +42,6 @@ export function Panel({ onAbrirConciliar }: { onAbrirConciliar: () => void }) {
     );
   }
 
-  const props = { nombre: config.nombre, cuentas, movimientos, prestamos, valorNetoActual, serie, recientes, onAbrirConciliar };
+  const props = { nombre: config.nombre, cuentas, movimientos, prestamos, valorNetoActual, serie, recientes, gastoMes, mes, onAbrirConciliar };
   return isDesktop ? <PanelDesktop {...props} /> : <PanelMobile {...props} />;
 }

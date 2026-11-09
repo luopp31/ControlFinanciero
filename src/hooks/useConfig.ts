@@ -50,10 +50,12 @@ export function useConfig() {
 
   const guardarTema = useCallback((tema: Tema) => mutar({ tema }), [mutar]);
 
+  const guardarPresupuesto = useCallback((presupuesto: number) => mutar({ presupuesto }), [mutar]);
+
   const guardarColorCategoria = useCallback(
     (categoriaId: string, color: string) => mutar({ catColor: { ...configRef.current.catColor, [categoriaId]: color } }),
     [mutar]
   );
 
-  return { config, cargando, guardarNombre, alternarOcultarSaldos, guardarTema, guardarColorCategoria };
+  return { config, cargando, guardarNombre, alternarOcultarSaldos, guardarTema, guardarColorCategoria, guardarPresupuesto };
 }

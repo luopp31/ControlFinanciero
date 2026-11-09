@@ -125,7 +125,8 @@ const compromisosSync: TablaSync<Compromiso> = {
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const TABLAS: TablaSync<any>[] = [cuentasSync, movimientosSync, prestamosSync, compromisosSync];
+// Orden obligatorio: movimientos referencia (FK) a cuentas, préstamos y compromisos.
+const TABLAS: TablaSync<any>[] = [cuentasSync, prestamosSync, compromisosSync, movimientosSync];
 
 async function sincronizarTabla<L extends { id: string; actualizado?: string; sincronizado?: boolean }>(
   t: TablaSync<L>
@@ -138,8 +139,11 @@ async function sincronizarTabla<L extends { id: string; actualizado?: string; si
   if (pendientes.length > 0) {
     const { error } = await supabase.from(t.tabla).upsert(pendientes.map(t.subir), { onConflict: 'id' });
     if (error) throw new Error(`${t.tabla}: ${error.message}`);
+    // Releemos: si la fila se editó mientras subía, sigue pendiente (no la marcamos).
+    const ahora = new Map((await getAll<L>(t.store)).map((x) => [x.id, x]));
     for (const l of pendientes) {
-      await put(t.store, { ...l, sincronizado: true });
+      const actual = ahora.get(l.id);
+      if (actual && actual.actualizado === l.actualizado) await put(t.store, { ...actual, sincronizado: true });
     }
   }
 
@@ -164,9 +168,7 @@ async function sincronizarTabla<L extends { id: string; actualizado?: string; si
 
 function bajarConfig(r: Record<string, unknown>, version: number): Config {
   return {
-    presupuesto: Number(r.presupuesto ?? 0),
     nombre: (r.nombre as string) ?? '',
-    catsExtra: (r.cats_extra as unknown[]) ?? [],
     catColor: (r.cat_color as Record<string, string>) ?? {},
     ocultarSaldos: !!r.ocultar_saldos,
     tema: (r.tema as Config['tema']) ?? undefined,
@@ -177,9 +179,7 @@ function bajarConfig(r: Record<string, unknown>, version: number): Config {
 function subirConfig(c: Config, usuarioId: string) {
   return {
     usuario_id: usuarioId,
-    presupuesto: c.presupuesto,
     nombre: c.nombre,
-    cats_extra: c.catsExtra,
     cat_color: c.catColor,
     ocultar_saldos: !!c.ocultarSaldos,
     tema: c.tema ?? null,
@@ -202,7 +202,7 @@ async function sincronizarConfig(): Promise<void> {
   } = await supabase.auth.getUser();
   if (!user) return;
 
-  const local = (await getConfig()) ?? { presupuesto: 0, nombre: '', catsExtra: [], catColor: {}, version: 0 };
+  const local = (await getConfig()) ?? { nombre: '', catColor: {}, version: 0 };
 
   const { data: remoto, error: errLeer } = await supabase.from('config').select('*').eq('usuario_id', user.id).maybeSingle();
   if (errLeer) throw new Error(`config: ${errLeer.message}`);
@@ -223,12 +223,33 @@ async function sincronizarConfig(): Promise<void> {
       .eq('version', versionRemota)
       .select();
     if (errUpdate) throw new Error(`config: ${errUpdate.message}`);
-    // 0 filas = alguien más escribió entre medio (carrera) -- nos quedamos
-    // con lo remoto en vez de arriesgarnos a pisar ese cambio a ciegas.
+    // 0 filas = otro dispositivo escribió entre medio (carrera). No descartamos
+    // tus cambios: los reaplicamos sobre la versión nueva, una sola vez.
     if (!filasActualizadas || filasActualizadas.length === 0) {
-      await putConfig(bajarConfig(remoto, versionRemota));
+      const { data: r2, error: errR2 } = await supabase.from('config').select('*').eq('usuario_id', user.id).maybeSingle();
+      if (errR2) throw new Error(`config: ${errR2.message}`);
+      if (r2) {
+        const v2 = Number(r2.version ?? 0);
+        const fusion = { ...local, version: v2 + 1 };
+        const { data: ok, error: errFusion } = await supabase
+          .from('config')
+          .update(subirConfig(fusion, user.id))
+          .eq('usuario_id', user.id)
+          .eq('version', v2)
+          .select();
+        if (errFusion) throw new Error(`config: ${errFusion.message}`);
+        await putConfig(ok && ok.length > 0 ? fusion : bajarConfig(r2, v2));
+      }
     }
   } else if (versionRemota > local.version) {
+    await putConfig(bajarConfig(remoto, versionRemota));
+  } else if (
+    versionRemota > 0 &&
+    JSON.stringify(subirConfig(local, user.id)) !== JSON.stringify(subirConfig(bajarConfig(remoto, versionRemota), user.id))
+  ) {
+    // Misma versión pero distinto contenido: dos dispositivos editaron sin verse.
+    // No hay forma de saber cuál es más nuevo; ganar lo remoto evita el bug original
+    // (un dispositivo recién instalado pisando la config buena) y deja ambos iguales.
     await putConfig(bajarConfig(remoto, versionRemota));
   }
 }

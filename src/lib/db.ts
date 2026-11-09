@@ -24,9 +24,7 @@ export interface Compromiso {
 export type Tema = 'sistema' | 'claro' | 'oscuro';
 
 export interface Config {
-  presupuesto: number;
   nombre: string;
-  catsExtra: unknown[];
   catColor: Record<string, string>;
   ocultarSaldos?: boolean;
   tema?: Tema;

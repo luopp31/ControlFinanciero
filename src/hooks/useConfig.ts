@@ -3,7 +3,7 @@ import { getConfig, putConfig, type Config, type Tema } from '../lib/db';
 import { avisarCambioDeDatos, suscribirCambiosDeDatos } from '../lib/eventos';
 import { programarSyncAutomatico } from '../lib/sync';
 
-const CONFIG_DEFAULT: Config = { presupuesto: 0, nombre: '', catsExtra: [], catColor: {}, version: 0 };
+const CONFIG_DEFAULT: Config = { nombre: '', catColor: {}, version: 0 };
 
 export function useConfig() {
   const [config, setConfig] = useState<Config>(CONFIG_DEFAULT);

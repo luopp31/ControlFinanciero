@@ -24,3 +24,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Datos personales (PDFs del banco, CSV)
+datos-privados/
+movimientos_greedy_*.csv

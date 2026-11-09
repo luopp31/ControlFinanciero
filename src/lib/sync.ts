@@ -1,12 +1,12 @@
 import { supabase } from './supabase';
-import { getAll, put, getConfig, putConfig, type Compromiso, type Config } from './db';
+import { getAll, put, getConfig, putConfig, type Compromiso, type Config, type ReglaCategoria, type Ignorado } from './db';
 import type { Cuenta, Movimiento, Prestamo } from './finanzas';
 import { avisarCambioDeDatos } from './eventos';
 
 // Cada tabla remota usa snake_case y usuario_id (RLS ya filtra por dueño);
 // estas funciones traducen hacia/desde nuestros tipos locales en camelCase.
 interface TablaSync<Local extends { id: string; actualizado?: string; sincronizado?: boolean }> {
-  store: 'cuentas' | 'movimientos' | 'prestamos' | 'compromisos';
+  store: 'cuentas' | 'movimientos' | 'prestamos' | 'compromisos' | 'reglas_categoria' | 'ignorados';
   tabla: string;
   subir: (l: Local) => Record<string, unknown>;
   bajar: (r: Record<string, unknown>) => Local;
@@ -21,6 +21,7 @@ const cuentasSync: TablaSync<Cuenta> = {
     rol: c.rol,
     saldo_inicial: c.saldoInicial,
     desde: c.desde,
+    conciliado_hasta: c.conciliadoHasta ?? null,
     borrado: !!c.borrado,
   }),
   bajar: (r) => ({
@@ -29,6 +30,7 @@ const cuentasSync: TablaSync<Cuenta> = {
     rol: r.rol as Cuenta['rol'],
     saldoInicial: Number(r.saldo_inicial),
     desde: r.desde as string,
+    conciliadoHasta: (r.conciliado_hasta as string) ?? null,
     borrado: !!r.borrado,
     actualizado: r.actualizado as string,
     sincronizado: true,
@@ -50,6 +52,10 @@ const movimientosSync: TablaSync<Movimiento> = {
     prest_id: m.prestId ?? null,
     compromiso_id: m.compromisoId ?? null,
     nota: m.nota ?? null,
+    referencia: m.referencia ?? null,
+    descriptor: m.descriptor ?? null,
+    origen: m.origen ?? null,
+    hora: m.hora ?? null,
     borrado: !!m.borrado,
   }),
   bajar: (r) => ({
@@ -64,6 +70,10 @@ const movimientosSync: TablaSync<Movimiento> = {
     prestId: (r.prest_id as string) ?? null,
     compromisoId: (r.compromiso_id as string) ?? null,
     nota: (r.nota as string) ?? null,
+    referencia: (r.referencia as string) ?? null,
+    descriptor: (r.descriptor as string) ?? null,
+    origen: (r.origen as Movimiento['origen']) ?? null,
+    hora: (r.hora as string) ?? null,
     borrado: !!r.borrado,
     actualizado: r.actualizado as string,
     sincronizado: true,
@@ -124,9 +134,57 @@ const compromisosSync: TablaSync<Compromiso> = {
   }),
 };
 
+const reglasSync: TablaSync<ReglaCategoria> = {
+  store: 'reglas_categoria',
+  tabla: 'reglas_categoria',
+  subir: (g) => ({
+    id: g.id,
+    clave: g.clave,
+    tipo: g.tipo,
+    categoria: g.categoria,
+    veces_confirmada: g.vecesConfirmada,
+    borrado: !!g.borrado,
+  }),
+  bajar: (r) => ({
+    id: r.id as string,
+    clave: r.clave as string,
+    tipo: r.tipo as ReglaCategoria['tipo'],
+    categoria: r.categoria as string,
+    vecesConfirmada: Number(r.veces_confirmada),
+    borrado: !!r.borrado,
+    actualizado: r.actualizado as string,
+    sincronizado: true,
+  }),
+};
+
+const ignoradosSync: TablaSync<Ignorado> = {
+  store: 'ignorados',
+  tabla: 'conciliar_ignorados',
+  subir: (i) => ({
+    id: i.id,
+    cuenta_id: i.cuentaId,
+    referencia: i.referencia,
+    descriptor: i.descriptor ?? null,
+    fecha: i.fecha ?? null,
+    monto: i.monto ?? null,
+    borrado: !!i.borrado,
+  }),
+  bajar: (r) => ({
+    id: r.id as string,
+    cuentaId: r.cuenta_id as string,
+    referencia: r.referencia as string,
+    descriptor: (r.descriptor as string) ?? null,
+    fecha: (r.fecha as string) ?? null,
+    monto: r.monto != null ? Number(r.monto) : null,
+    borrado: !!r.borrado,
+    actualizado: r.actualizado as string,
+    sincronizado: true,
+  }),
+};
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-// Orden obligatorio: movimientos referencia (FK) a cuentas, préstamos y compromisos.
-const TABLAS: TablaSync<any>[] = [cuentasSync, prestamosSync, compromisosSync, movimientosSync];
+// Orden obligatorio: movimientos e ignorados referencian (FK) a cuentas, préstamos y compromisos.
+const TABLAS: TablaSync<any>[] = [cuentasSync, prestamosSync, compromisosSync, movimientosSync, reglasSync, ignoradosSync];
 
 async function sincronizarTabla<L extends { id: string; actualizado?: string; sincronizado?: boolean }>(
   t: TablaSync<L>

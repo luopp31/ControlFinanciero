@@ -11,6 +11,8 @@ export interface Cuenta {
   saldoInicial: number;
   /** Fecha ISO (YYYY-MM-DD) desde la que los movimientos afectan el saldo. */
   desde: string;
+  /** Instante (ISO) hasta el que la última conciliación con el banco cuadró. */
+  conciliadoHasta?: string | null;
   borrado?: boolean;
   /** ISO datetime de la última modificación local — usado por el sync para
    * decidir qué versión gana (la más reciente), fila por fila. */
@@ -41,6 +43,13 @@ export interface Movimiento {
   prestId?: string | null; // solo PRESTAMO
   compromisoId?: string | null; // pago real de una suscripción/cuota
   nota?: string | null;
+  /** Solo movimientos importados del banco: hash estable de la fila (idempotencia). */
+  referencia?: string | null;
+  /** Texto original del banco. */
+  descriptor?: string | null;
+  origen?: 'manual' | 'conciliar' | null;
+  /** HH:MM, cuando se conoce (importados). */
+  hora?: string | null;
   borrado?: boolean;
   actualizado?: string;
   sincronizado?: boolean;
@@ -81,6 +90,7 @@ export const CATS_ING: Categoria[] = [
   { id: 'FREELANCE', nombre: 'Trabajos aparte', icono: 'wrench', color: '#FFB020' },
   { id: 'VENTAS', nombre: 'Ventas', icono: 'tag', color: '#FF8FD6' },
   { id: 'LIQUIDACION', nombre: 'Liquidación', icono: 'bank', color: '#59C98F' },
+  { id: 'INTERESES', nombre: 'Intereses', icono: 'bank', color: '#7FD6B0' },
   { id: 'OTROS', nombre: 'Otros', icono: 'sparkle', color: '#9A93AC' },
 ];
 

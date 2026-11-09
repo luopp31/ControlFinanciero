@@ -1,7 +1,34 @@
 import type { Cuenta, Movimiento, Prestamo } from './finanzas';
 
 const DB_NAME = 'greedy';
-const DB_VERSION = 1;
+// v2: stores reglas_categoria e ignorados (Conciliar). La migración solo CREA los
+// stores que faltan; los datos existentes no se tocan (ver db.test.ts).
+const DB_VERSION = 2;
+
+/** Regla aprendida: descriptor normalizado del banco -> categoría. */
+export interface ReglaCategoria {
+  id: string;
+  clave: string;
+  tipo: 'PERSONA' | 'COMERCIO';
+  categoria: string;
+  vecesConfirmada: number;
+  borrado?: boolean;
+  actualizado?: string;
+  sincronizado?: boolean;
+}
+
+/** Fila del banco que el usuario marcó "ignorar". id = hash(cuentaId + referencia). */
+export interface Ignorado {
+  id: string;
+  cuentaId: string;
+  referencia: string;
+  descriptor?: string | null;
+  fecha?: string | null;
+  monto?: number | null;
+  borrado?: boolean;
+  actualizado?: string;
+  sincronizado?: boolean;
+}
 
 export type TipoCompromiso = 'SUSCRIPCION' | 'CUOTA';
 
@@ -31,7 +58,7 @@ export interface Config {
   version: number;
 }
 
-const STORES = ['cuentas', 'movimientos', 'prestamos', 'compromisos', 'config'] as const;
+const STORES = ['cuentas', 'movimientos', 'prestamos', 'compromisos', 'config', 'reglas_categoria', 'ignorados'] as const;
 type Store = (typeof STORES)[number];
 
 let dbPromise: Promise<IDBDatabase> | null = null;

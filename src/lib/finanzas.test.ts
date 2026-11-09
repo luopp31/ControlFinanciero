@@ -250,6 +250,16 @@ describe('serieValorNeto', () => {
     expect(serieValorNeto([c], movs, [], ['2026-09-20'])).toEqual([{ fecha: '2026-09-20', valor: 100 }]);
   });
 
+  it('un préstamo pendiente cuenta completo aunque sea anterior a desde, sin tocar el saldo de la cuenta', () => {
+    const c = cuenta({ id: 'SIMPLE', saldoInicial: 100, desde: '2026-11-02' });
+    const p: Prestamo = { id: 'P', tipo: 'PRESTE', persona: 'Coco', capital: 950, fecha: '2026-10-01' };
+    const movs: Movimiento[] = [
+      { id: '1', fecha: '2026-10-01', monto: 950, tipo: 'PRESTAMO', dir: 'PRESTE', prestId: 'P', cuentaId: 'SIMPLE' },
+    ];
+    expect(saldo(c, movs)).toBe(100); // el movimiento previo a desde no mueve el saldo
+    expect(valorNeto([c], movs, [p])).toBe(1050); // pero lo que te deben sí cuenta
+  });
+
   it('no cuenta un préstamo en fechas anteriores a que existiera', () => {
     const c = cuenta({ id: 'SIMPLE', saldoInicial: 100, desde: '2026-09-01' });
     const p: Prestamo = { id: 'P', tipo: 'PRESTE', persona: 'Ana', capital: 50, fecha: '2026-09-10' };

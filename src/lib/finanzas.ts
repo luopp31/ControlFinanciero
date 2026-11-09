@@ -284,14 +284,15 @@ export function valorNeto(
   movimientos: Movimiento[],
   prestamos: Prestamo[]
 ): number {
-  // Igual que saldo(): lo anterior a la fecha de corte de su cuenta no cuenta
-  // (si no, un ahorro o préstamo viejo inflaría el valor neto sin tocar ningún saldo).
+  // Los ahorros anteriores a la fecha de corte de su cuenta no cuentan (como en saldo()).
+  // Los préstamos SÍ cuentan completos sin importar su fecha: lo que te deben (o debes)
+  // sigue vigente aunque el movimiento original sea anterior a `desde`.
   const desdePorCuenta = new Map(cuentas.map((c) => [c.id, c.desde || '']));
   const vigentes = movimientos.filter((m) => m.fecha >= (desdePorCuenta.get(m.cuentaId) ?? ''));
   return (
     saldoTotal(cuentas, movimientos) +
-    porCobrar(prestamos, vigentes) -
-    porPagar(prestamos, vigentes) +
+    porCobrar(prestamos, movimientos) -
+    porPagar(prestamos, movimientos) +
     totalAhorrado(vigentes)
   );
 }

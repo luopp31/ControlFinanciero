@@ -3,7 +3,7 @@ import { getAll, put } from '../lib/db';
 import { avisarCambioDeDatos, suscribirCambiosDeDatos } from '../lib/eventos';
 import { programarSyncAutomatico } from '../lib/sync';
 
-type Store = 'cuentas' | 'movimientos' | 'prestamos' | 'compromisos';
+type Store = 'cuentas' | 'movimientos' | 'prestamos' | 'compromisos' | 'reglas_categoria' | 'ignorados';
 type Fila = { id: string; borrado?: boolean };
 
 /** CRUD local + sync para cualquier store con borrado suave. Los hooks por entidad lo envuelven. */

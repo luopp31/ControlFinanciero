@@ -9,6 +9,12 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg', 'apple-touch-icon.png'],
+      workbox: {
+        // pdfjs (~1,7 MB entre librería y worker) solo hace falta al conciliar: no va en la instalación
+        // inicial; se guarda en caché la primera vez que se usa y de ahí en adelante funciona offline.
+        globIgnores: ['**/assets/pdf*.{js,mjs}'],
+        runtimeCaching: [{ urlPattern: /\/assets\/pdf[^/]*\.m?js$/, handler: 'CacheFirst', options: { cacheName: 'pdfjs' } }],
+      },
       manifest: {
         name: 'Greedy',
         short_name: 'Greedy',

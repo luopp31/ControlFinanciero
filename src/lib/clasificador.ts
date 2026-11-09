@@ -25,7 +25,7 @@ export function normalizarClave(descriptor: string): string {
     .toUpperCase()
     .replace(/\d+/g, ' ')
     .replace(/\s+/g, ' ')
-    .replace(/[\s*\-]+$/, '')
+    .replace(/[\s*-]+$/, '')
     .trim();
 }
 

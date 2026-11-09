@@ -2,9 +2,10 @@ import { useState } from 'react';
 import { CuentaCard } from '../../components/CuentaCard';
 import { CuentaForm } from '../../components/CuentaForm';
 import { IconPlus } from '../../components/icons';
+import { TarjetaConciliar } from '../../components/TarjetaConciliar';
 import type { CuentasViewProps } from './types';
 
-export function CuentasMobile({ cuentas, movimientos, crearCuenta }: CuentasViewProps) {
+export function CuentasMobile({ cuentas, movimientos, crearCuenta, onAbrirConciliar }: CuentasViewProps) {
   const vacio = cuentas.length === 0;
   const [mostrarForm, setMostrarForm] = useState(vacio);
 
@@ -29,6 +30,8 @@ export function CuentasMobile({ cuentas, movimientos, crearCuenta }: CuentasView
           ))}
         </div>
       )}
+
+      {!vacio && <TarjetaConciliar cuentas={cuentas} onAbrir={onAbrirConciliar} />}
 
       {mostrarForm ? (
         <div className="glass-card">

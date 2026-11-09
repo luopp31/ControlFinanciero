@@ -11,7 +11,7 @@ import { PanelMobile } from './Panel.mobile';
 
 const DIAS_SERIE = 30;
 
-export function Panel() {
+export function Panel({ onAbrirConciliar }: { onAbrirConciliar: () => void }) {
   const isDesktop = useIsDesktop();
   const { cuentas, cargando: cargandoCuentas } = useCuentas();
   const { movimientos, cargando: cargandoMovs } = useMovimientos();
@@ -39,6 +39,6 @@ export function Panel() {
     );
   }
 
-  const props = { nombre: config.nombre, cuentas, movimientos, prestamos, valorNetoActual, serie, recientes };
+  const props = { nombre: config.nombre, cuentas, movimientos, prestamos, valorNetoActual, serie, recientes, onAbrirConciliar };
   return isDesktop ? <PanelDesktop {...props} /> : <PanelMobile {...props} />;
 }

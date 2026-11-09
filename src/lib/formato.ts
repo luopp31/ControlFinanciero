@@ -35,3 +35,10 @@ export function formatearMesLargo(mesISO: string): string {
   const nombre = MESES_LARGOS[Number(mes) - 1];
   return `${nombre.charAt(0).toUpperCase()}${nombre.slice(1)} ${anio}`;
 }
+
+/** "9 nov, 11:46" a partir de un instante ISO, en hora de Lima (la del banco). */
+export function formatearInstanteLima(iso: string): string {
+  return new Date(iso)
+    .toLocaleString('es-PE', { timeZone: 'America/Lima', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', hour12: false })
+    .replace('.', '');
+}

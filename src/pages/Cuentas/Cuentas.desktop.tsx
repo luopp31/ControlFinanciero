@@ -1,8 +1,9 @@
 import { CuentaCard } from '../../components/CuentaCard';
 import { CuentaForm } from '../../components/CuentaForm';
+import { TarjetaConciliar } from '../../components/TarjetaConciliar';
 import type { CuentasViewProps } from './types';
 
-export function CuentasDesktop({ cuentas, movimientos, crearCuenta }: CuentasViewProps) {
+export function CuentasDesktop({ cuentas, movimientos, crearCuenta, onAbrirConciliar }: CuentasViewProps) {
   const vacio = cuentas.length === 0;
 
   return (
@@ -20,8 +21,11 @@ export function CuentasDesktop({ cuentas, movimientos, crearCuenta }: CuentasVie
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: vacio ? '1fr' : '360px 1fr', gap: 24, alignItems: 'start' }}>
-        <div className="glass-card" style={{ maxWidth: vacio ? 420 : undefined }}>
-          <CuentaForm onCrear={crearCuenta} />
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+          <div className="glass-card" style={{ maxWidth: vacio ? 420 : undefined }}>
+            <CuentaForm onCrear={crearCuenta} />
+          </div>
+          {!vacio && <TarjetaConciliar cuentas={cuentas} onAbrir={onAbrirConciliar} />}
         </div>
 
         {!vacio && (

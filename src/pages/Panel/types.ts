@@ -8,4 +8,5 @@ export interface PanelViewProps {
   valorNetoActual: number;
   serie: { fecha: string; valor: number }[];
   recientes: Movimiento[];
+  onAbrirConciliar: () => void;
 }

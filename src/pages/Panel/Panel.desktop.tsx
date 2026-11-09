@@ -2,12 +2,13 @@ import { CuentaCard } from '../../components/CuentaCard';
 import { MovimientoRow } from '../../components/MovimientoRow';
 import { GraficoTendencia } from '../../components/GraficoTendencia';
 import { IconEye, IconEyeSlash } from '../../components/icons';
+import { TarjetaConciliar } from '../../components/TarjetaConciliar';
 import { useConfig } from '../../hooks/useConfig';
 import { formatearMontoOcultable } from '../../lib/formato';
 import { saludoPorHora } from '../../lib/saludo';
 import type { PanelViewProps } from './types';
 
-export function PanelDesktop({ nombre, cuentas, movimientos, valorNetoActual, serie, recientes }: PanelViewProps) {
+export function PanelDesktop({ nombre, cuentas, movimientos, valorNetoActual, serie, recientes, onAbrirConciliar }: PanelViewProps) {
   const { config, alternarOcultarSaldos } = useConfig();
   const oculto = !!config.ocultarSaldos;
 
@@ -45,6 +46,9 @@ export function PanelDesktop({ nombre, cuentas, movimientos, valorNetoActual, se
             {cuentas.map((c) => (
               <CuentaCard key={c.id} cuenta={c} movimientos={movimientos} />
             ))}
+          </div>
+          <div style={{ marginTop: 16 }}>
+            <TarjetaConciliar cuentas={cuentas} onAbrir={onAbrirConciliar} />
           </div>
         </div>
 

@@ -2,12 +2,13 @@ import { CuentaCard } from '../../components/CuentaCard';
 import { MovimientoRow } from '../../components/MovimientoRow';
 import { GraficoTendencia } from '../../components/GraficoTendencia';
 import { IconEye, IconEyeSlash } from '../../components/icons';
+import { TarjetaConciliar } from '../../components/TarjetaConciliar';
 import { useConfig } from '../../hooks/useConfig';
 import { formatearMontoOcultable } from '../../lib/formato';
 import { saludoPorHora } from '../../lib/saludo';
 import type { PanelViewProps } from './types';
 
-export function PanelMobile({ nombre, cuentas, movimientos, valorNetoActual, serie, recientes }: PanelViewProps) {
+export function PanelMobile({ nombre, cuentas, movimientos, valorNetoActual, serie, recientes, onAbrirConciliar }: PanelViewProps) {
   const { config, alternarOcultarSaldos } = useConfig();
   const oculto = !!config.ocultarSaldos;
 
@@ -46,6 +47,8 @@ export function PanelMobile({ nombre, cuentas, movimientos, valorNetoActual, ser
           ))}
         </div>
       </div>
+
+      <TarjetaConciliar cuentas={cuentas} onAbrir={onAbrirConciliar} />
 
       <div>
         <p style={seccionTitulo}>Movimientos recientes</p>

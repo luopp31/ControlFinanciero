@@ -357,6 +357,9 @@ export const CATEGORIA_ICONOS: Record<string, (props: SVGProps<SVGSVGElement>) =
   wrench: IconWrench,
   tag: IconTag,
   sparkle: IconSparkle,
+  wallet: IconWallet,
+  'arrows-clockwise': IconArrowsClockwise,
+  bank: IconBank,
 };
 
 export const TIPO_ICONOS: Record<string, (props: SVGProps<SVGSVGElement>) => React.JSX.Element> = {

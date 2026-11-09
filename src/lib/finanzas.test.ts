@@ -174,18 +174,27 @@ describe('totalIngresos / totalGastos / totalesPorMes', () => {
     { id: '5', fecha: '2026-02-10', monto: 150, tipo: 'GASTO', cuentaId: 'SIMPLE' },
   ];
 
-  it('totalIngresos suma INGRESO y REEMBOLSO, no otros tipos', () => {
-    expect(totalIngresos(movs, '2026-01-01', '2026-01-31')).toBe(2050);
+  it('totalIngresos suma solo INGRESO (el reembolso no es ingreso)', () => {
+    expect(totalIngresos(movs, '2026-01-01', '2026-01-31')).toBe(2000);
     expect(totalIngresos(movs, '2026-02-01', '2026-02-28')).toBe(0);
   });
 
-  it('totalGastos solo cuenta tipo GASTO, no AHORRO', () => {
+  it('totalGastos resta los REEMBOLSO del GASTO y no cuenta AHORRO', () => {
+    expect(totalGastos(movs, '2026-01-01', '2026-01-31')).toBe(250);
     expect(totalGastos(movs, '2026-02-01', '2026-02-28')).toBe(150);
+  });
+
+  it('gastoPorCategoria resta el reembolso de su categoría', () => {
+    const m: Movimiento[] = [
+      { id: '1', fecha: '2026-11-07', monto: 63.5, tipo: 'GASTO', categoria: 'ALIMENTACION', cuentaId: 'A' },
+      { id: '2', fecha: '2026-11-07', monto: 33.7, tipo: 'REEMBOLSO', categoria: 'ALIMENTACION', cuentaId: 'A' },
+    ];
+    expect(gastoPorCategoria(m, '2026-11-01', '2026-11-30')).toEqual([{ categoria: 'ALIMENTACION', monto: expect.closeTo(29.8, 5) }]);
   });
 
   it('totalesPorMes arma ingreso y gasto reales por cada mes pedido', () => {
     expect(totalesPorMes(movs, ['2026-01', '2026-02', '2026-03'])).toEqual([
-      { mes: '2026-01', ingreso: 2050, gasto: 300 },
+      { mes: '2026-01', ingreso: 2000, gasto: 250 },
       { mes: '2026-02', ingreso: 0, gasto: 150 },
       { mes: '2026-03', ingreso: 0, gasto: 0 },
     ]);

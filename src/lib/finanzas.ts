@@ -49,7 +49,7 @@ export interface Movimiento {
 export interface Categoria {
   id: string;
   nombre: string;
-  icono: 'fork-knife' | 'bus' | 'heart' | 'wifi-high' | 'confetti' | 'shopping-bag' | 'book-open' | 'question' | 'briefcase' | 'gift' | 'wrench' | 'tag' | 'sparkle';
+  icono: 'fork-knife' | 'bus' | 'heart' | 'wifi-high' | 'confetti' | 'shopping-bag' | 'book-open' | 'question' | 'briefcase' | 'gift' | 'wrench' | 'tag' | 'sparkle' | 'wallet' | 'arrows-clockwise' | 'bank';
   /** Color de identidad de la categoría (mismo hex que usaba la app anterior). */
   color: string;
 }
@@ -69,6 +69,9 @@ export const CATS: Categoria[] = [
   { id: 'DIVERSION', nombre: 'Diversión', icono: 'confetti', color: '#FF5C86' },
   { id: 'COMPRAS', nombre: 'Compras', icono: 'shopping-bag', color: '#FF8FD6' },
   { id: 'EDUCACION', nombre: 'Educación', icono: 'book-open', color: '#8B5CF6' },
+  { id: 'TRABAJO', nombre: 'Trabajo', icono: 'briefcase', color: '#B8C76B' },
+  { id: 'EFECTIVO', nombre: 'Efectivo', icono: 'wallet', color: '#7FB3A0' },
+  { id: 'SUSCRIPCIONES', nombre: 'Suscripciones', icono: 'arrows-clockwise', color: '#6BA8FF' },
   { id: 'SINID', nombre: 'Sin identificar', icono: 'question', color: '#5A5368' },
 ];
 
@@ -77,6 +80,7 @@ export const CATS_ING: Categoria[] = [
   { id: 'EXTRAS', nombre: 'Extras laborales', icono: 'gift', color: '#5CC8FF' },
   { id: 'FREELANCE', nombre: 'Trabajos aparte', icono: 'wrench', color: '#FFB020' },
   { id: 'VENTAS', nombre: 'Ventas', icono: 'tag', color: '#FF8FD6' },
+  { id: 'LIQUIDACION', nombre: 'Liquidación', icono: 'bank', color: '#59C98F' },
   { id: 'OTROS', nombre: 'Otros', icono: 'sparkle', color: '#9A93AC' },
 ];
 
@@ -227,29 +231,32 @@ export interface CategoriaTotal {
 export function gastoPorCategoria(movimientos: Movimiento[], desde: string, hasta: string): CategoriaTotal[] {
   const totales = new Map<string, number>();
   for (const m of movimientosActivos(movimientos)) {
-    if (m.tipo !== 'GASTO') continue;
+    if (m.tipo !== 'GASTO' && m.tipo !== 'REEMBOLSO') continue;
     if (m.fecha < desde || m.fecha > hasta) continue;
     const categoria = m.categoria || 'SINID';
-    totales.set(categoria, (totales.get(categoria) ?? 0) + m.monto);
+    totales.set(categoria, (totales.get(categoria) ?? 0) + (m.tipo === 'GASTO' ? m.monto : -m.monto));
   }
+  // Un reembolso resta de su categoría; si en el rango la deja en 0 o menos, no se lista.
   return Array.from(totales.entries())
     .map(([categoria, monto]) => ({ categoria, monto }))
+    .filter((c) => c.monto > 0)
     .sort((a, b) => b.monto - a.monto);
 }
 
-/** Total ingresado (INGRESO + REEMBOLSO) dentro de [desde, hasta]. */
+/** Total ingresado (solo INGRESO) dentro de [desde, hasta]. Los REEMBOLSO no son
+ * ingreso: restan del gasto (ver totalGastos). */
 export function totalIngresos(movimientos: Movimiento[], desde: string, hasta: string): number {
   return movimientosActivos(movimientos)
-    .filter((m) => (m.tipo === 'INGRESO' || m.tipo === 'REEMBOLSO') && m.fecha >= desde && m.fecha <= hasta)
+    .filter((m) => m.tipo === 'INGRESO' && m.fecha >= desde && m.fecha <= hasta)
     .reduce((s, m) => s + m.monto, 0);
 }
 
-/** Total gastado (solo tipo GASTO) dentro de [desde, hasta] — el mismo total
+/** Gasto neto dentro de [desde, hasta]: GASTO menos REEMBOLSO — el mismo total
  * que suman las filas de gastoPorCategoria(). */
 export function totalGastos(movimientos: Movimiento[], desde: string, hasta: string): number {
   return movimientosActivos(movimientos)
-    .filter((m) => m.tipo === 'GASTO' && m.fecha >= desde && m.fecha <= hasta)
-    .reduce((s, m) => s + m.monto, 0);
+    .filter((m) => (m.tipo === 'GASTO' || m.tipo === 'REEMBOLSO') && m.fecha >= desde && m.fecha <= hasta)
+    .reduce((s, m) => s + (m.tipo === 'GASTO' ? m.monto : -m.monto), 0);
 }
 
 export interface TotalMensual {

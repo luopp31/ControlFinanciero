@@ -114,8 +114,9 @@ export function Bandeja({ onVolver }: { onVolver: () => void }) {
       )}
 
       {sinLeer.length > 0 && (
-        <details className="glass-card">
-          <summary style={{ cursor: 'pointer', fontSize: 14, fontWeight: 800 }}>No pude leer ({sinLeer.length})</summary>
+        // Aparte y plegado, discreto: no se mezcla con los pendientes ni cuenta en el Panel.
+        <details style={{ padding: '0 4px' }}>
+          <summary style={{ cursor: 'pointer', fontSize: 12.5, fontWeight: 700, color: 'var(--muted-fg)' }}>Correos que no pude leer ({sinLeer.length})</summary>
           <p style={{ margin: '8px 0', fontSize: 12.5, color: 'var(--muted-fg)' }}>
             Llegaron con un formato que todavía no sé leer (ya sin números de cuenta). Pásale este texto a Claude Code para que lo aprenda y luego descártalo.
           </p>

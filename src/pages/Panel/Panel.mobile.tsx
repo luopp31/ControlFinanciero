@@ -41,7 +41,7 @@ export function PanelMobile({ nombre, cuentas, movimientos, valorNetoActual, ser
         <GraficoTendencia puntos={serie} />
       </div>
 
-      <TarjetaBandeja pendientes={bandeja.pendientes} sinLeer={bandeja.sinLeer} onAbrir={onAbrirBandeja} />
+      <TarjetaBandeja pendientes={bandeja.pendientes} onAbrir={onAbrirBandeja} />
 
       <GastoDelMes gasto={gastoMes} mes={mes} />
 

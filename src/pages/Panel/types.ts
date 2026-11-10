@@ -13,6 +13,6 @@ export interface PanelViewProps {
   mes: string;
   onAbrirConciliar: () => void;
   onAbrirBandeja: () => void;
-  /** Capturas automáticas esperando clasificarse. */
-  bandeja: { pendientes: number; sinLeer: number };
+  /** Capturas automáticas esperando clasificarse (los correos sin_leer no cuentan). */
+  bandeja: { pendientes: number };
 }

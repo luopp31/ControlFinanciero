@@ -41,7 +41,7 @@ export function PanelDesktop({ nombre, cuentas, movimientos, valorNetoActual, se
         <GraficoTendencia puntos={serie} />
       </div>
 
-      <TarjetaBandeja pendientes={bandeja.pendientes} sinLeer={bandeja.sinLeer} onAbrir={onAbrirBandeja} />
+      <TarjetaBandeja pendientes={bandeja.pendientes} onAbrir={onAbrirBandeja} />
 
       <GastoDelMes gasto={gastoMes} mes={mes} />
 

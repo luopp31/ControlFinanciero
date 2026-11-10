@@ -45,6 +45,6 @@ export function Panel({ onAbrirConciliar, onAbrirBandeja }: { onAbrirConciliar: 
     );
   }
 
-  const props = { nombre: config.nombre, cuentas, movimientos, prestamos, valorNetoActual, serie, recientes, gastoMes, mes, onAbrirConciliar, onAbrirBandeja, bandeja: { pendientes: resumenBandeja(capturas).pendientes.length, sinLeer: resumenBandeja(capturas).sinLeer.length } };
+  const props = { nombre: config.nombre, cuentas, movimientos, prestamos, valorNetoActual, serie, recientes, gastoMes, mes, onAbrirConciliar, onAbrirBandeja, bandeja: { pendientes: resumenBandeja(capturas).pendientes.length } };
   return isDesktop ? <PanelDesktop {...props} /> : <PanelMobile {...props} />;
 }

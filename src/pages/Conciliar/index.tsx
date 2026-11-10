@@ -13,7 +13,7 @@ import { instanteConsulta } from '../../lib/verificar';
 import { guardarPlan } from '../../lib/guardarPlan';
 import { leerItemsPdf } from '../../lib/pdf';
 import { CATS, CATS_ING, estadoPrestamo, type Cuenta } from '../../lib/finanzas';
-import { formatearFechaCorta, formatearMonto } from '../../lib/formato';
+import { formatearFechaCorta, formatearInstanteLima, formatearMonto } from '../../lib/formato';
 import { botonPrimario, botonSecundario } from '../../components/formStyles';
 import { IconUpload } from '../../components/icons';
 import { FilaPorClasificar } from './FilaPorClasificar';
@@ -176,6 +176,16 @@ export function Conciliar({ onVolver }: { onVolver: () => void }) {
         <p style={{ fontSize: 13.5, color: 'var(--muted-fg)', margin: 0 }}>
           Sube la constancia de movimientos (PDF) de cada cuenta. Se lee en este dispositivo y no se sube a ningún lado.
         </p>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginTop: 14 }}>
+          {cuentas.map((c) => (
+            <p key={c.id} style={{ margin: 0, fontSize: 13.5, display: 'flex', justifyContent: 'space-between', gap: 12 }}>
+              <span style={{ color: 'var(--muted-fg)' }}>{c.nombre}</span>
+              <b style={{ color: c.conciliadoHasta ? 'var(--fg)' : 'var(--muted-fg)' }}>
+                {c.conciliadoHasta ? `Conciliado hasta ${formatearInstanteLima(c.conciliadoHasta)}` : 'Sin conciliar'}
+              </b>
+            </p>
+          ))}
+        </div>
       </div>
 
       <div

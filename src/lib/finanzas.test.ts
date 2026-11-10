@@ -8,6 +8,7 @@ import {
   porPagar,
   totalAhorrado,
   pagosDeCompromiso,
+  masRecientePrimero,
   totalPagadoDeCompromiso,
   totalIngresos,
   totalGastos,
@@ -280,5 +281,48 @@ describe('serieValorNeto', () => {
       { fecha: '2026-09-09', valor: 100 },
       { fecha: '2026-09-10', valor: 100 },
     ]);
+  });
+});
+
+describe('masRecientePrimero', () => {
+  const m = (id: string, fecha: string, extra: Partial<Movimiento> = {}): Movimiento =>
+    ({ id, tipo: 'GASTO', monto: 1, cuentaId: 'c', fecha, categoria: 'OTROS', ...extra }) as Movimiento;
+  const orden = (xs: Movimiento[]) => [...xs].sort(masRecientePrimero).map((x) => x.id);
+
+  it('dentro del mismo día manda la hora: el traspaso de las 13:40 sale arriba', () => {
+    const xs = [
+      m('yape', '2026-11-10', { hora: '12:55' }),
+      m('manana', '2026-11-10', { hora: '08:10' }),
+      m('traspaso', '2026-11-10', { tipo: 'TRASPASO', hora: '13:40' }),
+    ];
+    expect(orden(xs)).toEqual(['traspaso', 'yape', 'manana']);
+  });
+
+  it('el día manda sobre la hora', () => {
+    expect(orden([m('ayer', '2026-11-09', { hora: '23:50' }), m('hoy', '2026-11-10', { hora: '00:05' })])).toEqual(['hoy', 'ayer']);
+  });
+
+  it('sin hora: usa la hora de Lima de actualizado si es el mismo día (20:30Z = 15:30 Lima)', () => {
+    const xs = [m('con', '2026-11-10', { hora: '14:00' }), m('manual', '2026-11-10', { actualizado: '2026-11-10T20:30:00Z' })];
+    expect(orden(xs)).toEqual(['manual', 'con']);
+  });
+
+  it('sin hora y actualizado de otro día en Lima (importado después): cuenta como 00:00 y queda al final del día', () => {
+    const xs = [
+      m('tarde', '2026-11-05', { actualizado: '2026-11-10T20:30:00Z' }),
+      m('conhora', '2026-11-05', { hora: '00:01' }),
+    ];
+    expect(orden(xs)).toEqual(['conhora', 'tarde']);
+  });
+
+  it('00:30 Lima es 05:30Z: se cuenta en el día de Lima, no el de UTC', () => {
+    // 2026-11-10T03:00Z es 2026-11-09 22:00 en Lima: coincide con fecha 09, no con 10.
+    const xs = [m('a', '2026-11-09', { actualizado: '2026-11-10T03:00:00Z' }), m('b', '2026-11-09', { hora: '21:00' })];
+    expect(orden(xs)).toEqual(['a', 'b']);
+  });
+
+  it('es estable y no depende del orden de entrada', () => {
+    const xs = [m('b', '2026-11-10'), m('a', '2026-11-10'), m('c', '2026-11-10')];
+    expect(orden(xs)).toEqual(orden([...xs].reverse()));
   });
 });

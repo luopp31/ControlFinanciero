@@ -75,7 +75,7 @@ export function Bandeja({ onVolver }: { onVolver: () => void }) {
 
       {pendientes.length === 0 ? (
         <div className="glass-card">
-          <p style={{ margin: 0, fontSize: 14, color: 'var(--muted-fg)' }}>No hay gastos por clasificar.</p>
+          <p style={{ margin: 0, fontSize: 14, color: 'var(--muted-fg)' }}>La bandeja está vacía: no hay nada por clasificar{sinLeer.length > 0 ? '. Abajo hay correos que no pude leer.' : '.'}</p>
         </div>
       ) : (
         <section className="glass-card">

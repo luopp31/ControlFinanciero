@@ -210,12 +210,28 @@ export function totalAhorrado(movimientos: Movimiento[]): number {
     .reduce((s, m) => s + m.monto, 0);
 }
 
+/** Hora (HH:MM) con la que se ordena un movimiento dentro de su día: la suya si la tiene; si no, la hora de Lima en que se
+ * registró (`actualizado`), solo si ese día es el del movimiento; si no (p. ej. importado después con Conciliar), 00:00. */
+function horaParaOrdenar(m: Movimiento): string {
+  if (m.hora) return m.hora;
+  if (!m.actualizado) return '00:00';
+  const t = Date.parse(m.actualizado);
+  if (Number.isNaN(t)) return '00:00';
+  const lima = new Date(t - 5 * 3_600_000).toISOString(); // Lima: UTC-5, sin horario de verano
+  return lima.slice(0, 10) === m.fecha ? lima.slice(11, 16) : '00:00';
+}
+
+/** Orden de la lista de movimientos: día y hora, el más reciente primero; el id desempata para que sea estable. */
+export function masRecientePrimero(a: Movimiento, b: Movimiento): number {
+  return b.fecha.localeCompare(a.fecha) || horaParaOrdenar(b).localeCompare(horaParaOrdenar(a)) || a.id.localeCompare(b.id);
+}
+
 /** Pagos reales registrados para una suscripción/cuota, de más reciente a
  * más antiguo. */
 export function pagosDeCompromiso(compromisoId: string, movimientos: Movimiento[]): Movimiento[] {
   return movimientosActivos(movimientos)
     .filter((m) => m.compromisoId === compromisoId)
-    .sort((a, b) => b.fecha.localeCompare(a.fecha));
+    .sort(masRecientePrimero);
 }
 
 /** Suma de los pagos de una suscripción/cuota cuya fecha cae en [desde, hasta]. */

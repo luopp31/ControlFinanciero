@@ -1,4 +1,6 @@
 import { useId, useState } from 'react';
+import { useCapturas } from '../../hooks/useCapturas';
+import { resumenBandeja } from '../../lib/capturas';
 import { useAuth } from '../../hooks/useAuth';
 import { useConfig } from '../../hooks/useConfig';
 import { useCuentas } from '../../hooks/useCuentas';
@@ -23,7 +25,7 @@ const ROLES: { id: RolCuenta; etiqueta: string }[] = [
   { id: 'BOVEDA', etiqueta: 'Bóveda' },
 ];
 
-export function Ajustes({ onVolver }: { onVolver: () => void }) {
+export function Ajustes({ onVolver, onAbrirBandeja }: { onVolver: () => void; onAbrirBandeja: () => void }) {
   const isDesktop = useIsDesktop();
   const { configurado, session, cargando: cargandoAuth, iniciarSesion, registrarse, cerrarSesion } = useAuth();
   const { config, cargando: cargandoConfig, guardarNombre, alternarOcultarSaldos, guardarTema, guardarColorCategoria } = useConfig();
@@ -61,6 +63,8 @@ export function Ajustes({ onVolver }: { onVolver: () => void }) {
         onCambiarColorCategoria={guardarColorCategoria}
       />
 
+      <FilaBandeja onAbrir={onAbrirBandeja} />
+
       <SeccionCuentas cuentas={cuentas} onActualizar={actualizarCuenta} onArchivar={borrarCuenta} />
 
       <SeccionDatos session={session} cerrarSesion={cerrarSesion} />
@@ -76,6 +80,22 @@ function Tarjeta({ titulo, children }: { titulo: string; children: React.ReactNo
       </p>
       {children}
     </div>
+  );
+}
+
+/** Entrada fija a la bandeja de capturas (la tarjeta del Panel desaparece cuando no hay pendientes). */
+function FilaBandeja({ onAbrir }: { onAbrir: () => void }) {
+  const { capturas } = useCapturas();
+  const { pendientes, sinLeer } = resumenBandeja(capturas);
+  const detalle = [`${pendientes.length} por clasificar`, sinLeer.length > 0 ? `${sinLeer.length} sin leer` : ''].filter(Boolean).join(' · ');
+  return (
+    <button type="button" className="glass-card" onClick={onAbrir} style={{ cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, textAlign: 'left', width: '100%', color: 'inherit', font: 'inherit' }}>
+      <span style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+        <span style={{ fontSize: 14.5, fontWeight: 700 }}>Bandeja de capturas</span>
+        <span style={{ fontSize: 12.5, color: 'var(--muted-fg)' }}>{detalle}</span>
+      </span>
+      <span aria-hidden style={{ color: 'var(--muted-fg)', fontSize: 18 }}>›</span>
+    </button>
   );
 }
 

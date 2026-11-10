@@ -15,6 +15,12 @@ import { useCuentas } from './hooks/useCuentas';
 
 function App() {
   const [vista, setVista] = useState<Vista>('panel');
+  // La bandeja se abre desde el Panel o desde Ajustes y vuelve a donde se entró.
+  const [origenBandeja, setOrigenBandeja] = useState<Vista>('panel');
+  const abrirBandeja = (desde: Vista) => {
+    setOrigenBandeja(desde);
+    setVista('bandeja');
+  };
   const { session, cargando: cargandoAuth } = useAuth();
   const { cuentas, cargando: cargandoCuentas } = useCuentas();
   const { config } = useConfig();
@@ -46,14 +52,14 @@ function App() {
 
   return (
     <AppShell vista={vista} onCambiarVista={setVista}>
-      {vista === 'panel' && <Panel onAbrirConciliar={() => setVista('conciliar')} onAbrirBandeja={() => setVista('bandeja')} />}
+      {vista === 'panel' && <Panel onAbrirConciliar={() => setVista('conciliar')} onAbrirBandeja={() => abrirBandeja('panel')} />}
       {vista === 'movimientos' && <Movimientos />}
       {vista === 'cuentas' && <Cuentas onAbrirConciliar={() => setVista('conciliar')} />}
       {vista === 'estadisticas' && <Estadisticas />}
       {vista === 'compromisos' && <Compromisos />}
-      {vista === 'ajustes' && <Ajustes onVolver={() => setVista('panel')} />}
+      {vista === 'ajustes' && <Ajustes onVolver={() => setVista('panel')} onAbrirBandeja={() => abrirBandeja('ajustes')} />}
       {vista === 'conciliar' && <Conciliar onVolver={() => setVista('cuentas')} />}
-      {vista === 'bandeja' && <Bandeja onVolver={() => setVista('panel')} />}
+      {vista === 'bandeja' && <Bandeja onVolver={() => setVista(origenBandeja)} />}
     </AppShell>
   );
 }

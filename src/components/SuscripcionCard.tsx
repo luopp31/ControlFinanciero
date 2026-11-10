@@ -7,6 +7,8 @@ import { iconoDeMarca } from './marcas';
 import { IconArrowsClockwise, IconHandshake, IconPencilSimple, IconTrash } from './icons';
 import { botonPrimario, botonSecundario, inputStyle } from './formStyles';
 import { SuscripcionForm } from './SuscripcionForm';
+import { ConfirmarBorrado } from './ConfirmarBorrado';
+import { textoBorradoSuscripcion } from '../lib/textoBorrado';
 
 export function SuscripcionCard({
   suscripcion,
@@ -28,6 +30,8 @@ export function SuscripcionCard({
   const [monto, setMonto] = useState('');
   const [cuentaId, setCuentaId] = useState(cuentas[0]?.id ?? '');
   const [guardando, setGuardando] = useState(false);
+  const [confirmandoBorrado, setConfirmandoBorrado] = useState(false);
+  const [borrando, setBorrando] = useState(false);
 
   const marca = iconoDeMarca(suscripcion.nombre);
   const Icono = marca?.Icono ?? IconArrowsClockwise;
@@ -111,7 +115,7 @@ export function SuscripcionCard({
           </button>
           <button
             type="button"
-            onClick={() => onBorrar(suscripcion.id)}
+            onClick={() => setConfirmandoBorrado(true)}
             aria-label="Eliminar suscripción"
             style={{ all: 'unset', cursor: 'pointer', color: 'var(--muted-fg)', display: 'flex' }}
           >
@@ -171,6 +175,22 @@ export function SuscripcionCard({
           <IconHandshake width={15} height={15} />
           Marcar pagado este mes
         </button>
+      )}
+      {confirmandoBorrado && (
+        <ConfirmarBorrado
+          texto={textoBorradoSuscripcion(suscripcion, movimientos)}
+          borrando={borrando}
+          onCancelar={() => !borrando && setConfirmandoBorrado(false)}
+          onConfirmar={async () => {
+            setBorrando(true);
+            try {
+              await onBorrar(suscripcion.id);
+            } finally {
+              setBorrando(false);
+              setConfirmandoBorrado(false);
+            }
+          }}
+        />
       )}
     </div>
   );

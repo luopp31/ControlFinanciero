@@ -1,42 +1,21 @@
 import { useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { CATS, CATS_ING, type Cuenta, type Movimiento } from '../lib/finanzas';
-import { formatearFechaCorta, formatearMonto } from '../lib/formato';
+import type { TextoBorrado } from '../lib/textoBorrado';
 import { botonSecundario } from './formStyles';
 
-const TIPO_NOMBRE: Record<string, string> = {
-  GASTO: 'Gasto',
-  INGRESO: 'Ingreso',
-  REEMBOLSO: 'Reembolso',
-  TRASPASO: 'Traspaso',
-  AHORRO: 'Ahorro',
-  PRESTAMO: 'Préstamo',
-};
-
-/** Texto corto para identificar el movimiento: su nota, o si no tiene, su categoría o su tipo. */
-export function etiquetaMovimiento(m: Movimiento): string {
-  const cat = [...CATS, ...CATS_ING].find((c) => c.id === m.categoria)?.nombre;
-  return m.nota?.trim() || cat || TIPO_NOMBRE[m.tipo] || m.tipo;
-}
-
-/** "¿Borrar S/ 2.00 pasaje?" con el detalle del movimiento. Cancelar es lo que tiene el foco: un Enter sin querer no borra. */
+/** "¿Borrar S/ 2.00 pasaje?" con detalle y aviso. Cancelar es lo que tiene el foco: un Enter sin querer no borra. */
 export function ConfirmarBorrado({
-  movimiento,
-  cuentas,
+  texto,
   borrando,
   onConfirmar,
   onCancelar,
 }: {
-  movimiento: Movimiento;
-  cuentas: Cuenta[];
+  texto: TextoBorrado;
   borrando: boolean;
   onConfirmar: () => void;
   onCancelar: () => void;
 }) {
   const cancelarRef = useRef<HTMLButtonElement>(null);
-  const cuenta = cuentas.find((c) => c.id === movimiento.cuentaId)?.nombre;
-  const destino = movimiento.destinoId ? cuentas.find((c) => c.id === movimiento.destinoId)?.nombre : null;
-  const cat = [...CATS, ...CATS_ING].find((c) => c.id === movimiento.categoria)?.nombre;
 
   useEffect(() => {
     cancelarRef.current?.focus();
@@ -59,14 +38,10 @@ export function ConfirmarBorrado({
         style={{ width: '100%', maxWidth: 380, display: 'flex', flexDirection: 'column', gap: 12, background: 'var(--card)' }}
       >
         <p id="confirmar-borrado-titulo" style={{ margin: 0, fontSize: 18, fontWeight: 800, overflowWrap: 'anywhere' }}>
-          ¿Borrar S/ {formatearMonto(movimiento.monto)} {etiquetaMovimiento(movimiento)}?
+          {texto.titulo}
         </p>
-        <p style={{ margin: 0, fontSize: 13.5, color: 'var(--muted-fg)', overflowWrap: 'anywhere' }}>
-          {TIPO_NOMBRE[movimiento.tipo] ?? movimiento.tipo}
-          {cat && movimiento.nota?.trim() ? ` · ${cat}` : ''} · {cuenta ?? '—'}
-          {destino ? ` → ${destino}` : ''} · {formatearFechaCorta(movimiento.fecha)}
-        </p>
-        <p style={{ margin: 0, fontSize: 12.5, color: 'var(--muted-fg)' }}>Deja de contar en tus saldos y en las estadísticas.</p>
+        {texto.detalle && <p style={{ margin: 0, fontSize: 13.5, color: 'var(--muted-fg)', overflowWrap: 'anywhere' }}>{texto.detalle}</p>}
+        {texto.aviso && <p style={{ margin: 0, fontSize: 12.5, color: 'var(--muted-fg)' }}>{texto.aviso}</p>}
         <div style={{ display: 'flex', gap: 10, marginTop: 4 }}>
           <button ref={cancelarRef} type="button" onClick={onCancelar} disabled={borrando} style={{ ...botonSecundario, flex: 1 }}>
             Cancelar

@@ -7,6 +7,7 @@ import { useIsDesktop } from '../../hooks/useIsDesktop';
 import { useCuentas } from '../../hooks/useCuentas';
 import { useMovimientos } from '../../hooks/useMovimientos';
 import { mesActualISO, sumarMeses } from '../../lib/fecha';
+import { textoBorradoMovimiento } from '../../lib/textoBorrado';
 
 export function Movimientos() {
   const isDesktop = useIsDesktop();
@@ -88,8 +89,7 @@ export function Movimientos() {
 
       {porBorrar && (
         <ConfirmarBorrado
-          movimiento={porBorrar}
-          cuentas={cuentas}
+          texto={textoBorradoMovimiento(porBorrar, cuentas)}
           borrando={borrando}
           onCancelar={() => !borrando && setPorBorrarId(null)}
           onConfirmar={async () => {

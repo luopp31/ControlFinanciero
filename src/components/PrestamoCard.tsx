@@ -4,6 +4,8 @@ import { formatearMonto } from '../lib/formato';
 import { IconHandshake, IconPencilSimple, IconTrash, IconUser } from './icons';
 import { botonPrimario, botonSecundario, inputStyle } from './formStyles';
 import { PrestamoForm } from './PrestamoForm';
+import { ConfirmarBorrado } from './ConfirmarBorrado';
+import { textoBorradoPrestamo } from '../lib/textoBorrado';
 
 export function PrestamoCard({
   prestamo,
@@ -28,6 +30,8 @@ export function PrestamoCard({
   const [monto, setMonto] = useState('');
   const [cuentaId, setCuentaId] = useState(cuentas[0]?.id ?? '');
   const [guardando, setGuardando] = useState(false);
+  const [confirmandoBorrado, setConfirmandoBorrado] = useState(false);
+  const [borrando, setBorrando] = useState(false);
 
   const estado = estadoPrestamo(prestamo, movimientos);
   const esCobrar = prestamo.tipo === 'PRESTE';
@@ -167,13 +171,29 @@ export function PrestamoCard({
         </button>
         <button
           type="button"
-          onClick={() => onBorrar(prestamo.id)}
+          onClick={() => setConfirmandoBorrado(true)}
           aria-label="Eliminar préstamo"
           style={{ all: 'unset', cursor: 'pointer', color: 'var(--muted-fg)', display: 'flex' }}
         >
           <IconTrash width={15} height={15} />
         </button>
       </div>
+      {confirmandoBorrado && (
+        <ConfirmarBorrado
+          texto={textoBorradoPrestamo(prestamo, movimientos)}
+          borrando={borrando}
+          onCancelar={() => !borrando && setConfirmandoBorrado(false)}
+          onConfirmar={async () => {
+            setBorrando(true);
+            try {
+              await onBorrar(prestamo.id);
+            } finally {
+              setBorrando(false);
+              setConfirmandoBorrado(false);
+            }
+          }}
+        />
+      )}
     </div>
   );
 }

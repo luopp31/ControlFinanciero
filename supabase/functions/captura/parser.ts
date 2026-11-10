@@ -138,7 +138,7 @@ export function parsearCorreoPlin(texto: string): ResultadoCorreo {
   return { ok: true, captura: { codigoOperacion: codigo, fechaHora, cuenta, destinatario, destino, montoCentimos, moneda } };
 }
 
-async function sha256Hex(texto: string): Promise<string> {
+export async function sha256Hex(texto: string): Promise<string> {
   const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(texto));
   return [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, '0')).join('');
 }

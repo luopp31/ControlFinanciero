@@ -142,9 +142,9 @@ export function Conciliar({ onVolver }: { onVolver: () => void }) {
       }
       return { cuenta: g.cuenta, filas: g.vigentes, consulta: g.leida.consulta!, saldoDisponibleCent: g.leida.saldoDisponibleCent ?? 0, cubreDesde: g.descartadas > 0, decisiones: dec };
     });
-    const plan = planificar({ cuentas: entradas, movimientos, ignorados, reglas, capturas, ahora: new Date().toISOString(), nuevoId: () => crypto.randomUUID() });
+    const plan = planificar({ cuentas: entradas, movimientos, ignorados, reglas, capturas, cuentasTodas: cuentas, ahora: new Date().toISOString(), nuevoId: () => crypto.randomUUID() });
     return { filas, plan };
-  }, [grupos, decisiones, vivas, reglas, movimientos, ignorados, capturas, amexId]);
+  }, [grupos, decisiones, vivas, reglas, movimientos, ignorados, capturas, cuentas, amexId]);
 
   if (cargandoCuentas || cargandoMovs) return null;
 

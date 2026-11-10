@@ -56,6 +56,9 @@ export function fechaHoraLima(iso: string): { fecha: string; hora: string } {
 
 /** Qué sugiere el diccionario para esta captura (AUTO / CONFIRMAR / CLASIFICAR) con sus categorías. */
 export function proponerCaptura(c: Captura, reglas: ReglaCategoria[]): Propuesta {
+  // Una transferencia no trae nombre: no hay clave para el diccionario, solo las categorías de siempre.
+  // (El descriptor es neutro a propósito: uno que empiece con "TRANSF" se leería como la fila "Transf Web/App" del banco.)
+  if (c.tipo === 'transferencia') return proponer('SIN NOMBRE', -(c.montoCentimos ?? 0), []);
   const p = proponer(descriptorDeCaptura(c, reglas), -(c.montoCentimos ?? 0), reglas);
   // Un pago en dólares casi siempre es una suscripción: esa categoría va primera (sin pisar la que ya sabe el diccionario).
   if (c.moneda === 'USD' && !p.categoria) return { ...p, sugerencias: ['SUSCRIPCIONES', ...p.sugerencias.filter((x) => x !== 'SUSCRIPCIONES')].slice(0, 3) };
@@ -80,8 +83,27 @@ export function resumenBandeja(todas: Captura[]): { pendientes: Captura[]; sinLe
 
 const norm = (t: string) => t.trim().toLowerCase();
 
+/**
+ * Producto de Interbank ("Millonaria", "Simple") -> cuenta de la app. Primero por nombre; si no, por rol
+ * (Millonaria = la BOVEDA, Simple = la BILLETERA). Un producto en dólares ("Simple (USD)"), uno desconocido o un
+ * texto vacío NO se reconocen. A diferencia de cuentaDeCaptura, aquí no hay cuenta por defecto: nunca se inventa.
+ */
+export function cuentaDeProducto(producto: string | null | undefined, cuentas: Cuenta[]): Cuenta | undefined {
+  const p = norm(producto ?? '');
+  if (!p || /(usd)$/.test(p)) return undefined;
+  const porNombre = cuentas.find((c) => norm(c.nombre) === p);
+  if (porNombre) return porNombre;
+  if (p === 'simple') return cuentas.find((c) => c.rol === 'BILLETERA');
+  if (p === 'millonaria') return cuentas.find((c) => c.rol === 'BOVEDA');
+  return undefined;
+}
+
 /** Cuenta donde cae el gasto: la que dice la captura, o si no, la billetera (Simple por defecto). */
 export function cuentaDeCaptura(c: Captura, cuentas: Cuenta[]): Cuenta | undefined {
+  if (c.tipo === 'transferencia') {
+    const deProducto = cuentaDeProducto(c.cuenta, cuentas);
+    if (deProducto) return deProducto;
+  }
   const nombre = c.cuenta ? norm(c.cuenta) : '';
   return (nombre && cuentas.find((x) => norm(x.nombre) === nombre)) || cuentas.find((x) => x.rol === 'BILLETERA') || cuentas[0];
 }
@@ -125,6 +147,18 @@ export function notaDeCaptura(
   return util ? `${concepto} (${util})` : concepto;
 }
 
+/**
+ * Nota de un movimiento que viene de una transferencia (no hay destinatario): "Transferencia a Simple (USD)" si salió
+ * (gasto) o "Transferencia desde Ahorro Sueldo" si entró (ingreso); con concepto: "concepto (Transferencia ...)".
+ */
+export function notaDeTransferencia(c: Pick<Captura, 'cuenta' | 'cuentaDestino' | 'moneda' | 'montoCentimos'>, direccion: 'gasto' | 'ingreso', conceptoUsuario?: string | null): string {
+  const detalle = direccion === 'gasto' ? `Transferencia${c.cuentaDestino ? ` a ${c.cuentaDestino}` : ''}` : `Transferencia${c.cuenta ? ` desde ${c.cuenta}` : ''}`;
+  const dolares = c.moneda === 'USD' && c.montoCentimos ? `US$ ${(c.montoCentimos / 100).toFixed(2)}` : '';
+  const concepto = limpiarNota(conceptoUsuario);
+  const todo = [detalle, dolares].filter(Boolean).join(' · ');
+  return concepto ? `${concepto} (${todo})` : `${detalle}${dolares ? ` (${dolares})` : ''}`;
+}
+
 export type Clasificada =
   | { ok: true; movimiento: Movimiento; captura: Captura; regla?: ReglaCategoria }
   | { ok: false; motivo: string };
@@ -140,8 +174,10 @@ export function clasificarCaptura(c: Captura, categoria: string, ctx: ContextoCl
   if (!cuenta) return { ok: false, motivo: 'No hay una cuenta donde cargar el gasto.' };
 
   const { fecha, hora } = fechaHoraLima(c.fechaHora);
-  const descriptor = descriptorDeCaptura(c, ctx.reglas);
-  const nota = notaDeCaptura(c, ctx.nota);
+  // Una transferencia no trae nombre: sin descriptor, y sin regla que aprender (una clave vacía envenenaría el diccionario).
+  const esTransferencia = c.tipo === 'transferencia';
+  const descriptor = esTransferencia ? null : descriptorDeCaptura(c, ctx.reglas);
+  const nota = esTransferencia ? notaDeTransferencia(c, 'gasto', ctx.nota) : notaDeCaptura(c, ctx.nota);
 
   const movimiento: Movimiento = {
     id: uuidDeterminista(`cap|${c.id}`),
@@ -161,9 +197,9 @@ export function clasificarCaptura(c: Captura, categoria: string, ctx: ContextoCl
   const captura: Captura = { ...c, estado: 'clasificado', categoria, movimientoId: movimiento.id, actualizado: ctx.ahora, sincronizado: false };
 
   // Aprende la categoría como el Conciliar: cuenta una confirmación salvo que la regla ya sea automática.
-  const p = proponer(descriptor, -soles, ctx.reglas);
   let regla: ReglaCategoria | undefined;
-  if ((p.clase === 'PERSONA' || p.clase === 'COMERCIO') && p.estado !== 'AUTO') {
+  const p = descriptor ? proponer(descriptor, -soles, ctx.reglas) : null;
+  if (descriptor && p && (p.clase === 'PERSONA' || p.clase === 'COMERCIO') && p.estado !== 'AUTO') {
     const clave = p.clave;
     const existente = reglasVigentes(ctx.reglas).find((r) => r.tipo === p.clase && r.clave === clave);
     regla = aprenderRegla(existente, descriptor, p.clase, categoria, ctx.nuevoId(), ctx.ahora);
@@ -201,6 +237,7 @@ export function capturaQueCoincide(
   let mejor: { c: Captura; costo: number } | undefined;
   for (const c of capturas) {
     if (c.estado !== 'pendiente' || c.borrado || usadas.has(c.id) || c.moneda !== 'PEN' || c.montoCentimos !== monto || !c.fechaHora) continue;
+    if (c.tipo === 'transferencia') continue; // las transferencias se enlazan por cuenta (transferencias.ts), no por nombre
     const { fecha, hora } = fechaHoraLima(c.fechaHora);
     const dias = Math.abs(aDias(fecha) - aDias(fila.fecha));
     if (dias > TOLERANCIA_DIAS_CAPTURA) continue;

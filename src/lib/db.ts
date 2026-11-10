@@ -33,7 +33,11 @@ export interface Captura {
   fechaHora?: string | null;
   /** "Simple" o "Millonaria" por nombre; null = la billetera por defecto. */
   cuenta?: string | null;
-  origen: 'plin_correo' | 'wallet';
+  origen: 'plin_correo' | 'wallet' | 'transferencia_correo';
+  /** 'gasto' (Plin, Wallet) o 'transferencia': el servidor guarda los productos y la app decide si es traspaso, ingreso o gasto. */
+  tipo?: 'gasto' | 'transferencia';
+  /** Solo transferencias: producto de destino ("Simple"; "Simple (USD)" si es en dólares). `cuenta` es el de cargo. */
+  cuentaDestino?: string | null;
   categoria?: string | null;
   estado: 'pendiente' | 'clasificado' | 'descartado' | 'sin_leer';
   movimientoId?: string | null;

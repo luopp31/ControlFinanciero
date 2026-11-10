@@ -16,10 +16,12 @@ x-captura-key: <la clave secreta, 64 caracteres hexadecimales>
 
 `<REF>` es la primera parte de la URL de tu proyecto de Supabase (`https://<REF>.supabase.co`).
 
-**Correo de Interbank** (el cuerpo completo, sin tocar):
+**Correo de Interbank** (el cuerpo completo, sin tocar; sirve para la "Constancia de Pago Plin" y para la "Constancia de transferencia"; la función distingue cuál es y no hace falta cambiar el Atajo):
 ```json
 { "texto": "<cuerpo completo del correo>" }
 ```
+
+**Constancia de transferencia.** Se guarda con `tipo = transferencia`, `origen = transferencia_correo`, `cuenta` (producto de cargo), `cuenta_destino` (producto de destino) y `dedupe_key = tr:<código>`. El correo no trae destinatario y no se asume uno. Los productos se guardan como los escribe el banco (`Millonaria`, `Simple`, `Ahorro Sueldo`); si son en dólares salen como `Simple (USD)`, y un cargo sin nombre de producto queda vacío. El número de cuenta se descarta al leer (también si llega enmascarado con X). Necesita la migración `006_captura_transferencia.sql`. La app decide si es traspaso, ingreso o gasto según tus cuentas.
 
 **Wallet** (solo la tarjeta de débito Interbank):
 ```json

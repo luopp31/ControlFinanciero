@@ -5,10 +5,12 @@ import { useReglas } from '../../hooks/useReglas';
 import { useIsDesktop } from '../../hooks/useIsDesktop';
 import { reglasVigentes } from '../../lib/clasificador';
 import { clasificarCaptura, descartarCaptura, duplicadoDe, proponerCaptura, quitarMarcaDuplicado, resumenBandeja } from '../../lib/capturas';
+import { clasificarIngresoTransferencia, confirmarTraspaso, proponerTransferencia } from '../../lib/transferencias';
 import { guardarCaptura, guardarClasificacion } from '../../lib/guardarCaptura';
 import type { Captura } from '../../lib/db';
 import { botonSecundario } from '../../components/formStyles';
 import { FilaCaptura } from './FilaCaptura';
+import { FilaTransferencia } from './FilaTransferencia';
 
 /** Bandeja de la captura automática: gastos que llegaron solos (correo de Interbank y Wallet) por clasificar. Sin pestaña. */
 export function Bandeja({ onVolver }: { onVolver: () => void }) {
@@ -32,6 +34,14 @@ export function Bandeja({ onVolver }: { onVolver: () => void }) {
     const p = propuestas.get(c.id);
     return c.moneda === 'PEN' && p && (p.estado === 'AUTO' || p.estado === 'CONFIRMAR') && p.categoria;
   });
+
+  // Transferencias entre mis cuentas (caso A): un toque, y las únicas de su tipo que entran en "Confirmar sugeridas".
+  const traspasos = pendientes.flatMap((c) => {
+    if (c.tipo !== 'transferencia') return [];
+    const t = proponerTransferencia(c, cuentas);
+    return t.caso === 'TRASPASO' ? [{ c, origen: t.origen, destino: t.destino }] : [];
+  });
+  const totalSugeridas = sugeridas.length + traspasos.length;
 
   async function hacer(accion: () => Promise<void>) {
     setOcupada(true);
@@ -71,7 +81,7 @@ export function Bandeja({ onVolver }: { onVolver: () => void }) {
         <section className="glass-card">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, marginBottom: 4 }}>
             <p style={{ margin: 0, fontSize: 14, fontWeight: 800 }}>Pendientes ({pendientes.length})</p>
-            {sugeridas.length > 0 && (
+            {totalSugeridas > 0 && (
               <button
                 type="button"
                 disabled={ocupada}
@@ -86,14 +96,52 @@ export function Bandeja({ onVolver }: { onVolver: () => void }) {
                       await guardarClasificacion(r);
                       if (r.regla) acumuladas = [...acumuladas.filter((x) => x.id !== r.regla!.id), r.regla];
                     }
+                    for (const { c, origen, destino } of traspasos) {
+                      const r = confirmarTraspaso(c, origen.id, destino.id, { cuentas, ahora: new Date().toISOString(), nota: notas.current[c.id] });
+                      if (!r.ok) throw new Error(r.motivo);
+                      await guardarClasificacion(r);
+                    }
                   })
                 }
               >
-                Confirmar sugeridas ({sugeridas.length})
+                Confirmar sugeridas ({totalSugeridas})
               </button>
             )}
           </div>
-          {pendientes.map((c) => (
+          {pendientes.map((c) => {
+            const ahora = () => new Date().toISOString();
+            const t = c.tipo === 'transferencia' ? proponerTransferencia(c, cuentas) : null;
+            if (t && (t.caso === 'TRASPASO' || t.caso === 'ORIGEN_DESCONOCIDO' || t.caso === 'INGRESO')) {
+              return (
+                <FilaTransferencia
+                  key={c.id}
+                  captura={c}
+                  propuesta={t}
+                  cuentas={cuentas}
+                  ocupada={ocupada}
+                  onNota={(texto) => {
+                    notas.current[c.id] = texto;
+                  }}
+                  onTraspaso={(origenId, destinoId, nota) =>
+                    void hacer(async () => {
+                      const r = confirmarTraspaso(c, origenId, destinoId, { cuentas, ahora: ahora(), nota });
+                      if (!r.ok) throw new Error(r.motivo);
+                      await guardarClasificacion(r);
+                    })
+                  }
+                  onIngreso={(categoria, destinoId, nota) =>
+                    void hacer(async () => {
+                      const r = clasificarIngresoTransferencia(c, categoria, destinoId, { cuentas, ahora: ahora(), nota });
+                      if (!r.ok) throw new Error(r.motivo);
+                      await guardarClasificacion(r);
+                    })
+                  }
+                  onGasto={(categoria, cuentaId, nota) => void hacer(async () => guardarClasificacion(clasificar(c, categoria, cuentaId, null, reglas, nota)))}
+                  onDescartar={() => void hacer(() => guardarCaptura(descartarCaptura(c, ahora())))}
+                />
+              );
+            }
+            return (
             <FilaCaptura
               key={c.id}
               captura={c}
@@ -108,8 +156,10 @@ export function Bandeja({ onVolver }: { onVolver: () => void }) {
               onDescartar={() => void hacer(() => guardarCaptura(descartarCaptura(c, new Date().toISOString())))}
               onEsElMismo={() => void hacer(() => guardarCaptura(descartarCaptura(c, new Date().toISOString())))}
               onSonDistintos={() => void hacer(() => guardarCaptura(quitarMarcaDuplicado(c, new Date().toISOString())))}
+              aviso={t?.caso === 'AJENA' ? 'Ninguna de las dos cuentas es tuya en Greedy: probablemente no mueve tu plata. Descártala si es así.' : undefined}
             />
-          ))}
+            );
+          })}
         </section>
       )}
 

@@ -8,6 +8,7 @@ import type { Captura, Ignorado, ReglaCategoria } from './db';
 import { aprenderRegla, clasificarDescriptor, normalizarClave, proponer, reglasVigentes, sembrarReglas, type Propuesta } from './clasificador';
 import { uuidDeterminista, type FilaConRef } from './emparejar';
 import { capturaQueCoincide, enlazarCaptura } from './capturas';
+import { capturaTransferenciaQueCoincide } from './transferencias';
 import { nuevoConciliadoHasta, verificar, type Verificacion } from './verificar';
 
 export type Decision =
@@ -38,6 +39,8 @@ export interface EntradaPlan {
   reglas: ReglaCategoria[];
   /** Capturas de la bandeja: las pendientes que coincidan con una fila del banco quedan clasificadas y enlazadas. */
   capturas?: Captura[];
+  /** Todas las cuentas del usuario (para reconocer productos de transferencias aunque no se haya subido su PDF). Sin esto no se enlazan transferencias. */
+  cuentasTodas?: Cuenta[];
   ahora: string;
   nuevoId: () => string;
 }
@@ -96,8 +99,15 @@ export function planificar(e: EntradaPlan): Plan {
   // Capturas de la bandeja que coinciden con una fila del banco: una captura se enlaza con una sola fila.
   const usadasCapturas = new Set<string>();
   const enlazadas: Captura[] = [];
+  // Las transferencias se reconocen por cuentas: sin la lista completa del usuario, una cuenta suya podría pasar por ajena y un
+  // traspaso enlazarse con un gasto. Por eso, sin `cuentasTodas` no se enlazan.
+  const todasLasCuentas = e.cuentasTodas;
   const enlazar = (fila: FilaConRef, mov: Movimiento) => {
-    const c = capturaQueCoincide({ descriptor: fila.descriptor, centimos: fila.centimos, fecha: fila.fecha, hora: fila.hora }, e.capturas ?? [], usadasCapturas);
+    const capturas = e.capturas ?? [];
+    // Primero por nombre/comercio (Plin, Wallet); si no, por cuentas (transferencias: traspaso, gasto o ingreso).
+    const c =
+      capturaQueCoincide({ descriptor: fila.descriptor, centimos: fila.centimos, fecha: fila.fecha, hora: fila.hora }, capturas, usadasCapturas) ??
+      (todasLasCuentas ? capturaTransferenciaQueCoincide({ tipo: mov.tipo, cuentaId: mov.cuentaId, destinoId: mov.destinoId, fecha: mov.fecha, hora: mov.hora ?? fila.hora, centimos: Math.round(mov.monto * 100) }, capturas, todasLasCuentas, usadasCapturas) : undefined);
     if (!c) return;
     usadasCapturas.add(c.id);
     enlazadas.push(enlazarCaptura(c, mov, ahora));
@@ -105,7 +115,8 @@ export function planificar(e: EntradaPlan): Plan {
   // Un gasto que ya estaba en Greedy (por ejemplo, registrado a mano) también cubre a su captura pendiente.
   for (const b of base) {
     for (const p of b.emp?.yaEstaban ?? []) {
-      if (p.via !== 'dividido' && p.movimientos.length === 1 && p.movimientos[0].tipo === 'GASTO') enlazar(p.fila, p.movimientos[0]);
+      const t = p.movimientos[0]?.tipo;
+      if (p.via !== 'dividido' && p.movimientos.length === 1 && (t === 'GASTO' || t === 'INGRESO' || t === 'TRASPASO')) enlazar(p.fila, p.movimientos[0]);
     }
   }
 
@@ -161,7 +172,11 @@ export function planificar(e: EntradaPlan): Plan {
           break;
         }
         case 'INGRESO':
-          if (exige(!sale, 'un ingreso')) nuevosMov.push(crearMov(cuentaId, fila, { tipo: 'INGRESO', categoria: d.categoria ?? 'OTROS' }));
+          if (exige(!sale, 'un ingreso')) {
+            const ingreso = crearMov(cuentaId, fila, { tipo: 'INGRESO', categoria: d.categoria ?? 'OTROS' });
+            nuevosMov.push(ingreso);
+            enlazar(fila, ingreso);
+          }
           break;
         case 'REEMBOLSO':
           if (exige(!sale, 'un reembolso')) nuevosMov.push(crearMov(cuentaId, fila, { tipo: 'REEMBOLSO', categoria: d.categoria }));
@@ -179,10 +194,14 @@ export function planificar(e: EntradaPlan): Plan {
             consumidas.add(fila.referencia);
             consumidas.add(contraparte.referencia);
             const [origen, destino] = sale ? [cuentaId, d.cuentaContrariaId] : [d.cuentaContrariaId, cuentaId];
-            nuevosMov.push(crearMov(origen, sale ? fila : contraparte, { tipo: 'TRASPASO', destinoId: destino, categoria: null }));
+            const traspaso = crearMov(origen, sale ? fila : contraparte, { tipo: 'TRASPASO', destinoId: destino, categoria: null });
+            nuevosMov.push(traspaso);
+            enlazar(fila, traspaso);
           } else {
             const [origen, destino] = sale ? [cuentaId, d.cuentaContrariaId] : [d.cuentaContrariaId, cuentaId];
-            nuevosMov.push({ ...crearMov(cuentaId, fila, { tipo: 'TRASPASO', destinoId: destino, categoria: null }), cuentaId: origen });
+            const traspaso = { ...crearMov(cuentaId, fila, { tipo: 'TRASPASO', destinoId: destino, categoria: null }), cuentaId: origen };
+            nuevosMov.push(traspaso);
+            enlazar(fila, traspaso);
           }
           break;
         }

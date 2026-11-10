@@ -24,6 +24,7 @@ export function FilaCaptura({
   onDescartar,
   onEsElMismo,
   onSonDistintos,
+  aviso,
 }: {
   captura: Captura;
   propuesta: Propuesta;
@@ -36,6 +37,8 @@ export function FilaCaptura({
   onDescartar: () => void;
   onEsElMismo: () => void;
   onSonDistintos: () => void;
+  /** Texto de ayuda bajo el encabezado (p. ej. una transferencia que quizá no mueve tu plata). */
+  aviso?: string;
 }) {
   const usd = captura.moneda === 'USD';
   const [todas, setTodas] = useState(false);
@@ -53,14 +56,14 @@ export function FilaCaptura({
   }, [notaAbierta]);
 
   const ids = todas ? CATS.map((c) => c.id) : propuesta.sugerencias.length ? propuesta.sugerencias : ['ALIMENTACION', 'TRANSPORTE', 'COMPRAS'];
-  const etiquetaOrigen = captura.origen === 'wallet' ? ORIGEN.wallet : ORIGEN[captura.destino ?? 'Plin'];
+  const etiquetaOrigen = captura.origen === 'wallet' ? ORIGEN.wallet : captura.origen === 'transferencia_correo' ? 'Transferencia' : ORIGEN[captura.destino ?? 'Plin'];
   const monto = (captura.montoCentimos ?? 0) / 100;
 
   return (
     <div style={{ padding: '14px 0', borderBottom: '1px solid var(--card-border)', display: 'flex', flexDirection: 'column', gap: 10 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}>
         <div style={{ minWidth: 0 }}>
-          <p style={{ margin: 0, fontSize: 14.5, fontWeight: 700, overflowWrap: 'anywhere' }}>{captura.destinatario || 'Sin nombre'}</p>
+          <p style={{ margin: 0, fontSize: 14.5, fontWeight: 700, overflowWrap: 'anywhere' }}>{captura.destinatario || (captura.tipo === 'transferencia' ? 'Transferencia' : 'Sin nombre')}</p>
           <p style={{ margin: '2px 0 0', fontSize: 12.5, color: 'var(--muted-fg)' }}>
             {etiquetaOrigen}
             {captura.fechaHora ? ` · ${formatearInstanteLima(captura.fechaHora)}` : ''}
@@ -70,6 +73,8 @@ export function FilaCaptura({
           − {usd ? 'US$' : 'S/'} {formatearMonto(monto)}
         </p>
       </div>
+
+      {aviso && <p style={{ margin: 0, fontSize: 12.5, color: 'var(--muted-fg)' }}>{aviso}</p>}
 
       {duplicado && (
         <div style={{ borderRadius: 12, padding: '10px 12px', background: 'var(--primary-soft)', display: 'flex', flexDirection: 'column', gap: 8 }}>

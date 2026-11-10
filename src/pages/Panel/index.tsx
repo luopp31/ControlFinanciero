@@ -4,6 +4,8 @@ import { useCuentas } from '../../hooks/useCuentas';
 import { useMovimientos } from '../../hooks/useMovimientos';
 import { useConfig } from '../../hooks/useConfig';
 import { usePrestamos } from '../../hooks/usePrestamos';
+import { useCapturas } from '../../hooks/useCapturas';
+import { resumenBandeja } from '../../lib/capturas';
 import { mesActualISO, menosDiasISO } from '../../lib/fecha';
 import { serieValorNeto, totalGastos, valorNeto } from '../../lib/finanzas';
 import { PanelDesktop } from './Panel.desktop';
@@ -11,12 +13,13 @@ import { PanelMobile } from './Panel.mobile';
 
 const DIAS_SERIE = 30;
 
-export function Panel({ onAbrirConciliar }: { onAbrirConciliar: () => void }) {
+export function Panel({ onAbrirConciliar, onAbrirBandeja }: { onAbrirConciliar: () => void; onAbrirBandeja: () => void }) {
   const isDesktop = useIsDesktop();
   const { cuentas, cargando: cargandoCuentas } = useCuentas();
   const { movimientos, cargando: cargandoMovs } = useMovimientos();
   const { config, cargando: cargandoConfig } = useConfig();
   const { prestamos } = usePrestamos();
+  const { capturas } = useCapturas();
 
   const { valorNetoActual, serie, recientes, gastoMes, mes } = useMemo(() => {
     const mes = mesActualISO();
@@ -42,6 +45,6 @@ export function Panel({ onAbrirConciliar }: { onAbrirConciliar: () => void }) {
     );
   }
 
-  const props = { nombre: config.nombre, cuentas, movimientos, prestamos, valorNetoActual, serie, recientes, gastoMes, mes, onAbrirConciliar };
+  const props = { nombre: config.nombre, cuentas, movimientos, prestamos, valorNetoActual, serie, recientes, gastoMes, mes, onAbrirConciliar, onAbrirBandeja, bandeja: { pendientes: resumenBandeja(capturas).pendientes.length, sinLeer: resumenBandeja(capturas).sinLeer.length } };
   return isDesktop ? <PanelDesktop {...props} /> : <PanelMobile {...props} />;
 }

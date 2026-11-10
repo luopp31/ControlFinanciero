@@ -47,7 +47,7 @@ export interface Movimiento {
   referencia?: string | null;
   /** Texto original del banco. */
   descriptor?: string | null;
-  origen?: 'manual' | 'conciliar' | null;
+  origen?: 'manual' | 'conciliar' | 'captura' | null;
   /** HH:MM, cuando se conoce (importados). */
   hora?: string | null;
   borrado?: boolean;

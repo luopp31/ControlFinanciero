@@ -7,6 +7,7 @@ import { Compromisos } from './pages/Compromisos';
 import { Estadisticas } from './pages/Estadisticas';
 import { Ajustes } from './pages/Ajustes';
 import { Conciliar } from './pages/Conciliar';
+import { Bandeja } from './pages/Bandeja';
 import { Bienvenida } from './pages/Bienvenida/Bienvenida';
 import { useAuth } from './hooks/useAuth';
 import { useConfig } from './hooks/useConfig';
@@ -45,13 +46,14 @@ function App() {
 
   return (
     <AppShell vista={vista} onCambiarVista={setVista}>
-      {vista === 'panel' && <Panel onAbrirConciliar={() => setVista('conciliar')} />}
+      {vista === 'panel' && <Panel onAbrirConciliar={() => setVista('conciliar')} onAbrirBandeja={() => setVista('bandeja')} />}
       {vista === 'movimientos' && <Movimientos />}
       {vista === 'cuentas' && <Cuentas onAbrirConciliar={() => setVista('conciliar')} />}
       {vista === 'estadisticas' && <Estadisticas />}
       {vista === 'compromisos' && <Compromisos />}
       {vista === 'ajustes' && <Ajustes onVolver={() => setVista('panel')} />}
       {vista === 'conciliar' && <Conciliar onVolver={() => setVista('cuentas')} />}
+      {vista === 'bandeja' && <Bandeja onVolver={() => setVista('panel')} />}
     </AppShell>
   );
 }

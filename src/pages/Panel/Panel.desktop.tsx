@@ -4,12 +4,13 @@ import { GraficoTendencia } from '../../components/GraficoTendencia';
 import { IconEye, IconEyeSlash } from '../../components/icons';
 import { TarjetaConciliar } from '../../components/TarjetaConciliar';
 import { GastoDelMes } from '../../components/GastoDelMes';
+import { TarjetaBandeja } from '../../components/TarjetaBandeja';
 import { useConfig } from '../../hooks/useConfig';
 import { formatearMontoOcultable } from '../../lib/formato';
 import { saludoPorHora } from '../../lib/saludo';
 import type { PanelViewProps } from './types';
 
-export function PanelDesktop({ nombre, cuentas, movimientos, valorNetoActual, serie, recientes, gastoMes, mes, onAbrirConciliar }: PanelViewProps) {
+export function PanelDesktop({ nombre, cuentas, movimientos, valorNetoActual, serie, recientes, gastoMes, mes, onAbrirConciliar, onAbrirBandeja, bandeja }: PanelViewProps) {
   const { config, alternarOcultarSaldos } = useConfig();
   const oculto = !!config.ocultarSaldos;
 
@@ -39,6 +40,8 @@ export function PanelDesktop({ nombre, cuentas, movimientos, valorNetoActual, se
         </p>
         <GraficoTendencia puntos={serie} />
       </div>
+
+      <TarjetaBandeja pendientes={bandeja.pendientes} sinLeer={bandeja.sinLeer} onAbrir={onAbrirBandeja} />
 
       <GastoDelMes gasto={gastoMes} mes={mes} />
 

@@ -15,7 +15,7 @@ import {
 import { SyncPanel } from './SyncPanel';
 import { RegistroRapido } from './RegistroRapido';
 
-export type Vista = 'panel' | 'movimientos' | 'cuentas' | 'compromisos' | 'estadisticas' | 'ajustes' | 'conciliar';
+export type Vista = 'panel' | 'movimientos' | 'cuentas' | 'compromisos' | 'estadisticas' | 'ajustes' | 'conciliar' | 'bandeja';
 
 type IconComp = (props: SVGProps<SVGSVGElement>) => React.JSX.Element;
 

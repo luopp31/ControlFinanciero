@@ -3,7 +3,8 @@ import type { Cuenta, Movimiento, Prestamo } from './finanzas';
 const DB_NAME = 'greedy';
 // v2: stores reglas_categoria e ignorados (Conciliar). La migración solo CREA los
 // stores que faltan; los datos existentes no se tocan (ver db.test.ts).
-const DB_VERSION = 2;
+// v3: store capturas (bandeja de la captura automática).
+const DB_VERSION = 3;
 
 /** Regla aprendida: descriptor normalizado del banco -> categoría. */
 export interface ReglaCategoria {
@@ -12,6 +13,33 @@ export interface ReglaCategoria {
   tipo: 'PERSONA' | 'COMERCIO';
   categoria: string;
   vecesConfirmada: number;
+  borrado?: boolean;
+  actualizado?: string;
+  sincronizado?: boolean;
+}
+
+/** Gasto que llegó solo (correo de Interbank o Wallet) y espera clasificarse. Lo escribe la Edge Function "captura". */
+export interface Captura {
+  id: string;
+  dedupeKey: string;
+  /** Null si el correo no se pudo leer (estado sin_leer). */
+  montoCentimos?: number | null;
+  moneda: 'PEN' | 'USD';
+  /** Persona (Plin/Yape) o comercio (Wallet). */
+  destinatario?: string | null;
+  destino?: 'Plin' | 'Yape' | null;
+  codigoOperacion?: string | null;
+  /** Instante ISO (el banco escribe hora de Lima). */
+  fechaHora?: string | null;
+  /** "Simple" o "Millonaria" por nombre; null = la billetera por defecto. */
+  cuenta?: string | null;
+  origen: 'plin_correo' | 'wallet';
+  categoria?: string | null;
+  estado: 'pendiente' | 'clasificado' | 'descartado' | 'sin_leer';
+  movimientoId?: string | null;
+  posibleDuplicadoDe?: string | null;
+  /** Solo sin_leer, ya sin números de cuenta. */
+  textoCrudo?: string | null;
   borrado?: boolean;
   actualizado?: string;
   sincronizado?: boolean;
@@ -60,7 +88,7 @@ export interface Config {
   version: number;
 }
 
-const STORES = ['cuentas', 'movimientos', 'prestamos', 'compromisos', 'config', 'reglas_categoria', 'ignorados'] as const;
+const STORES = ['cuentas', 'movimientos', 'prestamos', 'compromisos', 'config', 'reglas_categoria', 'ignorados', 'capturas'] as const;
 type Store = (typeof STORES)[number];
 
 let dbPromise: Promise<IDBDatabase> | null = null;

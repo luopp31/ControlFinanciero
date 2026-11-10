@@ -1,12 +1,12 @@
 import { supabase } from './supabase';
-import { getAll, put, getConfig, putConfig, type Compromiso, type Config, type ReglaCategoria, type Ignorado } from './db';
+import { getAll, put, getConfig, putConfig, type Compromiso, type Config, type ReglaCategoria, type Ignorado, type Captura } from './db';
 import type { Cuenta, Movimiento, Prestamo } from './finanzas';
 import { avisarCambioDeDatos } from './eventos';
 
 // Cada tabla remota usa snake_case y usuario_id (RLS ya filtra por dueño);
 // estas funciones traducen hacia/desde nuestros tipos locales en camelCase.
 interface TablaSync<Local extends { id: string; actualizado?: string; sincronizado?: boolean }> {
-  store: 'cuentas' | 'movimientos' | 'prestamos' | 'compromisos' | 'reglas_categoria' | 'ignorados';
+  store: 'cuentas' | 'movimientos' | 'prestamos' | 'compromisos' | 'reglas_categoria' | 'ignorados' | 'capturas';
   tabla: string;
   subir: (l: Local) => Record<string, unknown>;
   bajar: (r: Record<string, unknown>) => Local;
@@ -182,9 +182,52 @@ const ignoradosSync: TablaSync<Ignorado> = {
   }),
 };
 
+const capturasSync: TablaSync<Captura> = {
+  store: 'capturas',
+  tabla: 'captura_pendiente',
+  subir: (c) => ({
+    id: c.id,
+    dedupe_key: c.dedupeKey,
+    monto_centimos: c.montoCentimos ?? null,
+    moneda: c.moneda,
+    destinatario: c.destinatario ?? null,
+    destino: c.destino ?? null,
+    codigo_operacion: c.codigoOperacion ?? null,
+    fecha_hora: c.fechaHora ?? null,
+    cuenta: c.cuenta ?? null,
+    origen: c.origen,
+    categoria: c.categoria ?? null,
+    estado: c.estado,
+    movimiento_id: c.movimientoId ?? null,
+    posible_duplicado_de: c.posibleDuplicadoDe ?? null,
+    texto_crudo: c.textoCrudo ?? null,
+    borrado: !!c.borrado,
+  }),
+  bajar: (r) => ({
+    id: r.id as string,
+    dedupeKey: r.dedupe_key as string,
+    montoCentimos: r.monto_centimos != null ? Number(r.monto_centimos) : null,
+    moneda: (r.moneda as Captura['moneda']) ?? 'PEN',
+    destinatario: (r.destinatario as string) ?? null,
+    destino: (r.destino as Captura['destino']) ?? null,
+    codigoOperacion: (r.codigo_operacion as string) ?? null,
+    fechaHora: (r.fecha_hora as string) ?? null,
+    cuenta: (r.cuenta as string) ?? null,
+    origen: r.origen as Captura['origen'],
+    categoria: (r.categoria as string) ?? null,
+    estado: r.estado as Captura['estado'],
+    movimientoId: (r.movimiento_id as string) ?? null,
+    posibleDuplicadoDe: (r.posible_duplicado_de as string) ?? null,
+    textoCrudo: (r.texto_crudo as string) ?? null,
+    borrado: !!r.borrado,
+    actualizado: r.actualizado as string,
+    sincronizado: true,
+  }),
+};
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 // Orden obligatorio: movimientos e ignorados referencian (FK) a cuentas, préstamos y compromisos.
-const TABLAS: TablaSync<any>[] = [cuentasSync, prestamosSync, compromisosSync, movimientosSync, reglasSync, ignoradosSync];
+const TABLAS: TablaSync<any>[] = [cuentasSync, prestamosSync, compromisosSync, movimientosSync, reglasSync, ignoradosSync, capturasSync];
 
 async function sincronizarTabla<L extends { id: string; actualizado?: string; sincronizado?: boolean }>(
   t: TablaSync<L>

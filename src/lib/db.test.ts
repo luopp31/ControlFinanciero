@@ -31,6 +31,7 @@ describe('IndexedDB v1 -> v2', () => {
     // 3. Los stores nuevos existen y funcionan.
     expect(await db.getAll('reglas_categoria')).toEqual([]);
     expect(await db.getAll('ignorados')).toEqual([]);
+    expect(await db.getAll('capturas')).toEqual([]);
     await db.put('ignorados', { id: 'i1', cuentaId: 'c1', referencia: 'abc' });
     expect(await db.getAll('ignorados')).toHaveLength(1);
   });

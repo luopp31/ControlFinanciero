@@ -28,4 +28,15 @@ describe('movimientos creados desde la bandeja', () => {
     expect(r.nuevos).toEqual([]);
     expect(r.soloEnGreedy).toEqual([]);
   });
+
+  it('la nota del usuario ("pasaje (Plin a ...)") no impide que el Conciliar lo reconozca', () => {
+    const m: Movimiento = { ...desdeBandeja('2026-11-08', 2.5, '21:39', 'PLIN-ALONSO'), nota: 'pasaje (Plin a Alonso Perez Gomez)' };
+    const sinNota: Movimiento = { ...desdeBandeja('2026-11-08', 2.5, '21:39', 'PLIN-ALONSO'), nota: 'Plin a Alonso Perez Gomez' };
+    for (const mov of [m, sinNota]) {
+      const r = correr([fila('YAPE-ALONSO', '2026-11-08', '21:41', -2.5)], [mov]);
+      expect(r.yaEstaban).toHaveLength(1);
+      expect(r.yaEstaban[0].movimientos[0].id).toBe(mov.id);
+      expect(r.nuevos).toEqual([]);
+    }
+  });
 });

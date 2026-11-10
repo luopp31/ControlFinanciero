@@ -95,6 +95,34 @@ export interface ContextoClasificar {
   cuentaId?: string;
   /** En soles, en céntimos. Obligatorio si la captura es en dólares. */
   montoSolesCentimos?: number | null;
+  /** Concepto opcional que escribe el usuario ("pasaje", "almuerzo"). */
+  nota?: string | null;
+}
+
+export const MAX_NOTA = 80;
+
+/** Espacios colapsados, sin bordes y con tope de largo. Vacío = sin nota. */
+export function limpiarNota(texto: string | null | undefined): string {
+  return (texto ?? '').replace(/\s+/g, ' ').trim().slice(0, MAX_NOTA).trim();
+}
+
+/**
+ * La nota del movimiento. Sin concepto: el detalle automático ("Plin a Alonso Perez Gomez", o el comercio; en
+ * dólares "... (US$ 23.60)"). Con concepto: el concepto primero y el detalle entre paréntesis, como las notas a mano
+ * ("pasaje (Plin a Alonso Perez Gomez)", "Claude (Plin a Servicio Prueba · US$ 23.60)").
+ */
+export function notaDeCaptura(
+  c: Pick<Captura, 'origen' | 'destino' | 'destinatario' | 'moneda' | 'montoCentimos'>,
+  conceptoUsuario?: string | null
+): string | null {
+  const quien = (c.destinatario ?? '').trim();
+  const detalle = `${c.origen === 'plin_correo' ? `${c.destino ?? 'Plin'} a ` : ''}${quien}`.trim();
+  const dolares = c.moneda === 'USD' && c.montoCentimos ? `US$ ${(c.montoCentimos / 100).toFixed(2)}` : '';
+  const concepto = limpiarNota(conceptoUsuario);
+  if (!concepto) return `${detalle}${dolares ? ` (${dolares})` : ''}`.trim() || null;
+  // "Sin nombre" (Wallet sin comercio) no aporta nada entre paréntesis.
+  const util = quien && quien !== 'Sin nombre' ? [detalle, dolares].filter(Boolean).join(' · ') : dolares;
+  return util ? `${concepto} (${util})` : concepto;
 }
 
 export type Clasificada =
@@ -113,8 +141,7 @@ export function clasificarCaptura(c: Captura, categoria: string, ctx: ContextoCl
 
   const { fecha, hora } = fechaHoraLima(c.fechaHora);
   const descriptor = descriptorDeCaptura(c, ctx.reglas);
-  const quien = (c.destinatario ?? '').trim();
-  const nota = `${c.origen === 'plin_correo' ? `${c.destino ?? 'Plin'} a ` : ''}${quien}${usd ? ` (US$ ${(c.montoCentimos / 100).toFixed(2)})` : ''}`.trim();
+  const nota = notaDeCaptura(c, ctx.nota);
 
   const movimiento: Movimiento = {
     id: uuidDeterminista(`cap|${c.id}`),

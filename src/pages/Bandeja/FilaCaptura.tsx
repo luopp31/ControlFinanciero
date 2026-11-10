@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { useLayoutEffect, useRef, useState } from 'react';
 import type { Captura } from '../../lib/db';
 import type { Propuesta } from '../../lib/clasificador';
 import { CATS, type Cuenta } from '../../lib/finanzas';
-import { cuentaDeCaptura } from '../../lib/capturas';
+import { MAX_NOTA, cuentaDeCaptura } from '../../lib/capturas';
 import { formatearInstanteLima, formatearMonto } from '../../lib/formato';
 import { leerMonto } from '../../lib/presupuesto';
 import { chipStyle, chipStyleColor, etiquetaStyle, inputStyle } from '../../components/formStyles';
@@ -20,6 +20,7 @@ export function FilaCaptura({
   duplicado,
   ocupada,
   onClasificar,
+  onNota,
   onDescartar,
   onEsElMismo,
   onSonDistintos,
@@ -29,7 +30,9 @@ export function FilaCaptura({
   cuentas: Cuenta[];
   duplicado?: Captura;
   ocupada: boolean;
-  onClasificar: (categoria: string, cuentaId: string, montoSolesCentimos: number | null) => void;
+  onClasificar: (categoria: string, cuentaId: string, montoSolesCentimos: number | null, nota: string) => void;
+  /** Avisa al padre del texto escrito sin que este se repinte (lo usa "Confirmar sugeridas"). */
+  onNota: (texto: string) => void;
   onDescartar: () => void;
   onEsElMismo: () => void;
   onSonDistintos: () => void;
@@ -40,6 +43,14 @@ export function FilaCaptura({
   const [solesTxt, setSolesTxt] = useState('');
   const soles = leerMonto(solesTxt);
   const listo = !ocupada && (!usd || soles !== null);
+  // La nota (concepto) es opcional y vive solo aquí: escribir no repinta la lista, y el teclado no se cierra.
+  const [notaAbierta, setNotaAbierta] = useState(false);
+  const [nota, setNota] = useState('');
+  const notaRef = useRef<HTMLInputElement>(null);
+  // Se enfoca en el mismo toque que abre el campo (el layout effect corre dentro del evento): así iOS abre el teclado.
+  useLayoutEffect(() => {
+    if (notaAbierta) notaRef.current?.focus();
+  }, [notaAbierta]);
 
   const ids = todas ? CATS.map((c) => c.id) : propuesta.sugerencias.length ? propuesta.sugerencias : ['ALIMENTACION', 'TRANSPORTE', 'COMPRAS'];
   const etiquetaOrigen = captura.origen === 'wallet' ? ORIGEN.wallet : ORIGEN[captura.destino ?? 'Plin'];
@@ -103,6 +114,23 @@ export function FilaCaptura({
         </div>
       )}
 
+      {notaAbierta && (
+        <input
+          ref={notaRef}
+          value={nota}
+          maxLength={MAX_NOTA}
+          onChange={(e) => {
+            setNota(e.target.value);
+            onNota(e.target.value);
+          }}
+          placeholder="Nota (opcional), ej. pasaje"
+          aria-label="Nota"
+          autoComplete="off"
+          enterKeyHint="done"
+          style={{ ...inputStyle, padding: '8px 12px' }}
+        />
+      )}
+
       <div style={fila_}>
         {ids.map((id, i) => {
           const c = CATS.find((x) => x.id === id);
@@ -113,7 +141,7 @@ export function FilaCaptura({
               type="button"
               disabled={!listo}
               style={{ ...chipStyleColor(i === 0 && !!propuesta.categoria && !todas, c.color), opacity: listo ? 1 : 0.5, cursor: listo ? 'pointer' : 'not-allowed' }}
-              onClick={() => onClasificar(id, cuentaId, usd && soles !== null ? Math.round(soles * 100) : null)}
+              onClick={() => onClasificar(id, cuentaId, usd && soles !== null ? Math.round(soles * 100) : null, nota)}
             >
               {c.nombre}
             </button>
@@ -126,10 +154,15 @@ export function FilaCaptura({
         )}
       </div>
 
-      <div>
+      <div style={{ display: 'flex', gap: 16 }}>
         <button type="button" disabled={ocupada} onClick={onDescartar} style={{ ...enlace, color: 'var(--muted-fg)' }}>
           Descartar
         </button>
+        {!notaAbierta && (
+          <button type="button" disabled={ocupada} onClick={() => setNotaAbierta(true)} style={{ ...enlace, color: 'var(--primary)' }}>
+            + Nota
+          </button>
+        )}
       </div>
     </div>
   );

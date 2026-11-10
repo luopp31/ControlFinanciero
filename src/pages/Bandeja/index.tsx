@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { useCapturas } from '../../hooks/useCapturas';
 import { useCuentas } from '../../hooks/useCuentas';
 import { useReglas } from '../../hooks/useReglas';
@@ -18,6 +18,8 @@ export function Bandeja({ onVolver }: { onVolver: () => void }) {
   const { reglas } = useReglas();
   const [ocupada, setOcupada] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Notas escritas por tarjeta. Es una referencia (no estado): escribir no repinta la lista, y "Confirmar sugeridas" las usa.
+  const notas = useRef<Record<string, string>>({});
 
   const { pendientes, sinLeer } = useMemo(() => resumenBandeja(capturas), [capturas]);
   const vivas = useMemo(() => reglasVigentes(reglas), [reglas]);
@@ -43,8 +45,8 @@ export function Bandeja({ onVolver }: { onVolver: () => void }) {
     }
   }
 
-  function clasificar(c: Captura, categoria: string, cuentaId: string, montoSolesCentimos: number | null, reglasActuales = reglas) {
-    const r = clasificarCaptura(c, categoria, { cuentas, reglas: reglasActuales, ahora: new Date().toISOString(), nuevoId: () => crypto.randomUUID(), cuentaId, montoSolesCentimos });
+  function clasificar(c: Captura, categoria: string, cuentaId: string, montoSolesCentimos: number | null, reglasActuales = reglas, nota: string | undefined = undefined) {
+    const r = clasificarCaptura(c, categoria, { cuentas, reglas: reglasActuales, ahora: new Date().toISOString(), nuevoId: () => crypto.randomUUID(), cuentaId, montoSolesCentimos, nota });
     if (!r.ok) throw new Error(r.motivo);
     return r;
   }
@@ -80,7 +82,7 @@ export function Bandeja({ onVolver }: { onVolver: () => void }) {
                     let acumuladas = reglas;
                     for (const c of sugeridas) {
                       const p = propuestas.get(c.id)!;
-                      const r = clasificar(c, p.categoria!, '', null, acumuladas);
+                      const r = clasificar(c, p.categoria!, '', null, acumuladas, notas.current[c.id]);
                       await guardarClasificacion(r);
                       if (r.regla) acumuladas = [...acumuladas.filter((x) => x.id !== r.regla!.id), r.regla];
                     }
@@ -99,7 +101,10 @@ export function Bandeja({ onVolver }: { onVolver: () => void }) {
               cuentas={cuentas}
               duplicado={duplicadoDe(c, capturas)}
               ocupada={ocupada}
-              onClasificar={(cat, cuentaId, soles) => void hacer(async () => guardarClasificacion(clasificar(c, cat, cuentaId, soles)))}
+              onNota={(texto) => {
+                notas.current[c.id] = texto;
+              }}
+              onClasificar={(cat, cuentaId, soles, nota) => void hacer(async () => guardarClasificacion(clasificar(c, cat, cuentaId, soles, reglas, nota)))}
               onDescartar={() => void hacer(() => guardarCaptura(descartarCaptura(c, new Date().toISOString())))}
               onEsElMismo={() => void hacer(() => guardarCaptura(descartarCaptura(c, new Date().toISOString())))}
               onSonDistintos={() => void hacer(() => guardarCaptura(quitarMarcaDuplicado(c, new Date().toISOString())))}

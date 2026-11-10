@@ -4,6 +4,7 @@ import { useMovimientos } from '../../hooks/useMovimientos';
 import { usePrestamos } from '../../hooks/usePrestamos';
 import { useReglas } from '../../hooks/useReglas';
 import { useIgnorados } from '../../hooks/useIgnorados';
+import { useCapturas } from '../../hooks/useCapturas';
 import { useIsDesktop } from '../../hooks/useIsDesktop';
 import { parsearConstancia, filtrarDesde, type ConstanciaLeida, type FilaBanco } from '../../lib/constancia';
 import { emparejar, type FilaConRef, type ResultadoEmparejo } from '../../lib/emparejar';
@@ -51,6 +52,7 @@ export function Conciliar({ onVolver }: { onVolver: () => void }) {
   const { prestamos } = usePrestamos();
   const { reglas } = useReglas();
   const { ignorados } = useIgnorados();
+  const { capturas } = useCapturas();
 
   const [pdfs, setPdfs] = useState<Pdf[]>([]);
   const [leyendo, setLeyendo] = useState(false);
@@ -140,9 +142,9 @@ export function Conciliar({ onVolver }: { onVolver: () => void }) {
       }
       return { cuenta: g.cuenta, filas: g.vigentes, consulta: g.leida.consulta!, saldoDisponibleCent: g.leida.saldoDisponibleCent ?? 0, cubreDesde: g.descartadas > 0, decisiones: dec };
     });
-    const plan = planificar({ cuentas: entradas, movimientos, ignorados, reglas, ahora: new Date().toISOString(), nuevoId: () => crypto.randomUUID() });
+    const plan = planificar({ cuentas: entradas, movimientos, ignorados, reglas, capturas, ahora: new Date().toISOString(), nuevoId: () => crypto.randomUUID() });
     return { filas, plan };
-  }, [grupos, decisiones, vivas, reglas, movimientos, ignorados, amexId]);
+  }, [grupos, decisiones, vivas, reglas, movimientos, ignorados, capturas, amexId]);
 
   if (cargandoCuentas || cargandoMovs) return null;
 
@@ -152,7 +154,7 @@ export function Conciliar({ onVolver }: { onVolver: () => void }) {
   };
   const pendientes = filas.filter((f) => !f.decision);
   const confirmables = pendientes.filter((f) => f.propuesta.estado === 'CONFIRMAR' && decisionDesdePropuesta(f.propuesta, amexId));
-  const hayEscrituras = plan.movimientos.length + plan.ignorados.length + plan.reglas.length + plan.cuentas.length > 0;
+  const hayEscrituras = plan.movimientos.length + plan.ignorados.length + plan.reglas.length + plan.capturas.length + plan.cuentas.length > 0;
   const sinPdf = grupos.length === 0;
 
   async function cargar() {
@@ -288,6 +290,11 @@ export function Conciliar({ onVolver }: { onVolver: () => void }) {
               </>
             ) : (
               <>
+                {plan.capturas.length > 0 && !guardado && (
+                  <p style={{ margin: 0, fontSize: 13, color: 'var(--muted-fg)' }}>
+                    {plan.capturas.length === 1 ? 'Un gasto de la bandeja coincide' : `${plan.capturas.length} gastos de la bandeja coinciden`} con lo que muestra el banco: quedarán enlazados y ya no saldrán pendientes.
+                  </p>
+                )}
                 <div style={{ display: 'grid', gridTemplateColumns: isDesktop && grupos.length > 1 ? '1fr 1fr' : '1fr', gap: 16 }}>
                   {grupos.map((g) => plan.verificaciones[g.cuenta.id] && <TarjetaVerificacion key={g.cuenta.id} cuenta={g.cuenta} v={plan.verificaciones[g.cuenta.id]} />)}
                 </div>

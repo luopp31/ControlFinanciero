@@ -4,9 +4,10 @@
 // y guardar "Conciliado hasta" en la misma operación.
 import type { Cuenta, Movimiento } from './finanzas';
 import type { FilaBanco } from './constancia';
-import type { Ignorado, ReglaCategoria } from './db';
+import type { Captura, Ignorado, ReglaCategoria } from './db';
 import { aprenderRegla, clasificarDescriptor, normalizarClave, proponer, reglasVigentes, sembrarReglas, type Propuesta } from './clasificador';
 import { uuidDeterminista, type FilaConRef } from './emparejar';
+import { capturaQueCoincide, enlazarCaptura } from './capturas';
 import { nuevoConciliadoHasta, verificar, type Verificacion } from './verificar';
 
 export type Decision =
@@ -35,6 +36,8 @@ export interface EntradaPlan {
   movimientos: Movimiento[];
   ignorados: Ignorado[];
   reglas: ReglaCategoria[];
+  /** Capturas de la bandeja: las pendientes que coincidan con una fila del banco quedan clasificadas y enlazadas. */
+  capturas?: Captura[];
   ahora: string;
   nuevoId: () => string;
 }
@@ -47,6 +50,8 @@ export interface Plan {
   movimientos: Movimiento[];
   ignorados: Ignorado[];
   reglas: ReglaCategoria[];
+  /** Capturas de la bandeja que se enlazan con lo que muestra el banco (ya no quedan pendientes). */
+  capturas: Captura[];
   /** Cuentas con "Conciliado hasta" actualizado (solo las que cuadran). */
   cuentas: Cuenta[];
   /** Verificación proyectada, con lo ya existente más lo que se va a cargar. */
@@ -66,7 +71,7 @@ export function decisionDesdePropuesta(p: Propuesta, prestIdAmex?: string): Deci
 const monto = (centimos: number) => Math.abs(centimos) / 100;
 
 export function planificar(e: EntradaPlan): Plan {
-  const plan: Plan = { listo: false, sinResolver: [], errores: [], movimientos: [], ignorados: [], reglas: [], cuentas: [], verificaciones: {} };
+  const plan: Plan = { listo: false, sinResolver: [], errores: [], movimientos: [], ignorados: [], reglas: [], capturas: [], cuentas: [], verificaciones: {} };
   const { ahora } = e;
   const porCuenta = new Map(e.cuentas.map((c) => [c.cuenta.id, c]));
 
@@ -87,6 +92,22 @@ export function planificar(e: EntradaPlan): Plan {
   );
   const semillas = sembrarReglas(pares, e.reglas, e.nuevoId, ahora);
   const reglasTrabajo = [...e.reglas, ...semillas];
+
+  // Capturas de la bandeja que coinciden con una fila del banco: una captura se enlaza con una sola fila.
+  const usadasCapturas = new Set<string>();
+  const enlazadas: Captura[] = [];
+  const enlazar = (fila: FilaConRef, mov: Movimiento) => {
+    const c = capturaQueCoincide({ descriptor: fila.descriptor, centimos: fila.centimos, fecha: fila.fecha, hora: fila.hora }, e.capturas ?? [], usadasCapturas);
+    if (!c) return;
+    usadasCapturas.add(c.id);
+    enlazadas.push(enlazarCaptura(c, mov, ahora));
+  };
+  // Un gasto que ya estaba en Greedy (por ejemplo, registrado a mano) también cubre a su captura pendiente.
+  for (const b of base) {
+    for (const p of b.emp?.yaEstaban ?? []) {
+      if (p.via !== 'dividido' && p.movimientos.length === 1 && p.movimientos[0].tipo === 'GASTO') enlazar(p.fila, p.movimientos[0]);
+    }
+  }
 
   // 3. Decisiones sobre las filas nuevas.
   const consumidas = new Set<string>(); // referencias absorbidas por un traspaso emparejado
@@ -130,7 +151,9 @@ export function planificar(e: EntradaPlan): Plan {
           break;
         case 'GASTO': {
           if (!exige(sale, 'un gasto')) break;
-          nuevosMov.push(crearMov(cuentaId, fila, { tipo: 'GASTO', categoria: d.categoria }));
+          const gasto = crearMov(cuentaId, fila, { tipo: 'GASTO', categoria: d.categoria });
+          nuevosMov.push(gasto);
+          enlazar(fila, gasto);
           const clase = clasificarDescriptor(fila.descriptor);
           if ((clase === 'PERSONA' || clase === 'COMERCIO') && proponer(fila.descriptor, fila.centimos, reglasTrabajo).estado !== 'AUTO') {
             aprender.set(`${clase}|${normalizarClave(fila.descriptor)}`, { descriptor: fila.descriptor, clase, categoria: d.categoria });
@@ -191,6 +214,7 @@ export function planificar(e: EntradaPlan): Plan {
   plan.movimientos = nuevosMov;
   plan.ignorados = nuevosIgn;
   plan.reglas = [...reglasFinal.values()];
+  plan.capturas = enlazadas;
   plan.listo = true;
   return plan;
 }

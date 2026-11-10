@@ -10,6 +10,7 @@ export async function guardarPlan(plan: Plan): Promise<void> {
   for (const m of plan.movimientos) await put('movimientos', m);
   for (const i of plan.ignorados) await put('ignorados', i);
   for (const r of plan.reglas) await put('reglas_categoria', r);
+  for (const k of plan.capturas) await put('capturas', k);
   avisarCambioDeDatos();
   programarSyncAutomatico();
 }

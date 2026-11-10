@@ -126,6 +126,18 @@ Flujo: Lu sube la constancia (PDF) de cada cuenta (puede subir varias a la vez; 
 - **Registro rápido:** el "+" abre una hoja con monto (teclado numérico enfocado), las 6 categorías más usadas en los últimos 60 días, cuenta Simple (la billetera) y fecha de hoy por defecto, y nota opcional. Sin categoría se guarda como "Sin identificar". "Más opciones" abre `MovimientoForm` con el monto ya escrito. Escribir solo cambia el estado local de ese bloque (en iOS repintar toda la vista cierra el teclado).
 - **Gasto del mes en el Panel:** tarjeta "Gasto de <mes>" con "Llevas S/ X de S/ Y, te quedan S/ Z" y barra (verde, ámbar al 85 %, rojo si te pasas). El gasto es neto: el reembolso resta, igual que en Estadísticas. Sin presupuesto, invita a fijarlo con un campo simple (`config.presupuesto`).
 
+## Captura automática (Fase 2a, hecha para el correo Plin)
+
+Un Atajo de iOS (automatización al recibir un correo de Interbank) manda el **cuerpo crudo** del correo, sin interpretarlo, a una Edge Function de Supabase; el servidor lo lee y lo deja en la bandeja. Hoy cubre la "Constancia de Pago Plin"; falta Wallet (solo la tarjeta de débito Interbank) y otros formatos.
+
+- **Backend** (`supabase/functions/captura/`, documentado en su `README.md`): `parser.ts` (puro, con tests) lee el correo; `payload.ts` arma la fila; `manejar.ts` es el manejador HTTP (solo POST, clave en la cabecera `x-captura-key` comparada en tiempo constante, acepta `CAPTURA_KEY` y `CAPTURA_KEY_ANTERIOR` para rotarla, cuerpo máximo 16 KB, nunca devuelve ni registra lo recibido); `index.ts` es el arranque en Deno. Se despliega **sin verificación de JWT** (`supabase functions deploy captura --no-verify-jwt`): la protección es la clave. Secretos de la función: `CAPTURA_KEY`, `CAPTURA_USUARIO` (el id de Auth del dueño) y, solo al rotar, `CAPTURA_KEY_ANTERIOR`; nunca en el repo.
+- **Solo inserta:** llama a la función SQL `captura_registrar` (migración `005_captura.sql`), ejecutable solo por `service_role`: idempotente por `dedupe_key` (`op:<código>`, o hash de monto + destinatario + minuto), con tope de 20 por minuto y 300 por día, y marca `posible_duplicado_de` si hay otra captura de distinto origen con el mismo monto a menos de 10 minutos.
+- **Tabla `captura_pendiente`** (RLS por usuario, borrado lógico): `monto_centimos`, `moneda` (PEN o USD), `destinatario`, `destino` (Plin o Yape), `codigo_operacion`, `fecha_hora` (Lima), `cuenta`, `origen` (`plin_correo` o `wallet`), `categoria`, `estado` (`pendiente`, `clasificado`, `descartado`, `sin_leer`), `movimiento_id`, `texto_crudo` (solo `sin_leer`). `movimientos.origen` admite también `captura`.
+- **Privacidad:** el número de cuenta y de tarjeta se descarta al leer el correo y se limpia también el texto de los correos que no se saben leer.
+- **Bandeja en la app** (vista `bandeja`, sin pestaña; aviso en el Panel con el número de pendientes): store `capturas` en IndexedDB (versión 3) sincronizado con `captura_pendiente`. Cada captura se clasifica con chips (el diccionario del Conciliar: personas con 2 confirmaciones, "Confirmar sugeridas") y crea un GASTO con origen `captura`, la hora y el descriptor tal como lo escribe el banco; también "Descartar" y, si hay posible duplicado, "¿Es el mismo gasto?" (Es el mismo / Son distintos). Un pago en dólares pide el monto en soles (Suscripciones va primera). Los correos `sin_leer` se muestran para pasar el formato a Claude Code. Lógica pura en `src/lib/capturas.ts`.
+- **Nombres:** el correo trae el nombre completo y el PDF una etiqueta recortada ("YAPE-JUAN C", "YAPE-ALEXAND"; no siempre el mismo largo), así que se compara por prefijo o por primer nombre + inicial (`coincideNombre`); si el diccionario ya aprendió la etiqueta real del PDF, la bandeja usa esa clave.
+- **Conciliar + bandeja:** una captura pendiente que coincide con una fila del banco (monto exacto, ±3 días y mismo nombre; en Wallet, el mismo día a 30 min o menos) queda clasificada y apunta al movimiento, ya sea uno recién cargado o uno que ya estaba (por ejemplo, registrado a mano). Un movimiento creado desde la bandeja no se duplica al conciliar. El PDF no trae código de operación, así que no se empareja por código.
+
 ---
 
 ## Principios heredados de Networth (a confirmar con Lu)
@@ -164,16 +176,15 @@ Reglas de negocio vigentes en el modelo: el reembolso resta de la categoría (no
 
 ## Prioridades actuales
 
-Hecho en la Fase 1: registro rápido, gasto del mes con presupuesto en el Panel y Conciliar con la constancia (parser, diccionario, emparejador, verificación, "ignorar", "Conciliado hasta").
+Hecho en la Fase 1: registro rápido, gasto del mes con presupuesto en el Panel y Conciliar con la constancia (parser, diccionario, emparejador, verificación, "ignorar", "Conciliado hasta"). Hecho en la Fase 2a: captura automática del correo Plin (Atajo, Edge Function, bandeja en la app y enlace con el Conciliar).
 
 **Falta / siguiente:**
-1. **Probar con gastos reales de Lu durante una semana** antes de agregar nada más: conciliar en el preview con los PDFs reales, usar el "+" a diario y fijar el presupuesto. Revisar en el iPhone que el teclado del registro rápido abra bien.
-2. **Revisar el sync de lo nuevo contra Supabase** tras la primera conciliación real (que aparezcan `conciliar_ignorados`, `conciliado_hasta` en las dos cuentas y `reglas_categoria`).
-3. **Fase 2 — captura automática al instante** (después de probar): una PWA no puede leer notificaciones ni otras apps. Vías evaluadas:
-   - **Correo de Interbank:** cubre Plin, QR y transferencias. Se leería desde Gmail y entraría por un punto de entrada protegido con clave propia, a una bandeja "por clasificar".
-   - **Atajos de iOS con disparador de Wallet:** cubriría compras en tienda, solo si Lu paga con Apple Pay (agregar la tarjeta Interbank a Wallet). Atajos también puede reaccionar a correos de un remitente.
-   - Alerta de consumo de la app de Interbank: Lu debe revisar si tiene un monto mínimo, porque algunos consumos sí llegan por correo.
-4. Publicar en producción cuando Lu lo decida (hoy producción tiene una versión vieja).
+1. **Probar con gastos reales de Lu durante una semana** antes de agregar nada más: conciliar en el preview con los PDFs reales, usar el "+" y la bandeja a diario y fijar el presupuesto. Revisar en el iPhone que el teclado del registro rápido abra bien.
+2. **Revisar el sync de la bandeja contra Supabase** tras clasificar capturas reales (que el movimiento, la regla y el estado `clasificado` lleguen a la nube).
+3. **Cuenta de cargo del correo:** en los correos reales `cuenta` llega vacía (el parser no la lee), y la bandeja asume Simple; pasar la línea "Cuenta cargo" (sin número) para que distinga Simple de Millonaria.
+4. **Más formatos de correo** (transferencias, pagos QR): hoy van a `sin_leer`; hace falta ver ejemplos reales.
+5. **Wallet** (solo la tarjeta de débito Interbank): la Edge Function ya acepta `{origen:'wallet',...}`; falta armar la automatización en el iPhone. La Amex queda fuera por ahora.
+6. Publicar en producción cuando Lu lo decida (hoy producción tiene una versión vieja).
 
 **No hacer ahora:** importar el estado de cuenta de la tarjeta Amex; usar las marcas sin uso (`evitable`, `compartido`, `emergencia`, `etiqueta`: están en la tabla pero la app no las usa ni las sube); modo mina/descanso (Lu ya no está en rotación 14x7); mejoras de la versión web (Fase 3).
 

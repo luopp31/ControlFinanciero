@@ -28,3 +28,6 @@ dist-ssr
 # Datos personales (PDFs del banco, CSV)
 datos-privados/
 movimientos_greedy_*.csv
+
+# Estado local del CLI de Supabase
+supabase/.temp/

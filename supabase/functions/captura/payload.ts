@@ -3,6 +3,7 @@
 //   {"texto": "<cuerpo del correo>"}                                                  -> correo Plin de Interbank
 //   {"origen":"wallet","monto":12.5,"comercio":"...","fecha_hora":"<ISO>","tarjeta":"interbank"}  -> Wallet (solo débito Interbank)
 import { aCentimos, claveDedupe, claveDedupeSinLeer, parsearCorreoPlin, quitarNumerosDeCuenta, sha256Hex } from './parser.ts';
+import { claveDedupeTransferencia, esTransferencia, parsearCorreoTransferencia } from './transferencia.ts';
 
 export type Construido =
   | { ok: true; estado: 'pendiente' | 'sin_leer'; payload: Record<string, unknown> }
@@ -79,6 +80,38 @@ export async function construirPayload(cuerpo: unknown, ahoraMs: number = Date.n
   // --- Correo crudo ---
   if (typeof c.texto === 'string') {
     if (c.texto.trim() === '') return rechazo(400, 'texto_vacio');
+
+    // Constancia de transferencia: se guardan los nombres de producto y la app decide qué es (traspaso, ingreso o gasto).
+    if (esTransferencia(c.texto)) {
+      const t = parsearCorreoTransferencia(c.texto);
+      if (t.ok) {
+        const x = t.transferencia;
+        return {
+          ok: true,
+          estado: 'pendiente',
+          payload: {
+            dedupe_key: await claveDedupeTransferencia(x),
+            monto_centimos: x.montoCentimos,
+            moneda: x.moneda,
+            destinatario: null, // el correo no trae destinatario: no se asume uno
+            destino: null,
+            codigo_operacion: x.codigoOperacion,
+            fecha_hora: x.fechaHora,
+            cuenta: x.cuentaCargo,
+            cuenta_destino: x.cuentaDestino,
+            tipo: 'transferencia',
+            origen: 'transferencia_correo',
+            estado: 'pendiente',
+          },
+        };
+      }
+      return {
+        ok: true,
+        estado: 'sin_leer',
+        payload: { dedupe_key: await claveDedupeSinLeer(t.textoLimpio), origen: 'transferencia_correo', estado: 'sin_leer', texto_crudo: t.textoLimpio },
+      };
+    }
+
     const r = parsearCorreoPlin(c.texto);
     if (r.ok) {
       const x = r.captura;

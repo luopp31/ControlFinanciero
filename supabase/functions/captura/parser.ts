@@ -26,17 +26,21 @@ export type ResultadoCorreo =
 const MESES: Record<string, number> = { ene: 1, feb: 2, mar: 3, abr: 4, may: 5, jun: 6, jul: 7, ago: 8, set: 9, sep: 9, oct: 10, nov: 11, dic: 12 };
 
 /** Lo más que se acepta como monto: la base lo limita a menos de S/ 100,000. */
-const MAX_CENTIMOS = 9_999_999;
-const MAX_TEXTO_LIMPIO = 8000;
+export const MAX_CENTIMOS = 9_999_999;
+export const MAX_TEXTO_LIMPIO = 8000;
 
-/** Quita números de cuenta y de tarjeta (9 o más dígitos seguidos, con espacios o guiones, y máscaras tipo "**** 1234"). */
+/**
+ * Quita números de cuenta y de tarjeta: 9 o más dígitos seguidos (con espacios o guiones), máscaras tipo "**** 1234"
+ * y números enmascarados con X ("898 XXXXXXXXXX", "361XXXXXXXXXX").
+ */
 export function quitarNumerosDeCuenta(texto: string): string {
   return texto
     .replace(/(?:\*{2,}|[xX•●]{2,})[ -]?\d{2,4}/g, '[tarjeta]')
+    .replace(/\d{2,4}[ -]?[xX•●*]{4,}/g, '[número]')
     .replace(/\d(?:[ -]?\d){8,}/g, '[número]');
 }
 
-const sinTildes = (s: string) => s.normalize('NFD').replace(/\p{M}/gu, '');
+export const sinTildes = (s: string) => s.normalize('NFD').replace(/\p{M}/gu, '');
 
 const ETIQUETAS = {
   codigo: /^c[oó]digo de operaci[oó]n\b/i,
@@ -95,7 +99,7 @@ export function aCentimos(texto: string): number | null {
 }
 
 /** "09 Nov 2026 09:39 PM" (o 24 h sin AM/PM) -> "2026-11-09T21:39:00-05:00". */
-function aFechaHoraLima(texto: string): string | null {
+export function aFechaHoraLima(texto: string): string | null {
   const m = /(\d{1,2})\s+([A-Za-zñÑáéíóúÁÉÍÓÚ]{3,4})\.?\s+(\d{4})\s+(\d{1,2}):(\d{2})(?:\s*([AaPp])\.?\s*[Mm]\.?)?/.exec(texto);
   if (!m) return null;
   const mes = MESES[sinTildes(m[2]).toLowerCase()];

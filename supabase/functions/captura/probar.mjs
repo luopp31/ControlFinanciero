@@ -53,7 +53,7 @@ if (completo) {
   await probar('Wallet de prueba que coincide en monto y hora con el correo (queda marcada "¿es el mismo gasto?")', {
     cuerpo: { origen: 'wallet', monto: 1, comercio: 'Comercio Prueba', fecha_hora: new Date().toISOString(), tarjeta: 'interbank' },
   }, 200, ok(true));
-  await probar('correo que no se sabe leer (queda sin_leer, sin números de cuenta)', { cuerpo: { texto: 'Constancia de transferencia\nPRUEBA-SIN-LEER\nMonto: S/ 3.00' } }, 200, ok(true, 'sin_leer'));
+  await probar('correo que no se sabe leer (queda sin_leer, sin números de cuenta)', { cuerpo: { texto: 'Constancia de pago QR\nPRUEBA-SIN-LEER\nMonto: S/ 3.00' } }, 200, ok(true, 'sin_leer'));
   console.log('\nLimpieza (SQL Editor) cuando termines de revisar:');
   console.log("  delete from captura_pendiente where destinatario in ('Prueba Prueba','Comercio Prueba') or texto_crudo like '%PRUEBA-SIN-LEER%';");
   console.log('Revisión: la fila de Wallet debe tener posible_duplicado_de con el id de la fila del correo.');

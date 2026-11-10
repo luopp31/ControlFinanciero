@@ -143,7 +143,7 @@ describe('correo Plin', () => {
   });
   it('un correo que no se sabe leer se guarda como sin_leer, ya sin números de cuenta', async () => {
     const { llamadas, registrar } = espia();
-    const raro = `Constancia de transferencia\nCuenta cargo: Cuenta Simple Soles ${CUENTA}\nMonto: S/ 5.00`;
+    const raro = `Constancia de pago QR\nCuenta cargo: Cuenta Simple Soles ${CUENTA}\nMonto: S/ 5.00`;
     const r = await manejar(pedir({ texto: raro }), ENTORNO, registrar);
     expect(await r.json()).toEqual({ ok: true, creado: true, estado: 'sin_leer' });
     expect(llamadas[0]).toMatchObject({ estado: 'sin_leer', origen: 'plin_correo' });

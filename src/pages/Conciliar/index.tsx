@@ -11,7 +11,7 @@ import { proponer, reglasVigentes, type Propuesta } from '../../lib/clasificador
 import { planificar, decisionDesdePropuesta, type CuentaConciliar, type Decision } from '../../lib/planificar';
 import { instanteConsulta } from '../../lib/verificar';
 import { guardarPlan } from '../../lib/guardarPlan';
-import { leerItemsPdf } from '../../lib/pdf';
+import { describirError, leerItemsPdf } from '../../lib/pdf';
 import { CATS, CATS_ING, estadoPrestamo, type Cuenta } from '../../lib/finanzas';
 import { formatearFechaCorta, formatearInstanteLima, formatearMonto } from '../../lib/formato';
 import { botonPrimario, botonSecundario } from '../../components/formStyles';
@@ -25,6 +25,8 @@ interface Pdf {
   nombre: string;
   leida?: ConstanciaLeida;
   error?: string;
+  /** Error real (nombre y mensaje, sin rutas) para diagnosticar desde el celular. */
+  detalle?: string;
   /** Cuenta elegida a mano cuando el banco la nombra de una forma que no reconozco. */
   cuentaId?: string;
 }
@@ -72,8 +74,8 @@ export function Conciliar({ onVolver }: { onVolver: () => void }) {
       const key = `${f.name}|${f.size}|${f.lastModified}`;
       try {
         nuevos.push({ key, nombre: f.name, leida: parsearConstancia(await leerItemsPdf(f)) });
-      } catch {
-        nuevos.push({ key, nombre: f.name, error: 'No pude abrir este archivo como PDF.' });
+      } catch (e) {
+        nuevos.push({ key, nombre: f.name, error: 'No pude abrir este archivo como PDF.', detalle: describirError(e) });
       }
     }
     setPdfs((prev) => [...prev.filter((p) => !nuevos.some((n) => n.key === p.key)), ...nuevos]);
@@ -327,6 +329,7 @@ function ResumenPdf({ pdf, cuentas, grupo, reemplazado, sinCuenta, onElegir }: {
         {leida?.consulta && <span style={{ fontWeight: 600, color: 'var(--muted-fg)' }}> · {formatearFechaCorta(leida.consulta.fecha)} {leida.consulta.hora}</span>}
       </p>
       {pdf.error && <p style={{ margin: 0, fontSize: 13, color: 'var(--destructive)' }}>{pdf.error}</p>}
+      {pdf.detalle && <p style={{ margin: 0, fontSize: 11, color: 'var(--muted-fg)', overflowWrap: 'anywhere' }}>Detalle técnico: {pdf.detalle}</p>}
       {leida && !leida.consulta && <p style={{ margin: 0, fontSize: 13, color: 'var(--destructive)' }}>No pude leer la fecha de la consulta; este archivo no se puede usar.</p>}
       {leida?.consulta && (
         <p style={{ margin: 0, fontSize: 13, color: 'var(--muted-fg)' }}>

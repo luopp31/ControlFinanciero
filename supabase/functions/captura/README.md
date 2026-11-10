@@ -28,7 +28,7 @@ x-captura-key: <la clave secreta, 64 caracteres hexadecimales>
 ```
 - `monto` acepta un número (`12.5`), texto con o sin símbolo (`"S/ 12.50"`, `"12,50"`, `"1,234.50"`, `"12.50 PEN"`) o una lista de un solo valor (`[12.5]`). Sin símbolo o con `S/` es en soles; con `US$`, `USD` o `$` es en dólares (la bandeja pedirá el monto en soles). Se rechaza 0, negativos y desde S/ 100,000 (400 `monto`).
 - `comercio` es opcional: si falta o viene vacío se guarda como "Sin nombre" y la captura entra igual.
-- `fecha_hora` en ISO 8601 con zona (`2026-11-09T21:39:00-05:00`, `...Z`, `...+00:00`, con fracción de segundos o con la zona pegada `-0500`). Si falta o viene vacía se usa la hora actual. Sin zona se toma como hora de Lima. Un formato que no es ISO (`09/11/2026`, `9 nov 2026`) se rechaza con 400 `fecha_hora` en vez de adivinarlo; tampoco se aceptan fechas a más de un día en el futuro ni de más de 400 días atrás.
+- `fecha_hora` en ISO 8601 con zona (`2026-11-09T21:39:00-05:00`, `...Z`, `...+00:00`, con fracción de segundos o con la zona pegada `-0500`). Si falta, viene vacía o **no es un ISO válido** (`09/11/2026`, `9 nov 2026`, `ayer`, un día imposible como el 31 de febrero) se usa la hora actual de Lima: el Atajo corre al pagar, así que no se pierde la compra y no se adivina una fecha que podría salir equivocada. Sin zona se toma como hora de Lima. Un ISO **válido pero fuera de rango** (más de un día en el futuro o de 400 días atrás) sí se rechaza con 400 `fecha_hora`. Esto es solo para Wallet: el correo Plin sigue estricto (si su fecha no se puede leer, queda `sin_leer`).
 - `tarjeta` es opcional; si viene y no es `interbank` (por ejemplo la Amex) se rechaza con 422.
 
 **Respuestas**

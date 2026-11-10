@@ -204,7 +204,6 @@ describe('Wallet (solo débito Interbank)', () => {
     ['monto cero', { monto: 0 }],
     ['monto negativo', { monto: -3 }],
     ['monto enorme', { monto: 100000 }],
-    ['fecha ilegible', { fecha_hora: 'ayer' }],
     ['fecha en el futuro lejano', { fecha_hora: '2027-12-01T10:00:00-05:00' }],
     ['fecha muy vieja', { fecha_hora: '2024-01-01T10:00:00-05:00' }],
   ])('rechaza: %s', async (_, extra) => {

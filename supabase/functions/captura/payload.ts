@@ -53,7 +53,8 @@ export function leerComercio(valor: unknown): string {
 /**
  * Fecha y hora del Atajo -> instante en ms. ISO con zona ("2026-11-09T21:39:00-05:00", "...Z", "...+00:00", con
  * fracción de segundos, con espacio en vez de T o con la zona pegada "-0500"). Vacía o ausente: la hora actual.
- * Sin zona se toma como hora de Lima. Ilegible: null.
+ * Sin zona se toma como hora de Lima. Ilegible (no es ISO válido): null; quien la llama decide qué hacer
+ * (Wallet usa la hora actual; el correo Plin tiene su propio lector estricto en parser.ts y no pasa por aquí).
  */
 export function leerFechaHora(valor: unknown, ahoraMs: number): number | null {
   const v = desenvolver(valor);
@@ -113,9 +114,10 @@ export async function construirPayload(cuerpo: unknown, ahoraMs: number = Date.n
     if (!importe) return rechazo(400, 'monto');
     const { centimos, moneda } = importe;
     const comercio = leerComercio(c.comercio);
-    const ms = leerFechaHora(c.fecha_hora, ahoraMs);
-    // Más allá de un día en el futuro o de 400 días atrás es un error del Atajo.
-    if (ms === null || ms > ahoraMs + 86_400_000 || ms < ahoraMs - 400 * 86_400_000) return rechazo(400, 'fecha_hora');
+    // Un formato que no es ISO válido (o una fecha imposible) no hace perder la compra: el Atajo corre al pagar, así
+    // que la hora actual es casi exacta. En cambio, un ISO válido pero fuera de rango sí es un error del Atajo.
+    const ms = leerFechaHora(c.fecha_hora, ahoraMs) ?? ahoraMs;
+    if (ms > ahoraMs + 86_400_000 || ms < ahoraMs - 400 * 86_400_000) return rechazo(400, 'fecha_hora');
     const iso = new Date(ms).toISOString();
     return {
       ok: true,

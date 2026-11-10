@@ -59,6 +59,28 @@ function valor(lineas: string[], re: RegExp): string | null {
   return sig && !esEtiqueta(sig) ? sig.trim() : null;
 }
 
+/** Valor de una etiqueta que puede ocupar varias líneas: lo que sigue en la suya y las siguientes hasta otra etiqueta (máx. 4). */
+function valorVarias(lineas: string[], re: RegExp, max = 4): string | null {
+  const i = lineas.findIndex((l) => re.test(l));
+  if (i < 0) return null;
+  const partes = [lineas[i].replace(re, '').replace(/^\s*[:\-–]?\s*/, '').trim()];
+  for (let j = i + 1; j < lineas.length && j <= i + max; j++) {
+    if (esEtiqueta(lineas[j])) break;
+    partes.push(lineas[j]);
+  }
+  return partes.filter(Boolean).join(' ') || null;
+}
+
+/**
+ * La palabra que sigue a "Cuenta" ("Cuenta Simple Soles <número>" -> "Simple"), esté en una línea o en varias.
+ * Solo devuelve el nombre: el número de cuenta que acompaña nunca sale de aquí.
+ */
+function nombreDeCuenta(texto: string | null): string | null {
+  const palabra = texto ? /\bcuenta\s+([A-Za-zÁÉÍÓÚÜáéíóúüÑñ]+)/i.exec(texto)?.[1] : undefined;
+  if (!palabra || /^(?:de|cargo|soles|d[oó]lares|ahorros?|corriente)$/i.test(palabra)) return null;
+  return palabra[0].toUpperCase() + palabra.slice(1).toLowerCase();
+}
+
 /** "1,234.50" | "12.5" | "12,50" | "1.234,50" -> céntimos enteros; null si no es un monto. */
 function aCentimos(texto: string): number | null {
   const t = texto.replace(/\s/g, '');
@@ -126,8 +148,7 @@ export function parsearCorreoPlin(texto: string): ResultadoCorreo {
 
   const codigo = valor(lineas, ETIQUETAS.codigo)?.match(/[A-Za-z0-9]{4,20}/)?.[0] ?? null;
 
-  const cuentaTxt = valor(lineas, ETIQUETAS.cuenta);
-  const cuenta = cuentaTxt ? (/cuenta\s+(.+?)\s+(?:soles|d[oó]lares)\b/i.exec(cuentaTxt)?.[1]?.trim() ?? null) : null;
+  const cuenta = nombreDeCuenta(valorVarias(lineas, ETIQUETAS.cuenta));
 
   const destinoTxt = valor(lineas, ETIQUETAS.destino);
   const destino = destinoTxt && /plin/i.test(destinoTxt) ? 'Plin' : destinoTxt && /yape/i.test(destinoTxt) ? 'Yape' : null;

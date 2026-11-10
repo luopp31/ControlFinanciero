@@ -26,8 +26,9 @@ x-captura-key: <la clave secreta, 64 caracteres hexadecimales>
 { "origen": "wallet", "monto": 12.5, "comercio": "Nombre del comercio",
   "fecha_hora": "2026-11-09T21:39:00-05:00", "tarjeta": "interbank" }
 ```
-- `monto` es un **número** en soles (no texto).
-- `fecha_hora` en ISO 8601 **con huso horario** (`-05:00` o `Z`).
+- `monto` acepta un número (`12.5`), texto con o sin símbolo (`"S/ 12.50"`, `"12,50"`, `"1,234.50"`, `"12.50 PEN"`) o una lista de un solo valor (`[12.5]`). Sin símbolo o con `S/` es en soles; con `US$`, `USD` o `$` es en dólares (la bandeja pedirá el monto en soles). Se rechaza 0, negativos y desde S/ 100,000 (400 `monto`).
+- `comercio` es opcional: si falta o viene vacío se guarda como "Sin nombre" y la captura entra igual.
+- `fecha_hora` en ISO 8601 con zona (`2026-11-09T21:39:00-05:00`, `...Z`, `...+00:00`, con fracción de segundos o con la zona pegada `-0500`). Si falta o viene vacía se usa la hora actual. Sin zona se toma como hora de Lima. Un formato que no es ISO (`09/11/2026`, `9 nov 2026`) se rechaza con 400 `fecha_hora` en vez de adivinarlo; tampoco se aceptan fechas a más de un día en el futuro ni de más de 400 días atrás.
 - `tarjeta` es opcional; si viene y no es `interbank` (por ejemplo la Amex) se rechaza con 422.
 
 **Respuestas**
@@ -112,7 +113,7 @@ Los nombres pueden variar un poco según tu versión de iOS. La clave pásala al
 2. **Obtener contenido de URL**, mismo URL, método `POST` y mismos dos encabezados.
 3. Cuerpo **JSON**, con estos campos:
    - `origen` (Texto): `wallet`
-   - `monto` (**Número**): la variable *Importe*. Si llega como texto ("S/ 12.50"), antes usa la acción **Obtener números de la entrada**.
-   - `comercio` (Texto): la variable *Comercio*.
-   - `fecha_hora` (Texto): *Fecha actual* con **Dar formato a la fecha** -> ISO 8601 (debe terminar en `-05:00`).
+   - `monto`: la variable *Importe*, tal como llegue (número, o texto como "S/ 12.50"); no hace falta convertirla.
+   - `comercio` (Texto): la variable *Comercio* (opcional).
+   - `fecha_hora` (Texto): *Fecha actual* con **Dar formato a la fecha** -> ISO 8601 (opcional: si no se manda, se usa la hora actual).
    - `tarjeta` (Texto): `interbank`

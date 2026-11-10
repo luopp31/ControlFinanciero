@@ -201,14 +201,10 @@ describe('Wallet (solo débito Interbank)', () => {
     expect((await manejar(pedir(sin), ENTORNO, registrar)).status).toBe(200);
   });
   it.each([
-    ['monto en texto', { monto: '12.5' }],
     ['monto cero', { monto: 0 }],
     ['monto negativo', { monto: -3 }],
     ['monto enorme', { monto: 100000 }],
-    ['sin comercio', { comercio: '   ' }],
-    ['comercio no texto', { comercio: 5 }],
     ['fecha ilegible', { fecha_hora: 'ayer' }],
-    ['fecha sin huso horario', { fecha_hora: '2026-11-09T21:39:00' }],
     ['fecha en el futuro lejano', { fecha_hora: '2027-12-01T10:00:00-05:00' }],
     ['fecha muy vieja', { fecha_hora: '2024-01-01T10:00:00-05:00' }],
   ])('rechaza: %s', async (_, extra) => {

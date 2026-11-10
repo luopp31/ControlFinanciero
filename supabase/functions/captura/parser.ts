@@ -82,7 +82,7 @@ function nombreDeCuenta(texto: string | null): string | null {
 }
 
 /** "1,234.50" | "12.5" | "12,50" | "1.234,50" -> céntimos enteros; null si no es un monto. */
-function aCentimos(texto: string): number | null {
+export function aCentimos(texto: string): number | null {
   const t = texto.replace(/\s/g, '');
   let normal: string;
   if (/^\d{1,3}(,\d{3})+(\.\d{1,2})?$/.test(t)) normal = t.replace(/,/g, '');

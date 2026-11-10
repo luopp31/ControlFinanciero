@@ -31,6 +31,7 @@ export function RegistroRapidoForm({
   const [cuentaId, setCuentaId] = useState(() => (cuentas.find((c) => c.rol === 'BILLETERA') ?? cuentas[0]).id);
   const [nota, setNota] = useState('');
   const [guardando, setGuardando] = useState(false);
+  const [enfocado, setEnfocado] = useState(false);
 
   // Las categorías se calculan una vez al abrir: no se reordenan mientras escribes.
   const frecuentes = useMemo(() => categoriasFrecuentes(movimientos, hoyISO(), 6), []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -63,10 +64,29 @@ export function RegistroRapidoForm({
     >
       <p style={{ margin: 0, fontSize: 16, fontWeight: 800 }}>Nuevo gasto</p>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+      {/* Toda la fila es un <label>: un toque en cualquier parte enfoca el monto. Si el teclado no se abrió solo
+          (iOS a veces lo impide), la fila resaltada invita a tocarla. */}
+      <label
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 12,
+          padding: '14px 16px',
+          borderRadius: 18,
+          background: 'var(--muted)',
+          border: `2px solid ${enfocado ? acento.texto : 'var(--primary)'}`,
+          cursor: 'text',
+          transition: 'border-color .15s ease',
+        }}
+      >
         <span style={barraAcentoStyle(acento)} />
         <input
           ref={montoRef}
+          onFocus={(e) => {
+            setEnfocado(true);
+            e.target.select();
+          }}
+          onBlur={() => setEnfocado(false)}
           inputMode="decimal"
           enterKeyHint="done"
           value={monto}
@@ -74,11 +94,13 @@ export function RegistroRapidoForm({
           placeholder="0"
           aria-label="Monto"
           autoComplete="off"
-          onFocus={(e) => e.target.select()}
           style={montoGrandeInputStyle(acento, monto.trim() !== '')}
         />
         <span style={{ fontSize: 18, fontWeight: 800, color: 'var(--muted-fg)' }}>S/</span>
-      </div>
+      </label>
+      {!enfocado && monto.trim() === '' && (
+        <p style={{ margin: '-8px 0 0', fontSize: 12.5, fontWeight: 700, color: 'var(--primary)' }}>Toca aquí y escribe el monto</p>
+      )}
 
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
         {frecuentes.map((id) => {

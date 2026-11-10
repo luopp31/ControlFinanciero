@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { ConfirmarBorrado } from '../../components/ConfirmarBorrado';
 import { MovimientoForm } from '../../components/MovimientoForm';
 import { MovimientoRow } from '../../components/MovimientoRow';
 import { SelectorMes } from '../../components/SelectorMes';
@@ -13,10 +14,15 @@ export function Movimientos() {
   const { movimientos, cargando: cargandoMovs, actualizarMovimiento, borrarMovimiento } = useMovimientos();
   const [mes, setMes] = useState(() => mesActualISO());
   const [editandoId, setEditandoId] = useState<string | null>(null);
+  // Borrar pide confirmación: primero se elige qué borrar, y recién al confirmar se borra.
+  const [porBorrarId, setPorBorrarId] = useState<string | null>(null);
+  const [borrando, setBorrando] = useState(false);
 
   const movimientosDelMes = useMemo(() => movimientos.filter((m) => m.fecha.startsWith(mes)), [movimientos, mes]);
 
   if (cargandoCuentas || cargandoMovs) return null;
+
+  const porBorrar = porBorrarId ? movimientos.find((m) => m.id === porBorrarId) : undefined;
 
   if (cuentas.length === 0) {
     return (
@@ -73,12 +79,30 @@ export function Movimientos() {
                 movimiento={m}
                 cuentas={cuentas}
                 onEditar={setEditandoId}
-                onBorrar={borrarMovimiento}
+                onBorrar={setPorBorrarId}
               />
             )
           )
         )}
       </div>
+
+      {porBorrar && (
+        <ConfirmarBorrado
+          movimiento={porBorrar}
+          cuentas={cuentas}
+          borrando={borrando}
+          onCancelar={() => !borrando && setPorBorrarId(null)}
+          onConfirmar={async () => {
+            setBorrando(true);
+            try {
+              await borrarMovimiento(porBorrar.id);
+            } finally {
+              setBorrando(false);
+              setPorBorrarId(null);
+            }
+          }}
+        />
+      )}
     </div>
   );
 }

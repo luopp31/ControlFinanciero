@@ -18,6 +18,8 @@ export function RegistroRapido() {
   const [arrastreY, setArrastreY] = useState(0);
   const [arrastrando, setArrastrando] = useState(false);
   const inicioY = useRef(0);
+  // Input siempre montado (invisible, NO display:none) que recibe el foco dentro del toque del "+".
+  const tecladoRef = useRef<HTMLInputElement>(null);
 
   // Con la hoja en `position: fixed`, el fondo (`body`) sigue siendo la única
   // parte "scrolleable" del documento — así que si el monto queda enfocado,
@@ -42,6 +44,19 @@ export function RegistroRapido() {
   }, [abierto]);
 
   if (cargando || cuentas.length === 0) return null;
+
+  // iOS solo abre el teclado si el foco se pide DENTRO del toque del usuario, y la hoja del monto todavía no existe
+  // en ese momento. Por eso el foco se da primero a un input que siempre está en el DOM; el teclado sube con el
+  // toque y, cuando la hoja ya está abierta, el formulario le pasa el foco al campo del monto sin cerrar el teclado.
+  function abrir() {
+    tecladoRef.current?.focus({ preventScroll: true });
+    setAbierto(true);
+  }
+
+  function masOpciones(monto: string) {
+    tecladoRef.current?.focus({ preventScroll: true }); // se mantiene el teclado mientras cambia el formulario
+    setMontoCompleto(monto);
+  }
 
   function cerrar() {
     // Igual que en onPointerDown: quitamos el foco ANTES de que la hoja se
@@ -80,9 +95,18 @@ export function RegistroRapido() {
 
   return (
     <>
+      <input
+        ref={tecladoRef}
+        data-teclado-proxy
+        inputMode="decimal"
+        aria-hidden="true"
+        tabIndex={-1}
+        autoComplete="off"
+        style={{ position: 'fixed', left: 0, bottom: 0, width: 1, height: 1, opacity: 0, border: 0, padding: 0, margin: 0, fontSize: 16, pointerEvents: 'none' }}
+      />
       <button
         type="button"
-        onClick={() => setAbierto(true)}
+        onClick={abrir}
         aria-label="Registrar movimiento"
         style={{
           all: 'unset',
@@ -191,7 +215,7 @@ export function RegistroRapido() {
                     cerrar();
                     return r;
                   }}
-                  onMasOpciones={setMontoCompleto}
+                  onMasOpciones={masOpciones}
                 />
               ) : (
                 <MovimientoForm

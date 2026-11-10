@@ -145,6 +145,14 @@ Un Atajo de iOS (automatización al recibir un correo de Interbank) manda el **c
 
 ---
 
+## Resumen para el asesor (hecho)
+
+Ajustes tiene "Copiar resumen para asesor": arma un texto en markdown (`src/lib/resumenAsesor.ts`, puro y con tests; el botón y el portapapeles están en `pages/Ajustes` y `lib/portapapeles.ts`) y lo copia para pegarlo en un chat con un asesor financiero. Mide unos 800 tokens con pocos datos y debe quedar bajo 4.000; la pantalla muestra la estimación. Secciones: encabezado (corte en hora de Lima, versión, rango de datos, reglas, "saldo exacto / categorías aproximadas"), saldos (incluye la deuda Amex), flujo mensual de 6 meses completos + el actual, categoría × mes con promedio, presupuesto, mes en curso con proyección y 10 mayores gastos, recurrentes (registrados y detectados) y alertas.
+- Mismas reglas que el resto de la app: traspasos y pagos de deuda (PRESTAMO con dir PAGO) van en columnas aparte, no son gasto; el retiro de cajero cuenta completo; el reembolso resta del gasto. "Neto" = ingresos − gastos (la deuda no entra).
+- El promedio mensual usa solo meses completos con datos (no el mes en curso ni los anteriores al primer movimiento); sin meses completos sale "—". Los meses anteriores al primer movimiento no se imprimen.
+- Greedy no guarda línea disponible, cierre, fecha de pago ni pago mínimo de la Amex ni presupuesto por categoría: el resumen lo dice. Las alertas basadas en proyección solo salen desde el día 15 del mes. Los recurrentes "detectados" son gastos con la misma descripción en 3 o más meses con montos dentro de 15 %.
+- El texto puede traer descripciones de gastos y nombres de personas (notas o etiqueta del banco): es para que lo pegue el propio usuario, no se sube a ningún lado. La versión sale de `package.json` más la fecha de compilación (`__APP_VERSION__` en `vite.config.ts`).
+
 ## Principios heredados de Networth (a confirmar con Lu)
 
 No están en el repo; vienen del diseño anterior. Si contradicen una feature, la feature está mal.

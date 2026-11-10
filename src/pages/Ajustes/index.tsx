@@ -3,11 +3,16 @@ import { useCapturas } from '../../hooks/useCapturas';
 import { resumenBandeja } from '../../lib/capturas';
 import { useAuth } from '../../hooks/useAuth';
 import { useConfig } from '../../hooks/useConfig';
+import { useCompromisos } from '../../hooks/useCompromisos';
 import { useCuentas } from '../../hooks/useCuentas';
+import { useMovimientos } from '../../hooks/useMovimientos';
+import { usePrestamos } from '../../hooks/usePrestamos';
 import { useIsDesktop } from '../../hooks/useIsDesktop';
 import { borrarTodoLocal, type Tema } from '../../lib/db';
 import { CATS, CATS_ING, colorCategoria, type Categoria, type Cuenta, type RolCuenta } from '../../lib/finanzas';
 import { sincronizarTodo } from '../../lib/sync';
+import { copiarTexto } from '../../lib/portapapeles';
+import { estimarTokens, resumenAsesor } from '../../lib/resumenAsesor';
 import { formatearMonto } from '../../lib/formato';
 import { IconArrowUUpLeft, IconEye, IconEyeSlash } from '../../components/icons';
 import { botonPrimario, botonSecundario, chipStyle, etiquetaStyle, inputStyle } from '../../components/formStyles';
@@ -65,6 +70,8 @@ export function Ajustes({ onVolver, onAbrirBandeja }: { onVolver: () => void; on
 
       <FilaBandeja onAbrir={onAbrirBandeja} />
 
+      <SeccionAsesor />
+
       <SeccionCuentas cuentas={cuentas} onActualizar={actualizarCuenta} onArchivar={borrarCuenta} />
 
       <SeccionDatos session={session} cerrarSesion={cerrarSesion} />
@@ -80,6 +87,47 @@ function Tarjeta({ titulo, children }: { titulo: string; children: React.ReactNo
       </p>
       {children}
     </div>
+  );
+}
+
+/** Resumen en texto para pegar en un chat con un asesor financiero (ver lib/resumenAsesor). */
+function SeccionAsesor() {
+  const { movimientos } = useMovimientos();
+  const { prestamos } = usePrestamos();
+  const { compromisos } = useCompromisos();
+  const { cuentas } = useCuentas();
+  const { config } = useConfig();
+  const { capturas } = useCapturas();
+  const [resultado, setResultado] = useState<{ copiado: boolean; tokens: number; texto: string } | null>(null);
+
+  function copiar() {
+    const texto = resumenAsesor(
+      { cuentas, movimientos, prestamos, compromisos, presupuesto: config.presupuesto, capturasPendientes: resumenBandeja(capturas).pendientes.length, version: __APP_VERSION__ },
+      new Date()
+    );
+    void copiarTexto(texto).then((copiado) => setResultado({ copiado, tokens: estimarTokens(texto), texto }));
+  }
+
+  return (
+    <Tarjeta titulo="Para tu asesor">
+      <p style={{ margin: 0, fontSize: 13, color: 'var(--muted-fg)' }}>
+        Un resumen corto con saldos, flujo de 6 meses, categorías, presupuesto y alertas. Se copia para pegarlo en un chat con tu asesor.
+      </p>
+      <button type="button" onClick={copiar} style={{ ...botonPrimario(false), width: '100%' }}>
+        Copiar resumen para asesor
+      </button>
+      {resultado && (
+        <>
+          <p role="status" style={{ margin: 0, fontSize: 12.5, color: resultado.copiado ? 'var(--accent)' : 'var(--destructive)', fontWeight: 600 }}>
+            {resultado.copiado ? 'Copiado' : 'No pude copiarlo solo: mantén pulsado el texto de abajo y elige Copiar'} · unos {resultado.tokens.toLocaleString('en-US')} tokens
+            {resultado.tokens > 4000 ? ' (más de lo ideal)' : ''}
+          </p>
+          {!resultado.copiado && (
+            <textarea readOnly value={resultado.texto} rows={8} onFocus={(e) => e.currentTarget.select()} style={{ ...inputStyle, fontSize: 16, fontFamily: 'monospace', resize: 'vertical' }} />
+          )}
+        </>
+      )}
+    </Tarjeta>
   );
 }
 

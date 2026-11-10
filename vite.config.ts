@@ -4,6 +4,8 @@ import { VitePWA } from 'vite-plugin-pwa'
 
 // https://vite.dev/config/
 export default defineConfig({
+  // Versión que se muestra en el resumen para el asesor: la de package.json y la fecha de compilación.
+  define: { __APP_VERSION__: JSON.stringify(`${process.env.npm_package_version ?? '0.0.0'} · compilada el ${new Date().toISOString().slice(0, 10)}`) },
   plugins: [
     react(),
     VitePWA({

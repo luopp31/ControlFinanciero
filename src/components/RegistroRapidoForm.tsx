@@ -74,7 +74,7 @@ export function RegistroRapidoForm({
           padding: '14px 16px',
           borderRadius: 18,
           background: 'var(--muted)',
-          border: `2px solid ${enfocado ? acento.texto : 'var(--primary)'}`,
+          border: `2px solid ${enfocado ? 'var(--fg)' : 'var(--card-border)'}`,
           cursor: 'text',
           transition: 'border-color .15s ease',
         }}

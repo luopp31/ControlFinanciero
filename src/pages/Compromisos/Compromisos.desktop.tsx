@@ -19,19 +19,20 @@ export function CompromisosDesktop({
   actualizarSuscripcion,
   registrarPagoSuscripcion,
   borrarSuscripcion,
+  embebido = false,
 }: CompromisosViewProps) {
   const [busqueda, setBusqueda] = useState('');
   const prestamosFiltrados = filtrarPrestamosPorPersona(prestamos, busqueda);
 
   return (
-    <div style={{ maxWidth: 1040, margin: '0 auto', padding: '48px 32px', display: 'flex', flexDirection: 'column', gap: 32 }}>
-      <div>
-        <p style={eyebrow}>Greedy</p>
-        <h1 style={{ fontSize: 28, fontWeight: 800, letterSpacing: '-0.02em', margin: '0 0 8px' }}>Compromisos</h1>
-        <p style={{ fontSize: 14.5, color: 'var(--muted-fg)', margin: 0 }}>
-          Quién te debe, a quién le debes, y qué se te cobra pronto.
-        </p>
-      </div>
+    <div style={embebido ? { display: 'flex', flexDirection: 'column', gap: 32 } : { maxWidth: 1040, margin: '0 auto', padding: '48px 32px', display: 'flex', flexDirection: 'column', gap: 32 }}>
+      {!embebido && (
+        <div>
+          <p style={eyebrow}>Greedy</p>
+          <h1 style={{ fontSize: 28, fontWeight: 800, letterSpacing: '-0.02em', margin: '0 0 8px' }}>Compromisos</h1>
+          <p style={{ fontSize: 14.5, color: 'var(--muted-fg)', margin: 0 }}>Quién te debe, a quién le debes, y qué se te cobra pronto.</p>
+        </div>
+      )}
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24, alignItems: 'start' }}>
         <section style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>

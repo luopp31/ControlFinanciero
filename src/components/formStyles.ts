@@ -24,9 +24,9 @@ export function chipStyle(activo: boolean): CSSProperties {
     gap: 6,
     padding: '8px 14px',
     borderRadius: 999,
-    border: `1px solid ${activo ? 'var(--primary)' : 'var(--card-border)'}`,
-    background: activo ? 'var(--primary-soft)' : 'var(--muted)',
-    color: activo ? 'var(--primary)' : 'var(--muted-fg)',
+    border: `1px solid ${activo ? 'var(--fg)' : 'var(--card-border)'}`,
+    background: activo ? 'var(--fg)' : 'var(--muted)',
+    color: activo ? 'var(--bg)' : 'var(--muted-fg)',
     fontWeight: 700,
     fontSize: 13,
     cursor: 'pointer',
@@ -43,8 +43,8 @@ export function chipStyleColor(activo: boolean, color: string): CSSProperties {
     padding: '8px 14px',
     borderRadius: 999,
     border: `1px solid ${activo ? color : 'var(--card-border)'}`,
-    background: activo ? `${color}26` : 'var(--muted)',
-    color: activo ? color : 'var(--muted-fg)',
+    background: activo ? color : 'var(--muted)',
+    color: activo ? '#1B1622' : 'var(--muted-fg)',
     fontWeight: 700,
     fontSize: 13,
     cursor: 'pointer',
@@ -53,25 +53,25 @@ export function chipStyleColor(activo: boolean, color: string): CSSProperties {
 
 export function botonPrimario(deshabilitado: boolean): CSSProperties {
   return {
-    padding: '11px 20px',
-    borderRadius: 12,
+    padding: '12px 22px',
+    borderRadius: 999,
     border: 'none',
-    background: deshabilitado ? 'var(--muted)' : 'var(--primary)',
-    color: deshabilitado ? 'var(--muted-fg)' : '#FFFFFF',
-    fontWeight: 700,
-    fontSize: 14,
+    background: deshabilitado ? 'var(--muted)' : 'var(--yellow)',
+    color: deshabilitado ? 'var(--muted-fg)' : 'var(--on-yellow)',
+    fontWeight: 600,
+    fontSize: 15,
     cursor: deshabilitado ? 'not-allowed' : 'pointer',
   };
 }
 
 export const botonSecundario: CSSProperties = {
-  padding: '11px 16px',
-  borderRadius: 12,
-  border: '1px solid var(--card-border)',
+  padding: '12px 20px',
+  borderRadius: 999,
+  border: '1px solid var(--btn-line)',
   background: 'transparent',
-  color: 'var(--muted-fg)',
+  color: 'var(--fg)',
   fontWeight: 600,
-  fontSize: 14,
+  fontSize: 15,
   cursor: 'pointer',
 };
 
@@ -133,8 +133,8 @@ export function campoSelIconoStyle(color: string): CSSProperties {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    background: `${color}26`,
-    color,
+    background: `color-mix(in srgb, ${color} var(--tile-a), transparent)`,
+    color: `var(--glyph, color-mix(in srgb, ${color} 50%, #000))`,
   };
 }
 
@@ -196,7 +196,7 @@ export function montoGrandeInputStyle(acento: AcentoMonto, tieneValor: boolean):
 export const pickerOverlayStyle: CSSProperties = {
   position: 'fixed',
   inset: 0,
-  background: 'var(--card)',
+  background: 'var(--bg)',
   padding: 'calc(18px + env(safe-area-inset-top)) 18px calc(18px + env(safe-area-inset-bottom))',
   display: 'flex',
   flexDirection: 'column',
@@ -234,7 +234,7 @@ export function pickerItemIconoStyle(color: string): CSSProperties {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    background: `${color}26`,
-    color,
+    background: `color-mix(in srgb, ${color} var(--tile-a), transparent)`,
+    color: `var(--glyph, color-mix(in srgb, ${color} 50%, #000))`,
   };
 }

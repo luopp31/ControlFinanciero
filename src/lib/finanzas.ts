@@ -69,29 +69,29 @@ export function colorCategoria(cat: Categoria, catColor?: Record<string, string>
   return catColor?.[cat.id] ?? cat.color;
 }
 
-// Portado de legacy/index.html:573-589.
+// Tonos pastel de la nueva identidad visual (el usuario puede cambiarlos en Ajustes).
 export const CATS: Categoria[] = [
-  { id: 'ALIMENTACION', nombre: 'Alimentación', icono: 'fork-knife', color: '#FFB020' },
-  { id: 'TRANSPORTE', nombre: 'Transporte', icono: 'bus', color: '#3DE39A' },
-  { id: 'SALUD', nombre: 'Salud', icono: 'heart', color: '#5CC8FF' },
-  { id: 'SERVICIOS', nombre: 'Servicios', icono: 'wifi-high', color: '#9A93AC' },
-  { id: 'DIVERSION', nombre: 'Diversión', icono: 'confetti', color: '#FF5C86' },
-  { id: 'COMPRAS', nombre: 'Compras', icono: 'shopping-bag', color: '#FF8FD6' },
-  { id: 'EDUCACION', nombre: 'Educación', icono: 'book-open', color: '#8B5CF6' },
-  { id: 'TRABAJO', nombre: 'Trabajo', icono: 'briefcase', color: '#B8C76B' },
-  { id: 'EFECTIVO', nombre: 'Efectivo', icono: 'wallet', color: '#7FB3A0' },
-  { id: 'SUSCRIPCIONES', nombre: 'Suscripciones', icono: 'arrows-clockwise', color: '#6BA8FF' },
-  { id: 'SINID', nombre: 'Sin identificar', icono: 'question', color: '#5A5368' },
+  { id: 'ALIMENTACION', nombre: 'Alimentación', icono: 'fork-knife', color: '#FFB48A' },
+  { id: 'TRANSPORTE', nombre: 'Transporte', icono: 'bus', color: '#8FDCCB' },
+  { id: 'SALUD', nombre: 'Salud', icono: 'heart', color: '#9DD1F5' },
+  { id: 'SERVICIOS', nombre: 'Servicios', icono: 'wifi-high', color: '#BBA4F0' },
+  { id: 'DIVERSION', nombre: 'Diversión', icono: 'confetti', color: '#FFE29A' },
+  { id: 'COMPRAS', nombre: 'Compras', icono: 'shopping-bag', color: '#F7A8C4' },
+  { id: 'EDUCACION', nombre: 'Educación', icono: 'book-open', color: '#B5E8A5' },
+  { id: 'TRABAJO', nombre: 'Trabajo', icono: 'briefcase', color: '#F2C6E8' },
+  { id: 'EFECTIVO', nombre: 'Efectivo', icono: 'wallet', color: '#D8D2C2' },
+  { id: 'SUSCRIPCIONES', nombre: 'Suscripciones', icono: 'arrows-clockwise', color: '#9FB4F5' },
+  { id: 'SINID', nombre: 'Sin identificar', icono: 'question', color: '#C9C6D6' },
 ];
 
 export const CATS_ING: Categoria[] = [
-  { id: 'SUELDO', nombre: 'Sueldo', icono: 'briefcase', color: '#3DE39A' },
-  { id: 'EXTRAS', nombre: 'Extras laborales', icono: 'gift', color: '#5CC8FF' },
-  { id: 'FREELANCE', nombre: 'Trabajos aparte', icono: 'wrench', color: '#FFB020' },
-  { id: 'VENTAS', nombre: 'Ventas', icono: 'tag', color: '#FF8FD6' },
-  { id: 'LIQUIDACION', nombre: 'Liquidación', icono: 'bank', color: '#59C98F' },
-  { id: 'INTERESES', nombre: 'Intereses', icono: 'bank', color: '#7FD6B0' },
-  { id: 'OTROS', nombre: 'Otros', icono: 'sparkle', color: '#9A93AC' },
+  { id: 'SUELDO', nombre: 'Sueldo', icono: 'briefcase', color: '#8FDCCB' },
+  { id: 'EXTRAS', nombre: 'Extras laborales', icono: 'gift', color: '#9DD1F5' },
+  { id: 'FREELANCE', nombre: 'Trabajos aparte', icono: 'wrench', color: '#FFB48A' },
+  { id: 'VENTAS', nombre: 'Ventas', icono: 'tag', color: '#F7A8C4' },
+  { id: 'LIQUIDACION', nombre: 'Liquidación', icono: 'bank', color: '#B5E8A5' },
+  { id: 'INTERESES', nombre: 'Intereses', icono: 'bank', color: '#BBA4F0' },
+  { id: 'OTROS', nombre: 'Otros', icono: 'sparkle', color: '#C9C6D6' },
 ];
 
 export const TIPOS: { id: TipoMovimiento; nombre: string }[] = [

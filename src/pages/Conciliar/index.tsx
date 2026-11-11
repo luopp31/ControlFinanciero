@@ -17,6 +17,8 @@ import { CATS, CATS_ING, estadoPrestamo, type Cuenta } from '../../lib/finanzas'
 import { formatearFechaCorta, formatearInstanteLima, formatearMonto } from '../../lib/formato';
 import { botonPrimario, botonSecundario } from '../../components/formStyles';
 import { IconUpload } from '../../components/icons';
+import { Escena } from '../../components/Escena';
+import { ESCENA, subEscenaStyle, tituloEscenaStyle } from '../../components/escenaEstilos';
 import { FilaPorClasificar } from './FilaPorClasificar';
 import { TarjetaVerificacion } from './TarjetaVerificacion';
 import { cuentaPorNombre } from './util';
@@ -171,27 +173,29 @@ export function Conciliar({ onVolver }: { onVolver: () => void }) {
   }
 
   return (
-    <div style={{ maxWidth: 880, margin: '0 auto', padding: isDesktop ? '48px 32px 64px' : '28px 18px 40px', display: 'flex', flexDirection: 'column', gap: 22 }}>
-      <div>
-        <button type="button" onClick={onVolver} style={{ all: 'unset', cursor: 'pointer', fontSize: 13, fontWeight: 700, color: 'var(--primary)' }}>
-          ← Volver
+    <>
+      <Escena
+        color={ESCENA.conciliar}
+        izquierda={
+          <button type="button" onClick={onVolver} style={{ all: 'unset', cursor: 'pointer', minHeight: 44, display: 'inline-flex', alignItems: 'center', fontSize: 15, fontWeight: 600, color: 'var(--muted-fg)' }}>
+          ‹ Cuentas
         </button>
-        <h1 style={{ fontSize: 22, fontWeight: 800, letterSpacing: '-0.02em', margin: '10px 0 6px' }}>Conciliar con el banco</h1>
-        <p style={{ fontSize: 13.5, color: 'var(--muted-fg)', margin: 0 }}>
-          Sube la constancia de movimientos (PDF) de cada cuenta. Se lee en este dispositivo y no se sube a ningún lado.
-        </p>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginTop: 14 }}>
+        }
+      >
+        <h1 style={tituloEscenaStyle}>Conciliar</h1>
+        <p style={subEscenaStyle}>Sube la constancia de movimientos (PDF) de cada cuenta. Se lee en este dispositivo y no se sube a ningún lado.</p>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginTop: 14, maxWidth: 480 }}>
           {cuentas.map((c) => (
-            <p key={c.id} style={{ margin: 0, fontSize: 13.5, display: 'flex', justifyContent: 'space-between', gap: 12 }}>
+            <p key={c.id} style={{ margin: 0, fontSize: 14.5, display: 'flex', justifyContent: 'space-between', gap: 12 }}>
               <span style={{ color: 'var(--muted-fg)' }}>{c.nombre}</span>
-              <b style={{ color: c.conciliadoHasta ? 'var(--fg)' : 'var(--muted-fg)' }}>
+              <b style={{ color: c.conciliadoHasta ? 'var(--fg)' : 'var(--muted-fg)', fontWeight: 600 }}>
                 {c.conciliadoHasta ? `Conciliado hasta ${formatearInstanteLima(c.conciliadoHasta)}` : 'Sin conciliar'}
               </b>
             </p>
           ))}
         </div>
-      </div>
-
+      </Escena>
+      <div style={{ maxWidth: 880, margin: '0 auto', padding: isDesktop ? '24px 32px 64px' : '20px 18px 40px', display: 'flex', flexDirection: 'column', gap: 22 }}>
       <div
         className="glass-card"
         onDragOver={(e) => e.preventDefault()}
@@ -311,7 +315,8 @@ export function Conciliar({ onVolver }: { onVolver: () => void }) {
           </section>
         </>
       )}
-    </div>
+      </div>
+    </>
   );
 }
 

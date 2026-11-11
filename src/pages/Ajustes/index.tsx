@@ -14,8 +14,10 @@ import { sincronizarTodo } from '../../lib/sync';
 import { copiarTexto } from '../../lib/portapapeles';
 import { estimarTokens, resumenAsesor } from '../../lib/resumenAsesor';
 import { formatearMonto } from '../../lib/formato';
-import { IconArrowUUpLeft, IconEye, IconEyeSlash } from '../../components/icons';
+import { IconEye, IconEyeSlash } from '../../components/icons';
 import { botonPrimario, botonSecundario, chipStyle, etiquetaStyle, inputStyle } from '../../components/formStyles';
+import { Escena } from '../../components/Escena';
+import { ESCENA, subEscenaStyle, tituloEscenaStyle } from '../../components/escenaEstilos';
 
 type EstadoSync = 'inactivo' | 'sincronizando' | 'ok' | 'error';
 
@@ -39,13 +41,19 @@ export function Ajustes({ onVolver, onAbrirBandeja }: { onVolver: () => void; on
   if (cargandoAuth || cargandoConfig || cargandoCuentas) return null;
 
   return (
-    <div style={{ maxWidth: isDesktop ? 640 : undefined, margin: isDesktop ? '0 auto' : undefined, padding: isDesktop ? '48px 32px' : '28px 18px 40px', display: 'flex', flexDirection: 'column', gap: 22 }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-        <button type="button" onClick={onVolver} aria-label="Volver" style={{ all: 'unset', cursor: 'pointer', display: 'flex', color: 'var(--muted-fg)' }}>
-          <IconArrowUUpLeft width={20} height={20} />
+    <>
+      <Escena
+        color={ESCENA.ajustes}
+        izquierda={
+          <button type="button" onClick={onVolver} style={{ all: 'unset', cursor: 'pointer', minHeight: 44, display: 'inline-flex', alignItems: 'center', fontSize: 15, fontWeight: 600, color: 'var(--muted-fg)' }}>
+          ‹ Hoy
         </button>
-        <h1 style={{ fontSize: isDesktop ? 26 : 22, fontWeight: 800, letterSpacing: '-0.02em', margin: 0 }}>Ajustes</h1>
-      </div>
+        }
+      >
+        <h1 style={tituloEscenaStyle}>Ajustes</h1>
+        <p style={subEscenaStyle}>Tu cuenta, la sincronización, tus preferencias y tus datos.</p>
+      </Escena>
+      <div style={{ maxWidth: isDesktop ? 640 : undefined, margin: isDesktop ? '0 auto' : undefined, padding: isDesktop ? '24px 32px 48px' : '20px 18px 40px', display: 'flex', flexDirection: 'column', gap: 22 }}>
 
       <SeccionPerfil
         nombre={config.nombre}
@@ -75,7 +83,8 @@ export function Ajustes({ onVolver, onAbrirBandeja }: { onVolver: () => void; on
       <SeccionCuentas cuentas={cuentas} onActualizar={actualizarCuenta} onArchivar={borrarCuenta} />
 
       <SeccionDatos session={session} cerrarSesion={cerrarSesion} />
-    </div>
+      </div>
+    </>
   );
 }
 

@@ -9,6 +9,8 @@ import { clasificarIngresoTransferencia, confirmarTraspaso, proponerTransferenci
 import { guardarCaptura, guardarClasificacion } from '../../lib/guardarCaptura';
 import type { Captura } from '../../lib/db';
 import { botonSecundario } from '../../components/formStyles';
+import { Escena } from '../../components/Escena';
+import { ESCENA, subEscenaStyle, tituloEscenaStyle } from '../../components/escenaEstilos';
 import { FilaCaptura } from './FilaCaptura';
 import { FilaTransferencia } from './FilaTransferencia';
 
@@ -62,15 +64,19 @@ export function Bandeja({ onVolver }: { onVolver: () => void }) {
   }
 
   return (
-    <div style={{ maxWidth: 880, margin: '0 auto', padding: isDesktop ? '48px 32px 64px' : '28px 18px 40px', display: 'flex', flexDirection: 'column', gap: 22 }}>
-      <div>
-        <button type="button" onClick={onVolver} style={{ all: 'unset', cursor: 'pointer', fontSize: 13, fontWeight: 700, color: 'var(--primary)' }}>
-          ← Volver
+    <>
+      <Escena
+        color={ESCENA.bandeja}
+        izquierda={
+          <button type="button" onClick={onVolver} style={{ all: 'unset', cursor: 'pointer', minHeight: 44, display: 'inline-flex', alignItems: 'center', fontSize: 15, fontWeight: 600, color: 'var(--muted-fg)' }}>
+          ‹ Volver
         </button>
-        <h1 style={{ fontSize: 22, fontWeight: 800, letterSpacing: '-0.02em', margin: '10px 0 6px' }}>Gastos por clasificar</h1>
-        <p style={{ fontSize: 13.5, color: 'var(--muted-fg)', margin: 0 }}>Llegaron solos por el correo de Interbank o por Wallet. Elige la categoría y se cargan como gasto.</p>
-      </div>
-
+        }
+      >
+        <h1 style={tituloEscenaStyle}>Por clasificar</h1>
+        <p style={subEscenaStyle}>Llegaron solos por el correo de Interbank o por Wallet. Elige la categoría y se cargan como gasto.</p>
+      </Escena>
+      <div style={{ maxWidth: 880, margin: '0 auto', padding: isDesktop ? '24px 32px 64px' : '20px 18px 40px', display: 'flex', flexDirection: 'column', gap: 22 }}>
       {error && <p style={{ margin: 0, fontSize: 13, color: 'var(--destructive)' }}>{error}</p>}
 
       {pendientes.length === 0 ? (
@@ -182,6 +188,7 @@ export function Bandeja({ onVolver }: { onVolver: () => void }) {
           ))}
         </details>
       )}
-    </div>
+      </div>
+    </>
   );
 }

@@ -2,6 +2,8 @@ import type { Compromiso } from '../../lib/db';
 import type { Cuenta, Movimiento, Prestamo, TipoPrestamo } from '../../lib/finanzas';
 
 export interface CompromisosViewProps {
+  /** Dentro de Cuentas: sin título propio ni márgenes de página. */
+  embebido?: boolean;
   cuentas: Cuenta[];
   movimientos: Movimiento[];
   prestamos: Prestamo[];

@@ -27,7 +27,7 @@ React 19 + TypeScript + Vite 8, PWA con `vite-plugin-pwa`. Supabase (Postgres + 
 ## Arquitectura
 
 - `src/App.tsx`: sin router. Una variable `vista` elige pantalla: `panel`, `movimientos`, `cuentas`, `estadisticas`, `compromisos`, `ajustes`, `conciliar` y `bandeja`. **`conciliar` y `bandeja` no tienen pestaña** en la barra: se entra desde la tarjeta "Conciliar con el banco" del Panel y de Cuentas; a la bandeja, desde el Panel y desde Ajustes. Sin sesión ni cuentas muestra `Bienvenida`.
-- `src/pages/<Vista>/`: `index.tsx` reúne datos; `.mobile.tsx` y `.desktop.tsx` son la presentación (elegida con `useIsDesktop`). `pages/Conciliar/` es una sola vista responsive (`index.tsx`, `FilaPorClasificar`, `TarjetaVerificacion`).
+- `src/pages/<Vista>/`: `index.tsx` reúne datos. Hoy, Libro (Movimientos), Análisis (Estadísticas), Cuentas, Conciliar, Bandeja y Ajustes son una sola vista responsive; solo Compromisos conserva `.mobile.tsx` y `.desktop.tsx` (elegidos con `useIsDesktop`) y se muestra dentro de Cuentas.
 - `src/components/`: `AppShell`, `MovimientoForm` (el más grande), `RegistroRapido` (el "+" flotante, hoja inferior arrastrable) con `RegistroRapidoForm` (gasto en pocos segundos), `GastoDelMes` (Panel), `TarjetaConciliar`, tarjetas, gráficos, `SyncPanel`.
 - `src/hooks/`: `useStore` (CRUD local + sync genérico) y un hook delgado por entidad (`useCuentas`, `useMovimientos`, `usePrestamos`, `useCompromisos`, `useReglas`, `useIgnorados`), más `useConfig` y `useAuth`.
 - `src/lib/`:
@@ -153,6 +153,18 @@ Ajustes tiene "Copiar resumen para asesor": arma un texto en markdown (`src/lib/
 - Greedy no guarda línea disponible, cierre, fecha de pago ni pago mínimo de la Amex ni presupuesto por categoría: el resumen lo dice. Las alertas basadas en proyección solo salen desde el día 15 del mes. Los recurrentes "detectados" son gastos con la misma descripción en 3 o más meses con montos dentro de 15 %.
 - El texto puede traer descripciones de gastos y nombres de personas (notas o etiqueta del banco): es para que lo pegue el propio usuario, no se sube a ningún lado. La versión sale de `package.json` más la fecha de compilación (`__APP_VERSION__` en `vite.config.ts`).
 
+## Diseño (estilo Rockstar, aplicado a toda la app)
+
+Referencia: la página de Rockstar Games. Propuesta aprobada por Lu en un prototipo (versión 7). Los nombres de variable CSS de siempre se conservaron (`--bg`, `--card`, `--primary`, `--accent`, `--destructive`...): lo que no se tocó hereda el nuevo aspecto.
+- **Tokens** en `src/index.css`: oscuro (negro puro) y claro (blanco humo) con el tema de Ajustes (sistema, claro, oscuro). `--yellow` es el botón principal; `--accent` es verde (lo que entra) y `--destructive` rojo (lo que sale); `--am1..4` y `--amanecer` son el degradado lila-rosa-durazno-mantequilla que marca lo activo (ícono de la isla y botón "+").
+- **Escenario** (`components/Escena.tsx`, `escenaEstilos.ts`): cada pantalla abre con un color que se funde al fondo (índigo en Hoy, violeta en Libro, verde petróleo en Análisis y Conciliar, vino en Cuentas, ámbar en Bandeja, azul en Ajustes), migas ("Hoy / Libro") y el título o número grande anclado abajo a la izquierda.
+- **Hoy**: el patrimonio como paisaje (`HeroPatrimonio`: curva suave de 16 puntos, rangos 1S/1M/3M, arrastrar para ver valor y fecha), tres datos que sirven (puedes gastar al día = presupuesto restante ÷ días que quedan; gastado hoy; próximo pago fijo) y un carrusel de tarjetas pequeñas (gasto del mes con presupuesto, "Avaricia sana" = parte de lo ingresado que no se gastó este mes, y Por clasificar). No hay botones de "Registrar" ni "Ver libro" en esa pantalla.
+- **Libro**: movimientos agrupados por día, gasto en rojo con "−", ingreso en verde con "+", traspaso neutro. Las filas ya no llevan lápiz ni papelera: tocar una fila abre `DetalleMovimiento` con Editar y Eliminar (la confirmación de borrado es la de siempre).
+- **Categorías**: un tono pastel por categoría (`CATS` en `finanzas.ts`; el usuario puede cambiarlos en Ajustes). El ícono es un recuadro pastel con el dibujo oscuro (`.tile-cat`, `TileCategoria`); en modo claro el dibujo usa una versión más oscura del tono.
+- **Isla** (`AppShell`): flota abajo en el celular y arriba al centro en escritorio. El "+" es el mismo botón de `RegistroRapido` (conserva el truco de foco del teclado de iOS), colocado en el hueco central de la isla: si se mueve la isla, hay que mover ese botón. Los íconos de la isla son dibujos propios (`IconNav*` en `icons.tsx`); no se usan íconos ni logos de Rockstar.
+- **Cuentas**: el total de la suma de las cuentas arriba, cada cuenta como fila, "Conciliar con el banco", y debajo Compromisos embebido (`<Compromisos embebido />`).
+- Pendiente de pulir: en escritorio, los formularios de préstamos y suscripciones siguen siempre abiertos dentro de Cuentas.
+
 ## Principios heredados de Networth (a confirmar con Lu)
 
 No están en el repo; vienen del diseño anterior. Si contradicen una feature, la feature está mal.
@@ -178,10 +190,10 @@ Reglas de negocio vigentes en el modelo: el reembolso resta de la categoría (no
 
 ## Decisiones de diseño tomadas
 
-- Barra de navegación siempre visible (Conciliar es una vista sin pestaña).
+- Navegación: isla flotante solo con íconos (Hoy, Libro, "+" al centro, Análisis, Cuentas), siempre visible. Conciliar, Bandeja, Ajustes y Compromisos no tienen pestaña (Compromisos vive dentro de Cuentas, como "Deudas y pagos fijos").
 - Sin cuentas en dólares por ahora.
 - Sin localStorage/sessionStorage (la persistencia es IndexedDB).
-- Tema oscuro azul pizarra (`#0F172A`).
+- Identidad visual estilo Rockstar (ver "Diseño"): negro puro con modo claro, tipografía Inter Tight, pasteles de GTA VI en las categorías.
 - **Conciliar = importar la constancia de movimientos** (decisión de Lu). Ya implementado.
 - Privacidad: los PDFs y el CSV de datos reales viven en `datos-privados/` y `movimientos_greedy_*.csv`, ambos en `.gitignore`; los tests usan fixtures sintéticas. Nunca guardar ni imprimir números de cuenta o de tarjeta.
 

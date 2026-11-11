@@ -1,115 +1,42 @@
-import { CATS, CATS_ING, type Cuenta, type Movimiento } from '../lib/finanzas';
-import { formatearFechaCorta, formatearMonto } from '../lib/formato';
-import { CATEGORIA_ICONOS, IconPencilSimple, IconQuestion, IconTrash, TIPO_COLOR, TIPO_ICONOS } from './icons';
+import type { CSSProperties } from 'react';
+import type { Cuenta, Movimiento } from '../lib/finanzas';
+import { formatearMonto } from '../lib/formato';
+import { colorMonto } from './escenaEstilos';
+import { infoVisual, signoDe, titulosDe } from './movimientoVista';
 
-const TIPO_NOMBRE: Record<string, string> = {
-  GASTO: 'Gasto',
-  INGRESO: 'Ingreso',
-  REEMBOLSO: 'Reembolso',
-  TRASPASO: 'Traspaso',
-  AHORRO: 'Ahorro',
-};
-
-function infoVisual(m: Movimiento) {
-  if (m.categoria) {
-    const cat = [...CATS, ...CATS_ING].find((c) => c.id === m.categoria);
-    if (cat) return { nombre: cat.nombre, Icono: CATEGORIA_ICONOS[cat.icono] ?? IconQuestion, color: cat.color };
-  }
-  return {
-    nombre: TIPO_NOMBRE[m.tipo] ?? m.tipo,
-    Icono: TIPO_ICONOS[m.tipo] ?? IconQuestion,
-    color: TIPO_COLOR[m.tipo] ?? 'var(--primary)',
-  };
-}
-
-function signoYColor(tipo: Movimiento['tipo']): { signo: string; color: string } {
-  if (tipo === 'INGRESO' || tipo === 'REEMBOLSO') return { signo: '+', color: 'var(--accent)' };
-  if (tipo === 'GASTO' || tipo === 'AHORRO') return { signo: '−', color: 'var(--destructive)' };
-  return { signo: '', color: 'var(--fg)' }; // TRASPASO: neutral, no gana ni pierde en conjunto
-}
-
-/** Fondo suave del ícono a partir de su color de identidad (hex con alpha, o
- * el token azul por defecto cuando no hay color específico). */
-function fondoIcono(color: string): string {
-  return color.startsWith('#') ? `${color}26` : 'var(--primary-soft)';
-}
-
-export function MovimientoRow({
-  movimiento,
-  cuentas,
-  onBorrar,
-  onEditar,
-}: {
-  movimiento: Movimiento;
-  cuentas: Cuenta[];
-  onBorrar?: (id: string) => void;
-  onEditar?: (id: string) => void;
-}) {
-  const { nombre, Icono, color: colorIcono } = infoVisual(movimiento);
-  const { signo, color } = signoYColor(movimiento.tipo);
-  const cuenta = cuentas.find((c) => c.id === movimiento.cuentaId);
-  const destino = movimiento.destinoId ? cuentas.find((c) => c.id === movimiento.destinoId) : null;
-
+/** Ícono de categoría: pastel pleno con el dibujo oscuro (en claro, el dibujo es una versión más oscura del tono). */
+export function TileCategoria({ color, Icono, tamano = 40 }: { color: string; Icono: (p: React.SVGProps<SVGSVGElement>) => React.JSX.Element; tamano?: number }) {
   return (
-    <div
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: 12,
-        padding: '12px 0',
-        borderBottom: '1px solid var(--card-border)',
-      }}
-    >
-      <div
-        style={{
-          width: 36,
-          height: 36,
-          borderRadius: 11,
-          background: fondoIcono(colorIcono),
-          color: colorIcono,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          flex: '0 0 auto',
-        }}
-      >
-        <Icono width={17} height={17} />
-      </div>
+    <span className="tile-cat" style={{ '--c': color, width: tamano, height: tamano } as CSSProperties}>
+      <Icono width={Math.round(tamano * 0.5)} height={Math.round(tamano * 0.5)} />
+    </span>
+  );
+}
+
+export function MovimientoRow({ movimiento, cuentas, onAbrir }: { movimiento: Movimiento; cuentas: Cuenta[]; onAbrir?: (id: string) => void }) {
+  const { nombre, Icono, color } = infoVisual(movimiento);
+  const { titulo, detalle } = titulosDe(movimiento, cuentas, nombre);
+  const signo = signoDe(movimiento.tipo);
+
+  const contenido = (
+    <>
+      <TileCategoria color={color} Icono={Icono} />
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontSize: 13.5, fontWeight: 600 }}>{nombre}</div>
-        <div style={{ fontSize: 11.5, color: 'var(--muted-fg)' }}>
-          {cuenta?.nombre ?? '—'}
-          {destino ? ` → ${destino.nombre}` : ''} · {formatearFechaCorta(movimiento.fecha)}
-          {movimiento.nota ? ` · ${movimiento.nota}` : ''}
-        </div>
+        <div style={{ fontSize: 16.5, fontWeight: 600, letterSpacing: '-0.015em', overflowWrap: 'anywhere' }}>{titulo}</div>
+        <div style={{ fontSize: 13, color: 'var(--muted-fg)' }}>{detalle}</div>
       </div>
-      <div style={{ fontVariantNumeric: 'tabular-nums', fontWeight: 700, fontSize: 13.5, color, whiteSpace: 'nowrap' }}>
+      <div style={{ fontVariantNumeric: 'tabular-nums', fontWeight: 600, fontSize: 16.5, letterSpacing: '-0.015em', color: colorMonto(movimiento.tipo), whiteSpace: 'nowrap' }}>
         {signo} S/ {formatearMonto(movimiento.monto)}
       </div>
-      {(onEditar || onBorrar) && (
-        <div style={{ display: 'flex', gap: 10, flex: '0 0 auto' }}>
-          {onEditar && (
-            <button
-              type="button"
-              onClick={() => onEditar(movimiento.id)}
-              aria-label="Editar movimiento"
-              style={{ all: 'unset', cursor: 'pointer', color: 'var(--primary)', display: 'flex' }}
-            >
-              <IconPencilSimple width={16} height={16} />
-            </button>
-          )}
-          {onBorrar && (
-            <button
-              type="button"
-              onClick={() => onBorrar(movimiento.id)}
-              aria-label="Eliminar movimiento"
-              style={{ all: 'unset', cursor: 'pointer', color: 'var(--muted-fg)', display: 'flex' }}
-            >
-              <IconTrash width={16} height={16} />
-            </button>
-          )}
-        </div>
-      )}
-    </div>
+    </>
+  );
+
+  const estilo: CSSProperties = { display: 'flex', alignItems: 'center', gap: 14, width: '100%', minHeight: 64, padding: '8px 0', textAlign: 'left', color: 'inherit' };
+  return onAbrir ? (
+    <button type="button" onClick={() => onAbrir(movimiento.id)} style={{ all: 'unset', boxSizing: 'border-box', cursor: 'pointer', ...estilo }}>
+      {contenido}
+    </button>
+  ) : (
+    <div style={estilo}>{contenido}</div>
   );
 }

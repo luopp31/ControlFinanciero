@@ -1,78 +1,98 @@
+/* Greedy · sistema visual (estilo Rockstar).
+   Negro puro con un "escenario" de color por pantalla que se funde al fondo, tarjetas oscuras pocas y pequeñas,
+   botones en píldora, rojo para lo que sale y verde para lo que entra. El degradado "amanecer" (lila, rosa, durazno,
+   mantequilla) marca lo activo. Los nombres de variable de siempre se conservan: las pantallas que no se tocaron
+   heredan el nuevo aspecto. */
 :root {
-  --bg: #f5f7fb;
+  --bg: #f6f6f7;
   --card: #ffffff;
-  --card-border: rgba(15, 23, 42, 0.08);
-  --muted: #eef1f7;
-  --muted-fg: #5b6472;
-  --fg: #0f172a;
-  --primary: #14274e;
-  --primary-soft: rgba(20, 39, 78, 0.1);
-  --accent: #00a854;
-  --accent-soft: rgba(0, 168, 84, 0.12);
-  --destructive: #e11d48;
-  --destructive-soft: rgba(225, 29, 72, 0.1);
-  --ring: #14274e;
+  --card-border: rgba(0, 0, 0, 0.08);
+  --muted: #ededef;
+  --muted-fg: #64646c;
+  --fg: #0b0b0c;
+  --primary: #8a6a00;
+  --primary-soft: rgba(138, 106, 0, 0.14);
+  --accent: #12803f;
+  --accent-soft: rgba(18, 128, 63, 0.12);
+  --destructive: #c6342a;
+  --destructive-soft: rgba(198, 52, 42, 0.1);
+  --ring: #ffffff;
   --glass-blur: 0px;
-  --glass-fill: rgba(255, 255, 255, 0.6);
-  --shadow: 0 2px 6px rgba(15, 23, 42, 0.08), 0 14px 32px rgba(15, 23, 42, 0.1);
-  --bg-wash: radial-gradient(60% 50% at 88% -8%, rgba(20, 39, 78, 0.1), transparent),
-    radial-gradient(55% 45% at 4% 100%, rgba(0, 168, 84, 0.12), transparent);
-  --hero-gradient: linear-gradient(135deg, #14274e, #1e3a8a);
-  --hero-shadow: 0 16px 40px rgba(20, 39, 78, 0.3);
-  --nav-glass: rgba(255, 255, 255, 0.55);
+  --glass-fill: transparent;
+  --shadow: 0 0 0 1px rgba(0, 0, 0, 0.06), 0 10px 26px rgba(0, 0, 0, 0.06);
+  --bg-wash: none;
+  --nav-glass: rgba(255, 255, 255, 0.86);
+
+  --yellow: #f9c846;
+  --on-yellow: #000000;
+  --btn-line: rgba(0, 0, 0, 0.45);
+  --sa: 30%;
+  --tile-a: 75%;
+  --am1: #7b5ce0;
+  --am2: #e0558f;
+  --am3: #ee8a45;
+  --am4: #e3a400;
+  --amanecer: linear-gradient(135deg, var(--am1) 0%, var(--am2) 40%, var(--am3) 72%, var(--am4) 100%);
+  --font: 'Inter Tight', 'Helvetica Neue', Helvetica, Arial, ui-sans-serif, system-ui, sans-serif;
 
   color-scheme: light dark;
-  font-family: 'Plus Jakarta Sans', ui-sans-serif, system-ui, -apple-system, sans-serif;
+  font-family: var(--font);
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme='light']) {
-    --bg: #0f172a;
-    --card: #192134;
-    --card-border: rgba(255, 255, 255, 0.08);
-    --muted: #101a34;
-    --muted-fg: #94a3b8;
+    --bg: #000000;
+    --card: #141414;
+    --card-border: rgba(255, 255, 255, 0.1);
+    --muted: #1d1d1f;
+    --muted-fg: #9a9aa0;
     --fg: #ffffff;
-    --primary: #4c6fb3;
-    --primary-soft: rgba(76, 111, 179, 0.18);
-    --accent: #00e676;
-    --accent-soft: rgba(0, 230, 118, 0.16);
-    --destructive: #ff3860;
-    --destructive-soft: rgba(255, 56, 96, 0.16);
+    --primary: #f9c846;
+    --primary-soft: rgba(249, 200, 70, 0.16);
+    --accent: #5ee08f;
+    --accent-soft: rgba(94, 224, 143, 0.16);
+    --destructive: #ff6b5e;
+    --destructive-soft: rgba(255, 107, 94, 0.16);
     --ring: #ffffff;
-    --glass-blur: 16px;
-    --glass-fill: rgba(255, 255, 255, 0.06);
-    --shadow: 0 1px 0 rgba(255, 255, 255, 0.04) inset, 0 20px 40px rgba(0, 0, 0, 0.35);
-    --bg-wash: radial-gradient(60% 50% at 88% -8%, rgba(76, 111, 179, 0.22), transparent),
-      radial-gradient(55% 45% at 4% 100%, rgba(0, 230, 118, 0.16), transparent);
-    --hero-gradient: linear-gradient(135deg, #0b1730, #3d5fa6);
-    --hero-shadow: 0 20px 44px rgba(0, 0, 0, 0.45);
-    --nav-glass: rgba(25, 33, 52, 0.55);
+    --shadow: 0 0 0 1px rgba(255, 255, 255, 0.07);
+    --nav-glass: rgba(20, 20, 20, 0.86);
+    --btn-line: rgba(255, 255, 255, 0.5);
+    --sa: 100%;
+    --tile-a: 100%;
+    --glyph: #1b1622;
+    --txt-mix: 100%;
+    --am1: #bba4f0;
+    --am2: #f7a8c4;
+    --am3: #ffb48a;
+    --am4: #ffe29a;
   }
 }
 
 :root[data-theme='dark'] {
-  --bg: #0f172a;
-  --card: #192134;
-  --card-border: rgba(255, 255, 255, 0.08);
-  --muted: #101a34;
-  --muted-fg: #94a3b8;
+  --bg: #000000;
+  --card: #141414;
+  --card-border: rgba(255, 255, 255, 0.1);
+  --muted: #1d1d1f;
+  --muted-fg: #9a9aa0;
   --fg: #ffffff;
-  --primary: #4c6fb3;
-  --primary-soft: rgba(76, 111, 179, 0.18);
-  --accent: #00e676;
-  --accent-soft: rgba(0, 230, 118, 0.16);
-  --destructive: #ff3860;
-  --destructive-soft: rgba(255, 56, 96, 0.16);
+  --primary: #f9c846;
+  --primary-soft: rgba(249, 200, 70, 0.16);
+  --accent: #5ee08f;
+  --accent-soft: rgba(94, 224, 143, 0.16);
+  --destructive: #ff6b5e;
+  --destructive-soft: rgba(255, 107, 94, 0.16);
   --ring: #ffffff;
-  --glass-blur: 16px;
-  --glass-fill: rgba(255, 255, 255, 0.06);
-  --shadow: 0 1px 0 rgba(255, 255, 255, 0.04) inset, 0 20px 40px rgba(0, 0, 0, 0.35);
-  --bg-wash: radial-gradient(60% 50% at 88% -8%, rgba(76, 111, 179, 0.22), transparent),
-    radial-gradient(55% 45% at 4% 100%, rgba(0, 230, 118, 0.16), transparent);
-  --hero-gradient: linear-gradient(135deg, #0b1730, #3d5fa6);
-  --hero-shadow: 0 20px 44px rgba(0, 0, 0, 0.45);
-  --nav-glass: rgba(25, 33, 52, 0.55);
+  --shadow: 0 0 0 1px rgba(255, 255, 255, 0.07);
+  --nav-glass: rgba(20, 20, 20, 0.86);
+  --btn-line: rgba(255, 255, 255, 0.5);
+  --sa: 100%;
+  --tile-a: 100%;
+  --glyph: #1b1622;
+  --txt-mix: 100%;
+  --am1: #bba4f0;
+  --am2: #f7a8c4;
+  --am3: #ffb48a;
+  --am4: #ffe29a;
 }
 
 * {
@@ -81,8 +101,7 @@
 
 body {
   margin: 0;
-  background: var(--bg-wash), var(--bg);
-  background-attachment: fixed;
+  background: var(--bg);
   color: var(--fg);
   transition: background 0.25s ease, color 0.25s ease;
   min-height: 100vh;
@@ -90,35 +109,165 @@ body {
 
 button,
 input,
-select {
+select,
+textarea {
   font-family: inherit;
 }
 
+/* Tarjeta: pocas y pequeñas; solo para lo que cambia una decisión. */
 .glass-card {
-  border-radius: 20px;
-  padding: 20px;
-  background: linear-gradient(180deg, var(--glass-fill), transparent 140%), var(--card);
-  backdrop-filter: blur(var(--glass-blur));
-  -webkit-backdrop-filter: blur(var(--glass-blur));
-  border: 1px solid var(--card-border);
+  border-radius: 18px;
+  padding: 18px;
+  background: var(--card);
+  border: 0;
   box-shadow: var(--shadow);
 }
 
-.hero-valor {
-  border-radius: 24px;
-  padding: 26px 24px;
-  background: var(--hero-gradient);
-  color: #ffffff;
-  box-shadow: var(--hero-shadow);
+/* Escenario: color que se funde al fondo, con el título y el número grandes anclados abajo a la izquierda. */
+.escena {
   position: relative;
-  overflow: hidden;
+  padding: calc(env(safe-area-inset-top) + 56px) 20px 22px;
+  background: radial-gradient(80% 50% at 88% 4%, rgba(255, 255, 255, 0.14), transparent 70%),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--scene, #2e3560) var(--sa), var(--bg)) 0%,
+      color-mix(in srgb, var(--scene, #2e3560) calc(var(--sa) * 0.4), var(--bg)) 55%,
+      var(--bg) 100%
+    );
 }
-.hero-valor::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(70% 90% at 100% 0%, rgba(255, 255, 255, 0.14), transparent 60%);
-  pointer-events: none;
+.escena-in {
+  max-width: 960px;
+  margin: 0 auto;
+}
+@media (min-width: 900px) {
+  .escena {
+    padding: 112px 40px 28px;
+  }
+}
+
+/* Ícono de categoría: pastel pleno con el dibujo oscuro (en claro, el dibujo es una versión más oscura del tono). */
+.txt-cat {
+  color: color-mix(in srgb, var(--c) var(--txt-mix, 50%), #000);
+}
+.tile-cat {
+  width: 40px;
+  height: 40px;
+  border-radius: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  background: color-mix(in srgb, var(--c) var(--tile-a), transparent);
+  color: var(--glyph, color-mix(in srgb, var(--c) 50%, #000));
+}
+
+/* Botones en píldora. */
+.pildora {
+  min-height: 48px;
+  padding: 0 22px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  font-size: 15.5px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.pildora.amarilla {
+  background: var(--yellow);
+  color: var(--on-yellow);
+}
+.pildora.borde {
+  background: transparent;
+  border-color: var(--btn-line);
+  color: var(--fg);
+}
+.pildora.chica {
+  min-height: 44px;
+  padding: 0 16px;
+  font-size: 14px;
+}
+
+/* Carrusel de tarjetas pequeñas del Hoy: en el celular se ven dos completas y la tercera asoma; en escritorio, tres en fila. */
+.carrusel {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding: 4px 20px 6px;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+}
+.carrusel::-webkit-scrollbar {
+  display: none;
+}
+.mini {
+  flex: none;
+  width: 168px;
+  min-height: 142px;
+  background: var(--card);
+  border-radius: 18px;
+  padding: 14px;
+  scroll-snap-align: start;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  box-shadow: var(--shadow);
+}
+@media (min-width: 900px) {
+  .carrusel {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    overflow: visible;
+    padding: 0;
+  }
+  .mini {
+    width: auto;
+    min-height: 150px;
+  }
+}
+
+/* Tres datos del Hoy: repartidos en el celular, juntos a la izquierda en escritorio. */
+.datos-clave {
+  display: grid;
+  grid-template-columns: 1.15fr 0.9fr 1fr;
+  gap: 12px;
+}
+@media (min-width: 900px) {
+  .datos-clave {
+    grid-template-columns: repeat(3, auto);
+    justify-content: start;
+    gap: 56px;
+  }
+}
+
+/* Contenido centrado bajo el escenario. En el celular las tarjetas del carrusel van de borde a borde. */
+.pagina {
+  max-width: 960px;
+  margin: 0 auto;
+}
+.pagina-pad {
+  padding: 0 20px;
+}
+.dos-col {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0;
+}
+@media (min-width: 900px) {
+  .pagina {
+    padding: 0 40px;
+  }
+  .pagina-pad {
+    padding: 0;
+  }
+  .dos-col {
+    grid-template-columns: 1fr 1fr;
+    gap: 56px;
+  }
 }
 
 @keyframes greedy-hoja-fondo {
@@ -136,6 +285,12 @@ select {
   }
   to {
     transform: translateY(0);
+  }
+}
+
+@keyframes greedy-dibujar {
+  to {
+    stroke-dashoffset: 0;
   }
 }
 

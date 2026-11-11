@@ -371,8 +371,22 @@ export const TIPO_ICONOS: Record<string, (props: SVGProps<SVGSVGElement>) => Rea
 
 // Portado de ICONOS_TIPO en legacy/index.html:604-609 (ahí usaban var(--verde)/var(--violeta)/var(--suave)).
 export const TIPO_COLOR: Record<string, string> = {
-  REEMBOLSO: '#3DE39A',
-  TRASPASO: '#9A93AC',
-  AHORRO: '#8B5CF6',
-  PRESTAMO: '#8B5CF6',
+  REEMBOLSO: '#8FDCCB',
+  TRASPASO: '#C9C6D6',
+  AHORRO: '#BBA4F0',
+  PRESTAMO: '#BBA4F0',
 };
+
+// Íconos de la isla de navegación: trazo grueso con puntas redondeadas (dibujo propio, inspirado en los pictogramas de mapa).
+const nav = (d: string) =>
+  function IconNav(props: SVGProps<SVGSVGElement>) {
+    return (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.1} strokeLinecap="round" strokeLinejoin="round" {...props}>
+        <path d={d} />
+      </svg>
+    );
+  };
+export const IconNavHoy = nav('M3 17h18M7 17a5 5 0 0 1 10 0M12 5.5V8M5 9.5l1.7 1.7M19 9.5l-1.7 1.7M3 13.5h2M19 13.5h2M6 20.5h12');
+export const IconNavLibro = nav('M5 4.5h10.5A3.5 3.5 0 0 1 19 8v11.5H8.5A3.5 3.5 0 0 1 5 16zM9 9h6M9 13h5');
+export const IconNavAnalisis = nav('M5 19v-6M12 19V5M19 19v-9');
+export const IconNavCuentas = nav('M4 8a2 2 0 0 1 2-2h11v3M4 8v9a2 2 0 0 0 2 2h13a1 1 0 0 0 1-1V10a1 1 0 0 0-1-1H6a2 2 0 0 1-2-2zM16.5 14h.01');

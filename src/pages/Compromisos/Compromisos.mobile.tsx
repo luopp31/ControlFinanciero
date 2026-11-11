@@ -22,6 +22,7 @@ export function CompromisosMobile({
   actualizarSuscripcion,
   registrarPagoSuscripcion,
   borrarSuscripcion,
+  embebido = false,
 }: CompromisosViewProps) {
   const [subtab, setSubtab] = useState<Subtab>('prestamos');
   const [mostrarForm, setMostrarForm] = useState(false);
@@ -29,11 +30,13 @@ export function CompromisosMobile({
   const prestamosFiltrados = filtrarPrestamosPorPersona(prestamos, busqueda);
 
   return (
-    <div style={{ padding: '28px 18px 40px', display: 'flex', flexDirection: 'column', gap: 20 }}>
-      <div>
-        <p style={eyebrow}>Greedy</p>
-        <h1 style={{ fontSize: 22, fontWeight: 800, letterSpacing: '-0.02em', margin: 0 }}>Compromisos</h1>
-      </div>
+    <div style={{ padding: embebido ? '8px 0 0' : '28px 18px 40px', display: 'flex', flexDirection: 'column', gap: 20 }}>
+      {!embebido && (
+        <div>
+          <p style={eyebrow}>Greedy</p>
+          <h1 style={{ fontSize: 22, fontWeight: 800, letterSpacing: '-0.02em', margin: 0 }}>Compromisos</h1>
+        </div>
+      )}
 
       <div style={{ display: 'flex', gap: 8 }}>
         {(['prestamos', 'suscripciones'] as const).map((t) => (
@@ -47,13 +50,13 @@ export function CompromisosMobile({
             aria-pressed={subtab === t}
             style={{
               flex: 1,
-              padding: '9px 0',
-              borderRadius: 10,
-              border: `1px solid ${subtab === t ? 'var(--primary)' : 'var(--card-border)'}`,
-              background: subtab === t ? 'var(--primary-soft)' : 'var(--muted)',
-              color: subtab === t ? 'var(--primary)' : 'var(--muted-fg)',
-              fontWeight: 700,
-              fontSize: 13,
+              minHeight: 44,
+              borderRadius: 999,
+              border: `1px solid ${subtab === t ? 'var(--fg)' : 'var(--card-border)'}`,
+              background: subtab === t ? 'var(--fg)' : 'var(--muted)',
+              color: subtab === t ? 'var(--bg)' : 'var(--muted-fg)',
+              fontWeight: 600,
+              fontSize: 14,
             }}
           >
             {t === 'prestamos' ? 'Préstamos' : 'Suscripciones'}
@@ -162,11 +165,12 @@ const botonAgregar: React.CSSProperties = {
   justifyContent: 'center',
   gap: 8,
   padding: '13px 16px',
-  borderRadius: 14,
-  border: '1px dashed var(--card-border)',
+  minHeight: 48,
+  borderRadius: 999,
+  border: '1px solid var(--btn-line)',
   background: 'transparent',
-  color: 'var(--primary)',
-  fontWeight: 700,
-  fontSize: 14,
+  color: 'var(--fg)',
+  fontWeight: 600,
+  fontSize: 14.5,
   cursor: 'pointer',
 };

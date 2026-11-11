@@ -56,12 +56,12 @@ export function SyncPanel({
         display: 'flex',
         alignItems: 'center',
         gap: 6,
-        padding: mostrarEtiqueta ? '8px 12px 8px 10px' : '8px',
+        padding: mostrarEtiqueta ? '8px 12px 8px 10px' : '13px',
         borderRadius: 999,
         color: session && estadoSync === 'ok' ? 'var(--accent)' : 'var(--muted-fg)',
       }}
     >
-      <Icono width={17} height={17} />
+      <Icono width={18} height={18} />
       {mostrarEtiqueta && <span style={{ fontSize: 12.5, fontWeight: 700 }}>Cuenta</span>}
     </button>
   );

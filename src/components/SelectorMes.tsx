@@ -11,7 +11,7 @@ export function SelectorMes({
   deshabilitarSiguiente: boolean;
 }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: 8 }}>
       <button
         type="button"
         onClick={() => onCambiar(-1)}
@@ -20,7 +20,7 @@ export function SelectorMes({
       >
         <IconCaretRight width={16} height={16} style={{ transform: 'rotate(180deg)' }} />
       </button>
-      <p style={{ margin: 0, fontSize: 15, fontWeight: 700, minWidth: '18ch', textAlign: 'center' }}>
+      <p style={{ margin: 0, fontSize: 16, fontWeight: 600, letterSpacing: '-0.01em', minWidth: '14ch', textAlign: 'center' }}>
         {formatearMesLargo(mes)}
       </p>
       <button
@@ -39,9 +39,9 @@ export function SelectorMes({
 const botonFlechaStyle: React.CSSProperties = {
   all: 'unset',
   cursor: 'pointer',
-  width: 32,
-  height: 32,
-  borderRadius: 10,
+  width: 44,
+  height: 44,
+  borderRadius: 999,
   background: 'var(--muted)',
   color: 'var(--fg)',
   display: 'flex',

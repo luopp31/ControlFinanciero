@@ -112,21 +112,23 @@ export function RegistroRapido() {
           all: 'unset',
           cursor: 'pointer',
           position: 'fixed',
-          right: isDesktop ? 24 : 16,
-          bottom: isDesktop ? 24 : 'calc(92px + env(safe-area-inset-bottom))',
-          width: 56,
-          height: 56,
+          left: '50%',
+          transform: 'translateX(-50%)',
+          // Cae en el hueco central de la isla (AppShell): abajo en el celular, arriba en escritorio.
+          ...(isDesktop ? { top: 23 } : { bottom: 'calc(32px + env(safe-area-inset-bottom))' }),
+          width: isDesktop ? 46 : 56,
+          height: isDesktop ? 46 : 56,
           borderRadius: '50%',
-          background: '#FFC107',
-          color: '#14274E',
+          background: 'var(--amanecer)',
+          color: '#0B0B0C',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          boxShadow: '0 10px 30px rgba(255,193,7,0.4)',
+          boxShadow: '0 10px 26px color-mix(in srgb, var(--am2) 55%, transparent)',
           zIndex: 50,
         }}
       >
-        <IconPlus width={26} height={26} />
+        <IconPlus width={isDesktop ? 22 : 26} height={isDesktop ? 22 : 26} />
       </button>
 
       {abierto && (
@@ -156,10 +158,10 @@ export function RegistroRapido() {
               display: 'flex',
               flexDirection: 'column',
               overflow: 'hidden',
-              background: 'var(--card)',
-              borderTopLeftRadius: 26,
-              borderTopRightRadius: 26,
-              boxShadow: '0 -12px 40px rgba(0,0,0,0.35)',
+              background: 'var(--bg)',
+              borderTopLeftRadius: 30,
+              borderTopRightRadius: 30,
+              boxShadow: '0 -1px 0 var(--card-border), 0 -12px 40px rgba(0,0,0,0.35)',
               paddingBottom: 'env(safe-area-inset-bottom)',
               transform: `translateY(${arrastreY}px)`,
               transition: arrastrando ? 'none' : 'transform 0.25s ease',

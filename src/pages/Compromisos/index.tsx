@@ -9,7 +9,7 @@ import { hoyISO } from '../../lib/fecha';
 import { CompromisosDesktop } from './Compromisos.desktop';
 import { CompromisosMobile } from './Compromisos.mobile';
 
-export function Compromisos() {
+export function Compromisos({ embebido = false }: { embebido?: boolean }) {
   const isDesktop = useIsDesktop();
   const { cuentas, cargando: cargandoCuentas } = useCuentas();
   const { movimientos, cargando: cargandoMovs, crearMovimiento } = useMovimientos();
@@ -64,6 +64,7 @@ export function Compromisos() {
   }
 
   const props = {
+    embebido,
     cuentas,
     movimientos,
     prestamos,

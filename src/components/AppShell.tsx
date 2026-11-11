@@ -1,17 +1,6 @@
-import type { ReactNode, SVGProps } from 'react';
+import type { CSSProperties, ReactNode, SVGProps } from 'react';
 import { useIsDesktop } from '../hooks/useIsDesktop';
-import {
-  IconChartBar,
-  IconChartBarFill,
-  IconHandshake,
-  IconHandshakeFill,
-  IconHouse,
-  IconHouseFill,
-  IconReceipt,
-  IconReceiptFill,
-  IconWallet,
-  IconWalletFill,
-} from './icons';
+import { IconNavAnalisis, IconNavCuentas, IconNavHoy, IconNavLibro } from './icons';
 import { SyncPanel } from './SyncPanel';
 import { RegistroRapido } from './RegistroRapido';
 
@@ -19,17 +8,22 @@ export type Vista = 'panel' | 'movimientos' | 'cuentas' | 'compromisos' | 'estad
 
 type IconComp = (props: SVGProps<SVGSVGElement>) => React.JSX.Element;
 
-// Orden por frecuencia de uso real: Panel y Movimientos son lo que más se toca.
-// Referencia real de Instagram (captura del usuario): barra flotante en forma de
-// píldora, no pegada a los bordes, con la pestaña activa resaltada por un fondo
-// propio además de pasar de ícono de contorno a relleno.
-const ITEMS: { id: Vista; nombre: string; Outline: IconComp; Fill: IconComp }[] = [
-  { id: 'panel', nombre: 'Panel', Outline: IconHouse, Fill: IconHouseFill },
-  { id: 'movimientos', nombre: 'Movimientos', Outline: IconReceipt, Fill: IconReceiptFill },
-  { id: 'cuentas', nombre: 'Cuentas', Outline: IconWallet, Fill: IconWalletFill },
-  { id: 'estadisticas', nombre: 'Estadísticas', Outline: IconChartBar, Fill: IconChartBarFill },
-  { id: 'compromisos', nombre: 'Compromisos', Outline: IconHandshake, Fill: IconHandshakeFill },
+// Isla flotante solo con íconos. El hueco del medio es del "+" (lo dibuja RegistroRapido, que lleva el teclado de iOS).
+const ITEMS: ({ id: Vista; nombre: string; Icono: IconComp } | null)[] = [
+  { id: 'panel', nombre: 'Hoy', Icono: IconNavHoy },
+  { id: 'movimientos', nombre: 'Libro', Icono: IconNavLibro },
+  null,
+  { id: 'estadisticas', nombre: 'Análisis', Icono: IconNavAnalisis },
+  { id: 'cuentas', nombre: 'Cuentas', Icono: IconNavCuentas },
 ];
+
+/** Qué ícono de la isla se ilumina según la pantalla (Compromisos y Conciliar viven dentro de Cuentas; la bandeja, dentro de Hoy). */
+function activoDe(vista: Vista): Vista | null {
+  if (vista === 'bandeja') return 'panel';
+  if (vista === 'compromisos' || vista === 'conciliar') return 'cuentas';
+  if (vista === 'ajustes') return null;
+  return vista;
+}
 
 export function AppShell({
   vista,
@@ -41,128 +35,76 @@ export function AppShell({
   children: ReactNode;
 }) {
   const isDesktop = useIsDesktop();
+  const activa = activoDe(vista);
 
-  if (isDesktop) {
-    return (
-      <div style={{ display: 'flex', minHeight: '100vh' }}>
-        <nav
-          style={{
-            width: 76,
-            flex: '0 0 auto',
-            background: 'var(--muted)',
-            borderRight: '1px solid var(--card-border)',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            gap: 18,
-            paddingTop: 24,
-          }}
-        >
-          {ITEMS.map(({ id, nombre, Outline, Fill }) => {
-            const activo = vista === id;
-            const Icono = activo ? Fill : Outline;
-            return (
-              <button
-                key={id}
-                type="button"
-                onClick={() => onCambiarVista(id)}
-                aria-pressed={activo}
-                aria-label={nombre}
-                title={nombre}
-                style={{
-                  all: 'unset',
-                  cursor: 'pointer',
-                  width: 44,
-                  height: 44,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: activo ? 'var(--primary)' : 'var(--muted-fg)',
-                  transition: 'color .15s ease, transform .15s ease',
-                  transform: activo ? 'scale(1.08)' : 'scale(1)',
-                }}
-              >
-                <Icono width={24} height={24} />
-              </button>
-            );
-          })}
-          <div style={{ marginTop: 'auto', paddingBottom: 12 }}>
-            <SyncPanel mostrarEtiqueta={false} onAbrirAjustes={() => onCambiarVista('ajustes')} />
-          </div>
-        </nav>
-        <div style={{ flex: 1, minWidth: 0 }}>{children}</div>
-        <RegistroRapido />
-      </div>
-    );
-  }
+  const islaStyle: CSSProperties = isDesktop
+    ? { position: 'fixed', top: 16, left: '50%', transform: 'translateX(-50%)', width: 360, height: 60, borderRadius: 30 }
+    : { position: 'fixed', left: 20, right: 20, bottom: 'calc(18px + env(safe-area-inset-bottom))', height: 68, borderRadius: 34 };
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-      <div
-        style={{
-          position: 'fixed',
-          top: 'calc(14px + env(safe-area-inset-top))',
-          right: 14,
-          zIndex: 40,
-          background: 'var(--muted)',
-          borderRadius: 999,
-          boxShadow: 'var(--shadow)',
-        }}
-      >
-        <SyncPanel onAbrirAjustes={() => onCambiarVista('ajustes')} />
+    <div style={{ minHeight: '100vh' }}>
+      {/* Degradado "amanecer" para el ícono activo (sigue el tema). */}
+      <svg width="0" height="0" style={{ position: 'absolute' }} aria-hidden="true">
+        <defs>
+          <linearGradient id="amanecer-grad" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" style={{ stopColor: 'var(--am1)' }} />
+            <stop offset="0.4" style={{ stopColor: 'var(--am2)' }} />
+            <stop offset="0.72" style={{ stopColor: 'var(--am3)' }} />
+            <stop offset="1" style={{ stopColor: 'var(--am4)' }} />
+          </linearGradient>
+        </defs>
+      </svg>
+
+      <div style={{ position: 'fixed', top: 'calc(10px + env(safe-area-inset-top))', right: isDesktop ? 24 : 8, zIndex: 40 }}>
+        <SyncPanel mostrarEtiqueta={false} onAbrirAjustes={() => onCambiarVista('ajustes')} />
       </div>
-      <div style={{ flex: 1, paddingTop: 'calc(24px + env(safe-area-inset-top))', paddingBottom: 92 }}>{children}</div>
+
+      <div style={{ paddingBottom: isDesktop ? 56 : 'calc(120px + env(safe-area-inset-bottom))' }}>{children}</div>
+
       <nav
+        aria-label="Navegación principal"
         style={{
-          display: 'flex',
-          justifyContent: 'space-around',
+          ...islaStyle,
+          display: 'grid',
+          gridTemplateColumns: 'repeat(5, 1fr)',
           alignItems: 'center',
-          gap: 4,
-          padding: '8px 14px',
-          margin: '0 16px calc(16px + env(safe-area-inset-bottom))',
-          borderRadius: 999,
+          padding: '0 8px',
           background: 'var(--nav-glass)',
-          backdropFilter: 'blur(20px)',
-          WebkitBackdropFilter: 'blur(20px)',
-          border: '1px solid var(--card-border)',
-          boxShadow: 'var(--shadow)',
-          position: 'fixed',
-          left: 0,
-          right: 0,
-          bottom: 0,
+          backdropFilter: 'blur(22px)',
+          WebkitBackdropFilter: 'blur(22px)',
+          boxShadow: '0 14px 34px rgba(0,0,0,0.3), 0 0 0 1px var(--card-border)',
           zIndex: 30,
         }}
       >
-        {ITEMS.map(({ id, nombre, Outline, Fill }) => {
-          const activo = vista === id;
-          const Icono = activo ? Fill : Outline;
+        {ITEMS.map((item, i) => {
+          if (!item) return <span key={`hueco-${i}`} aria-hidden="true" />;
+          const activo = activa === item.id;
+          const { Icono } = item;
           return (
             <button
-              key={id}
+              key={item.id}
               type="button"
-              onClick={() => onCambiarVista(id)}
-              aria-pressed={activo}
-              aria-label={nombre}
-              title={nombre}
+              onClick={() => onCambiarVista(item.id)}
+              aria-label={item.nombre}
+              aria-current={activo ? 'page' : undefined}
+              title={item.nombre}
               style={{
                 all: 'unset',
                 cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                width: activo ? 52 : 44,
-                height: 44,
-                borderRadius: 999,
-                background: activo ? 'var(--primary-soft)' : 'transparent',
-                color: activo ? 'var(--primary)' : 'var(--muted-fg)',
-                transition: 'background .18s ease, color .18s ease, width .18s ease',
+                height: 56,
+                display: 'grid',
+                placeItems: 'center',
+                position: 'relative',
+                color: activo ? 'var(--fg)' : 'var(--muted-fg)',
               }}
             >
-              <Icono width={24} height={24} />
+              <Icono width={27} height={27} style={activo ? { stroke: 'url(#amanecer-grad)' } : undefined} />
+              {activo && <span style={{ position: 'absolute', bottom: 5, width: 5, height: 5, borderRadius: '50%', background: 'var(--amanecer)' }} />}
             </button>
           );
         })}
       </nav>
+
       <RegistroRapido />
     </div>
   );
